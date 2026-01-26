@@ -141,7 +141,7 @@ const FeedKPGame = () => {
           </div>
 
           {/* Right Side - Dengulu */}
-          <div className="flex flex-col items-center justify-center order-3">
+          <div className="flex flex-col items-center justify-center order-3 mt-4 md:mt-0">
             <DenguluFood onFeed={handleFeed} disabled={happiness >= maxHappiness} />
           </div>
         </div>
