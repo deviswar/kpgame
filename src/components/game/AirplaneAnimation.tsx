@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import KPCharacter from './KPCharacter';
 
 interface AirplaneAnimationProps {
   onComplete: () => void;
@@ -54,25 +55,37 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
       {/* Main content */}
       <div className="flex flex-col items-center justify-center text-center px-4 z-10">
         
-        {/* Big moving airplane emoji */}
-        <div 
-          className={`text-8xl md:text-9xl transition-all duration-1000 ${
-            phase === 'celebrating' ? 'scale-100' : 'scale-110 -translate-y-4'
-          }`}
-          style={{
-            animation: 'planeFloat 2s ease-in-out infinite',
-          }}
-        >
-          ✈️
+        {/* Airplane and KP waving */}
+        <div className="flex items-center gap-4 md:gap-6">
+          {/* Big moving airplane emoji */}
+          <div 
+            className={`text-7xl md:text-8xl transition-all duration-1000 ${
+              phase === 'celebrating' ? 'scale-100' : 'scale-110 -translate-y-4'
+            }`}
+            style={{
+              animation: 'planeFloat 2s ease-in-out infinite',
+            }}
+          >
+            ✈️
+          </div>
+          
+          {/* KP waving bye */}
+          <div className="relative animate-bounce" style={{ animationDuration: '2s' }}>
+            <KPCharacter scale={1} isHappy={true} happiness={100} />
+            {/* Waving hand */}
+            <div className="absolute -top-2 -right-4 text-3xl md:text-4xl animate-wave">
+              👋
+            </div>
+          </div>
         </div>
         
         {/* Netherlands flag and milk glass */}
-        <div className="my-6 text-5xl md:text-6xl flex items-center gap-3">
+        <div className="my-4 text-4xl md:text-5xl flex items-center gap-3">
           🇳🇱 🥛
         </div>
         
         {/* Text */}
-        <h2 className="text-2xl md:text-4xl font-bold text-white text-shadow-game mb-8">
+        <h2 className="text-xl md:text-3xl font-bold text-white text-shadow-game mb-6">
           Bye guys, I'm going to Netherlands!
         </h2>
         

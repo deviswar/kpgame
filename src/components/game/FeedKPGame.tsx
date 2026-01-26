@@ -69,8 +69,8 @@ const FeedKPGame = () => {
   }
   return <div className="min-h-screen min-h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="p-3 md:p-4 flex items-center justify-between gap-2">
-        <div className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 border border-primary-foreground/20">
+      <header className="p-2 md:p-3 flex items-center justify-between gap-2">
+        <div className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1 md:px-4 md:py-1.5 border border-primary-foreground/20">
           <span className="text-primary-foreground/70 text-xs md:text-sm">Feeds:</span>
           <span className="text-primary-foreground font-bold text-base md:text-xl ml-1 md:ml-2">{feedCount}/5</span>
         </div>
@@ -79,26 +79,26 @@ const FeedKPGame = () => {
           <span className="hidden sm:inline">🍚 </span>FEED KP<span className="hidden sm:inline"> 🍚</span>
         </h1>
         
-        <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm md:text-base">
+        <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1 md:px-4 md:py-1.5 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm md:text-base">
           🔄 <span className="hidden sm:inline">Reset</span>
         </button>
       </header>
 
       {/* Game Area */}
-      <main className="flex-1 flex items-center justify-center px-4 pb-4 md:pb-8">
-        <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
+      <main className="flex-1 flex items-center justify-center px-4 py-2">
+        <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center md:justify-between gap-2 md:gap-8">
           
           {/* Left Side - KP */}
           <div className="flex-1 flex flex-col items-center order-1 md:order-1">
             {/* Name Badge */}
-            <div className="mb-2 md:mb-3 bg-gradient-to-r from-blue-500 to-blue-600 px-6 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl border-4 border-blue-400/50 shadow-lg">
+            <div className="mb-1 md:mb-2 bg-gradient-to-r from-blue-500 to-blue-600 px-6 md:px-8 py-1.5 md:py-2 rounded-xl md:rounded-2xl border-4 border-blue-400/50 shadow-lg">
               <h2 className="text-2xl md:text-4xl font-bold text-white text-shadow-game tracking-widest">
                 KP
               </h2>
             </div>
             
             {/* Happiness Meter */}
-            <div className="mb-3 md:mb-4 relative w-full max-w-[160px] md:max-w-[200px]">
+            <div className="mb-1 md:mb-2 relative w-full max-w-[160px] md:max-w-[200px]">
               <HappinessMeter value={happiness} maxValue={maxHappiness} />
               
               {/* +20 indicator */}
@@ -128,7 +128,7 @@ const FeedKPGame = () => {
           </div>
 
           {/* Mobile arrow - pointing down */}
-          <div className="md:hidden text-primary-foreground/60 text-2xl order-2">
+          <div className="md:hidden text-primary-foreground/60 text-xl order-2">
         </div>
 
           {/* Right Side - Dengulu */}
@@ -139,7 +139,7 @@ const FeedKPGame = () => {
       </main>
       
       {/* Footer text */}
-      <footer className="pb-4 md:pb-6 text-center px-4">
+      <footer className="pb-2 md:pb-4 text-center px-4">
         <p className="text-white text-sm md:text-base font-medium">
           Give him 100 rupees cash, he will do PhonePe 💸
         </p>
