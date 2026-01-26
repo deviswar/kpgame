@@ -4,7 +4,6 @@ import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
 import AirplaneAnimation from './AirplaneAnimation';
 import WelcomeScreen from './WelcomeScreen';
-
 const FeedKPGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [happiness, setHappiness] = useState(0);
@@ -13,7 +12,6 @@ const FeedKPGame = () => {
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
@@ -23,33 +21,29 @@ const FeedKPGame = () => {
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
     audioRef.current.play().catch(console.error);
-    
     setGameStarted(true);
   };
-
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
-    
     const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
     setHappiness(newHappiness);
-    
+
     // Trigger happy animation
     setIsHappy(true);
     setTimeout(() => setIsHappy(false), 100);
-    
+
     // Show +20 indicator
     setShowPlusOne(true);
     setTimeout(() => setShowPlusOne(false), 500);
-    
+
     // Increment feed count
     setFeedCount(prev => prev + 1);
-    
+
     // Check for 100% happiness
     if (newHappiness >= maxHappiness) {
       setTimeout(() => setShowAirplane(true), 800);
     }
   }, [happiness, showAirplane]);
-
   const handleGoHome = () => {
     // Stop the music
     if (audioRef.current) {
@@ -62,23 +56,18 @@ const FeedKPGame = () => {
     setShowAirplane(false);
     setGameStarted(false);
   };
-
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
     setShowAirplane(false);
   };
-
   if (!gameStarted) {
     return <WelcomeScreen onStart={handleStartGame} />;
   }
-
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
   }
-
-  return (
-    <div className="min-h-screen min-h-[100dvh] game-gradient flex flex-col overflow-hidden">
+  return <div className="min-h-screen min-h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-3 md:p-4 flex items-center justify-between gap-2">
         <div className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 border border-primary-foreground/20">
@@ -90,10 +79,7 @@ const FeedKPGame = () => {
           <span className="hidden sm:inline">🍚 </span>FEED KP<span className="hidden sm:inline"> 🍚</span>
         </h1>
         
-        <button
-          onClick={handleReset}
-          className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm md:text-base"
-        >
+        <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl md:rounded-2xl px-3 py-1.5 md:px-4 md:py-2 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm md:text-base">
           🔄 <span className="hidden sm:inline">Reset</span>
         </button>
       </header>
@@ -116,30 +102,21 @@ const FeedKPGame = () => {
               <HappinessMeter value={happiness} maxValue={maxHappiness} />
               
               {/* +20 indicator */}
-              {showPlusOne && (
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-happiness text-xl md:text-2xl font-bold animate-fade-in whitespace-nowrap">
+              {showPlusOne && <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-happiness text-xl md:text-2xl font-bold animate-fade-in whitespace-nowrap">
                   +20% 😊
-                </div>
-              )}
+                </div>}
             </div>
             
             {/* Character Platform */}
             <div className="relative">
               {/* Shadow/Platform */}
-              <div 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm"
-                style={{
-                  width: 70,
-                  height: 12,
-                }}
-              />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm" style={{
+              width: 70,
+              height: 12
+            }} />
               
               {/* Character */}
-              <KPCharacter 
-                scale={1} 
-                isHappy={isHappy}
-                happiness={happiness}
-              />
+              <KPCharacter scale={1} isHappy={isHappy} happiness={happiness} />
             </div>
           </div>
 
@@ -152,8 +129,7 @@ const FeedKPGame = () => {
 
           {/* Mobile arrow - pointing down */}
           <div className="md:hidden text-primary-foreground/60 text-2xl order-2">
-            ⬇️
-          </div>
+        </div>
 
           {/* Right Side - Dengulu */}
           <div className="flex-1 flex flex-col items-center justify-center order-3">
@@ -168,8 +144,6 @@ const FeedKPGame = () => {
           Give him 100 rupees cash, he will do PhonePe 💸
         </p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default FeedKPGame;
