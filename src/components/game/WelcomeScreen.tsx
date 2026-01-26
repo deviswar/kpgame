@@ -7,10 +7,10 @@ interface WelcomeScreenProps {
 const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   return (
     <div 
-      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center px-4 py-4 cursor-pointer overflow-hidden"
+      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 cursor-pointer overflow-hidden gap-3"
       onClick={onStart}
     >
-      {/* Header with title and KP - at top */}
+      {/* Header with title and KP */}
       <div className="flex items-center gap-2">
         <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           KP Game
@@ -20,8 +20,8 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
         </div>
       </div>
 
-      {/* Fun Facts Section - centered */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-sm">
+      {/* Fun Facts Section */}
+      <div className="flex flex-col items-center max-w-sm">
         <h2 className="text-xl md:text-2xl font-bold text-primary-foreground mb-2 text-shadow-game">
           Fun Facts about me
         </h2>
@@ -43,19 +43,15 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
             btw north indian girls like krishna name {'<3'} 💕
           </p>
         </div>
-        
-        {/* Tap to start - Green button */}
-        <div className="flex flex-col items-center gap-2 mt-4">
-          <div className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg">
-            <span className="text-white text-lg md:text-xl font-bold">
-              👆 Tap to start the game
-            </span>
-          </div>
-        </div>
       </div>
       
-      {/* Footer - at bottom */}
-      <div className="flex flex-col items-center gap-1 text-center pb-4">
+      {/* Tap to start + Footer - grouped together */}
+      <div className="flex flex-col items-center gap-2">
+        <div className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg">
+          <span className="text-white text-lg md:text-xl font-bold">
+            👆 Tap to start the game
+          </span>
+        </div>
         <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
