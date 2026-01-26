@@ -16,7 +16,7 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
       </div>
 
       {/* Header with title and KP */}
-      <div className="flex items-center gap-2 -mt-48">
+      <div className="flex items-center gap-2 -mt-32">
         <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           KP Game
         </h1>
