@@ -7,21 +7,21 @@ interface WelcomeScreenProps {
 const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   return (
     <div 
-      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center px-4 py-4 cursor-pointer overflow-hidden"
+      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-6 cursor-pointer overflow-hidden gap-4"
       onClick={onStart}
     >
       {/* Header with title and KP */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-2">
         <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           KP Game
         </h1>
-        <div className="scale-50 origin-center -my-10">
-          <KPCharacter scale={0.6} isHappy={false} happiness={50} />
+        <div className="scale-75 origin-center -my-8">
+          <KPCharacter scale={0.8} isHappy={false} happiness={50} />
         </div>
       </div>
 
       {/* Fun Facts Section */}
-      <div className="flex flex-col items-center gap-1 flex-1 justify-center max-w-sm">
+      <div className="flex flex-col items-center max-w-sm">
         <h2 className="text-xl md:text-2xl font-bold text-primary-foreground mb-2 text-shadow-game">
           Fun Facts about me
         </h2>
