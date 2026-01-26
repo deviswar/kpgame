@@ -11,12 +11,12 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
       onClick={onStart}
     >
       {/* Version number - bottom left */}
-      <div className="absolute bottom-16 left-4">
+      <div className="absolute bottom-24 left-4">
         <span className="text-white text-xs font-medium">version - 1.69.69</span>
       </div>
 
       {/* Header with title and KP */}
-      <div className="flex items-center gap-2 -mt-32">
+      <div className="flex items-center gap-2 -mt-48">
         <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           KP Game
         </h1>
