@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import HappinessMeter from './HappinessMeter';
 import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
@@ -15,12 +15,27 @@ const FeedKPGame = () => {
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
+  // Preload audio on component mount
+  useEffect(() => {
+    const audio = new Audio('/music/background.mp3');
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.preload = 'auto';
+    audioRef.current = audio;
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
   const handleStartGame = () => {
-    // Initialize and play audio
-    audioRef.current = new Audio('/music/background.mp3');
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.5;
-    audioRef.current.play().catch(console.error);
+    // Play preloaded audio instantly
+    if (audioRef.current) {
+      audioRef.current.play().catch(console.error);
+    }
     setGameStarted(true);
   };
   const handleFeed = useCallback(() => {
