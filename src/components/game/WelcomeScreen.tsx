@@ -7,8 +7,7 @@ interface WelcomeScreenProps {
 const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   return (
     <div 
-      className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 cursor-pointer overflow-hidden gap-3"
-      onClick={onStart}
+      className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3"
     >
       {/* Version number - bottom left */}
       <div className="absolute bottom-24 left-4">
@@ -52,11 +51,14 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
       
       {/* Tap to start + Footer - grouped together */}
       <div className="flex flex-col items-center gap-2">
-        <div className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg">
+        <button 
+          onClick={onStart}
+          className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-green-600 transition-colors active:scale-95"
+        >
           <span className="text-white text-lg md:text-xl font-bold">
             👆 Tap to start the game
           </span>
-        </div>
+        </button>
         <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
