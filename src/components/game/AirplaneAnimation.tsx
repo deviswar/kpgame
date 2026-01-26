@@ -76,12 +76,12 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           Bye guys, I'm going to Netherlands!
         </h2>
         
-        {/* Play Again button */}
+        {/* Go to Home button */}
         <button
           onClick={onComplete}
           className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
         >
-          Play Again 🔄
+          Go to Home 🏠
         </button>
       </div>
     </div>

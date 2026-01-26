@@ -50,6 +50,19 @@ const FeedKPGame = () => {
     }
   }, [happiness, showAirplane]);
 
+  const handleGoHome = () => {
+    // Stop the music
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    // Reset all state and go back to welcome screen
+    setHappiness(0);
+    setFeedCount(0);
+    setShowAirplane(false);
+    setGameStarted(false);
+  };
+
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
@@ -61,7 +74,7 @@ const FeedKPGame = () => {
   }
 
   if (showAirplane) {
-    return <AirplaneAnimation onComplete={handleReset} />;
+    return <AirplaneAnimation onComplete={handleGoHome} />;
   }
 
   return (
