@@ -11,10 +11,9 @@ const FeedKPGame = () => {
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
-  const [gameComplete, setGameComplete] = useState(false);
 
   const maxHappiness = 100;
-  const maxScale = 1.8;
+  const maxScale = 1.5;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
   const handleFeed = useCallback(() => {
@@ -24,7 +23,7 @@ const FeedKPGame = () => {
     setHappiness(newHappiness);
     
     // Increase scale
-    setScale(prev => Math.min(prev + 0.16, maxScale));
+    setScale(prev => Math.min(prev + 0.1, maxScale));
     
     // Trigger happy animation
     setIsHappy(true);
@@ -43,21 +42,15 @@ const FeedKPGame = () => {
     }
   }, [happiness, showAirplane]);
 
-  const handleAnimationComplete = () => {
-    setShowAirplane(false);
-    setGameComplete(true);
-  };
-
   const handleReset = () => {
     setHappiness(0);
     setScale(1);
     setFeedCount(0);
-    setGameComplete(false);
     setShowAirplane(false);
   };
 
   if (showAirplane) {
-    return <AirplaneAnimation onComplete={handleAnimationComplete} />;
+    return <AirplaneAnimation onComplete={handleReset} />;
   }
 
   return (
@@ -83,97 +76,72 @@ const FeedKPGame = () => {
 
       {/* Game Area */}
       <main className="flex-1 flex items-center justify-center px-4 pb-4 md:pb-8">
-        {gameComplete ? (
-          <div className="text-center animate-fade-in">
-            <div className="mb-6">
-              <span className="text-6xl md:text-8xl">🎊</span>
+        <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8">
+          
+          {/* Left Side - KP */}
+          <div className="flex-1 flex flex-col items-center order-1 md:order-1">
+            {/* Name Badge */}
+            <div className="mb-2 md:mb-3 bg-gradient-to-r from-blue-500 to-blue-600 px-6 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl border-4 border-blue-400/50 shadow-lg">
+              <h2 className="text-2xl md:text-4xl font-bold text-white text-shadow-game tracking-widest">
+                KP
+              </h2>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground text-shadow-game mb-4">
-              KP is in Netherlands!
-            </h2>
-            <p className="text-lg md:text-xl text-primary-foreground/80 mb-6">
-              He's living his best life now! 🌷🇳🇱
-            </p>
-            <button
-              onClick={handleReset}
-              className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-lg"
-            >
-              Play Again 🔄
-            </button>
-          </div>
-        ) : (
-          <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center md:justify-between gap-6 md:gap-8">
             
-            {/* Left Side - KP */}
-            <div className="flex-1 flex flex-col items-center order-1 md:order-1">
-              {/* Name Badge */}
-              <div className="mb-3 md:mb-4 bg-gradient-to-r from-blue-500 to-blue-600 px-6 md:px-8 py-2 md:py-3 rounded-xl md:rounded-2xl border-4 border-blue-400/50 shadow-lg">
-                <h2 className="text-2xl md:text-4xl font-bold text-white text-shadow-game tracking-widest">
-                  KP
-                </h2>
-              </div>
+            {/* Happiness Meter */}
+            <div className="mb-3 md:mb-4 relative w-full max-w-[160px] md:max-w-[200px]">
+              <HappinessMeter value={happiness} maxValue={maxHappiness} />
               
-              {/* Happiness Meter */}
-              <div className="mb-4 md:mb-6 relative w-full max-w-[180px] md:max-w-[200px]">
-                <HappinessMeter value={happiness} maxValue={maxHappiness} />
-                
-                {/* +20 indicator */}
-                {showPlusOne && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-happiness text-xl md:text-2xl font-bold animate-fade-in whitespace-nowrap">
-                    +20% 😊
-                  </div>
-                )}
-              </div>
+              {/* +20 indicator */}
+              {showPlusOne && (
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-happiness text-xl md:text-2xl font-bold animate-fade-in whitespace-nowrap">
+                  +20% 😊
+                </div>
+              )}
+            </div>
+            
+            {/* Character Platform */}
+            <div className="relative">
+              {/* Shadow/Platform */}
+              <div 
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm transition-all duration-300"
+                style={{
+                  width: 70 * scale,
+                  height: 12,
+                }}
+              />
               
-              {/* Character Platform */}
-              <div className="relative">
-                {/* Shadow/Platform */}
-                <div 
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm transition-all duration-300"
-                  style={{
-                    width: 100 * scale * 0.8,
-                    height: 16,
-                  }}
-                />
-                
-                {/* Character */}
-                <KPCharacter 
-                  scale={scale} 
-                  isHappy={isHappy}
-                  happiness={happiness}
-                />
-              </div>
-              
-              {/* Size indicator */}
-              <div className="mt-3 md:mt-4 text-primary-foreground/70 text-xs md:text-sm">
-                Size: {Math.round(scale * 100)}%
-              </div>
+              {/* Character */}
+              <KPCharacter 
+                scale={scale} 
+                isHappy={isHappy}
+                happiness={happiness}
+              />
             </div>
-
-            {/* Center divider - desktop only */}
-            <div className="hidden md:flex flex-col items-center gap-2 text-primary-foreground/40">
-              <div className="w-0.5 h-16 bg-primary-foreground/20" />
-              <span className="text-xl">➡️</span>
-              <div className="w-0.5 h-16 bg-primary-foreground/20" />
-            </div>
-
-            {/* Mobile arrow */}
-            <div className="md:hidden text-primary-foreground/40 text-2xl order-2 rotate-90">
-              ⬇️
-            </div>
-
-            {/* Right Side - Dengulu */}
-            <div className="flex-1 flex flex-col items-center justify-center order-3 md:order-3">
-              <DenguluFood onFeed={handleFeed} disabled={happiness >= maxHappiness} />
+            
+            {/* Size indicator */}
+            <div className="mt-2 md:mt-3 text-primary-foreground/70 text-xs md:text-sm">
+              Size: {Math.round(scale * 100)}%
             </div>
           </div>
-        )}
-      </main>
 
-      {/* Footer */}
-      <footer className="p-3 md:p-4 text-center text-primary-foreground/50 text-xs md:text-sm">
-        Feed KP 5 times to make him 100% happy! ✈️🇳🇱
-      </footer>
+          {/* Arrow - Right of KP on desktop, between on mobile */}
+          <div className="hidden md:flex flex-col items-center gap-2 text-primary-foreground/60 order-2">
+            <div className="w-0.5 h-12 bg-primary-foreground/20" />
+            <span className="text-2xl">➡️</span>
+            <div className="w-0.5 h-12 bg-primary-foreground/20" />
+          </div>
+
+          {/* Mobile arrow - pointing down */}
+          <div className="md:hidden text-primary-foreground/60 text-2xl order-2">
+            ⬇️
+          </div>
+
+          {/* Right Side - Dengulu */}
+          <div className="flex-1 flex flex-col items-center justify-center order-3">
+            <DenguluFood onFeed={handleFeed} disabled={happiness >= maxHappiness} />
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
