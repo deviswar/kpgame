@@ -355,6 +355,18 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
         </div>
       </div>
 
+      {/* Pink ribbon on head - Hello Kitty style */}
+      <div 
+        className="absolute z-20"
+        style={{
+          top: height * 0.15,
+          right: -width * 0.05,
+          fontSize: Math.max(16, width * 0.25),
+        }}
+      >
+        🎀
+      </div>
+
       {/* Sparkles when super happy */}
       {happiness >= 80 && (
         <>
