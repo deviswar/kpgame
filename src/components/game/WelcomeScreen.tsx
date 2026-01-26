@@ -7,11 +7,16 @@ interface WelcomeScreenProps {
 const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
   return (
     <div 
-      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 cursor-pointer overflow-hidden gap-3"
+      className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 cursor-pointer overflow-hidden gap-3"
       onClick={onStart}
     >
+      {/* Version number - bottom left */}
+      <div className="absolute bottom-4 left-4">
+        <span className="text-white text-xs font-medium">version - 1.69.69</span>
+      </div>
+
       {/* Header with title and KP */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 -mt-6">
         <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           KP Game
         </h1>
