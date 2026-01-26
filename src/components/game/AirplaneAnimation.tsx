@@ -96,6 +96,11 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
         >
           Go to Home 🏠
         </button>
+        
+        {/* PhonePe request */}
+        <p className="mt-4 text-white/90 text-base md:text-lg font-medium">
+          Can you give 100 rupees cash? I will do PhonePe 💸
+        </p>
       </div>
     </div>
   );
