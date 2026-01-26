@@ -66,9 +66,9 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           ✈️
         </div>
         
-        {/* Milk glass emoji */}
-        <div className="my-6 text-6xl md:text-7xl">
-          🥛
+        {/* Netherlands flag and milk glass */}
+        <div className="my-6 text-5xl md:text-6xl flex items-center gap-3">
+          🇳🇱 🥛
         </div>
         
         {/* Text */}
