@@ -12,31 +12,96 @@ const FeedKPGame = () => {
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioInitialized = useRef(false);
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
-  // Preload audio on component mount
+  // Initialize and keep audio alive
   useEffect(() => {
-    const audio = new Audio('/music/background.mp3');
-    audio.loop = true;
-    audio.volume = 0.5;
-    audio.preload = 'auto';
-    audioRef.current = audio;
+    const initAudio = () => {
+      if (audioInitialized.current) return;
+      
+      const audio = new Audio('/music/background.mp3');
+      audio.loop = true;
+      audio.volume = 0.5;
+      audio.preload = 'auto';
+      
+      // Handle audio interruptions (e.g., phone call, tab switch)
+      audio.addEventListener('pause', () => {
+        if (gameStarted && audioRef.current && !audioRef.current.ended) {
+          // Try to resume if paused unexpectedly during game
+          setTimeout(() => {
+            if (audioRef.current && gameStarted) {
+              audioRef.current.play().catch(() => {});
+            }
+          }, 100);
+        }
+      });
+
+      // Handle audio errors
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        // Try to recreate audio on error
+        if (gameStarted) {
+          audioInitialized.current = false;
+          initAudio();
+        }
+      });
+
+      // Ensure audio is ready to play
+      audio.addEventListener('canplaythrough', () => {
+        console.log('Audio ready to play');
+      });
+
+      audioRef.current = audio;
+      audioInitialized.current = true;
+    };
+
+    initAudio();
     
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = '';
         audioRef.current = null;
+        audioInitialized.current = false;
       }
     };
-  }, []);
+  }, [gameStarted]);
+
+  // Keep audio playing when game is active
+  useEffect(() => {
+    if (gameStarted && audioRef.current) {
+      const checkAudio = setInterval(() => {
+        if (audioRef.current && audioRef.current.paused && !showAirplane) {
+          audioRef.current.play().catch(() => {});
+        }
+      }, 1000);
+
+      return () => clearInterval(checkAudio);
+    }
+  }, [gameStarted, showAirplane]);
 
   const handleStartGame = () => {
-    // Play preloaded audio instantly
-    if (audioRef.current) {
-      audioRef.current.play().catch(console.error);
-    }
     setGameStarted(true);
+    
+    // Play audio with retry logic
+    const playAudio = (attempts = 0) => {
+      if (!audioRef.current || attempts > 3) return;
+      
+      audioRef.current.currentTime = 0;
+      audioRef.current.play()
+        .then(() => {
+          console.log('Audio playing successfully');
+        })
+        .catch((error) => {
+          console.error('Audio play failed, attempt:', attempts + 1, error);
+          // Retry after a short delay
+          setTimeout(() => playAudio(attempts + 1), 200);
+        });
+    };
+    
+    playAudio();
   };
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
