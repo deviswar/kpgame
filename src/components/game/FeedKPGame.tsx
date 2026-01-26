@@ -140,9 +140,7 @@ const FeedKPGame = () => {
       
       {/* Footer text */}
       <footer className="pb-2 md:pb-4 text-center px-4">
-        <p className="text-white text-sm md:text-base font-medium">
-          Give him 100 rupees cash, he will do PhonePe 💸
-        </p>
+        
       </footer>
     </div>;
 };
