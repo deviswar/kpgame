@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import HappinessMeter from './HappinessMeter';
 import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
@@ -6,24 +6,53 @@ import AirplaneAnimation from './AirplaneAnimation';
 
 const FeedKPGame = () => {
   const [happiness, setHappiness] = useState(0);
-  const [scale, setScale] = useState(1);
   const [isHappy, setIsHappy] = useState(false);
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
+  const [musicStarted, setMusicStarted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const maxHappiness = 100;
-  const maxScale = 1.5;
   const happinessPerFeed = 20; // 5 feeds = 100%
+
+  // Initialize audio
+  useEffect(() => {
+    audioRef.current = new Audio('/music/background.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.5;
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Play music on first interaction
+  useEffect(() => {
+    const startMusic = () => {
+      if (!musicStarted && audioRef.current) {
+        audioRef.current.play().catch(console.error);
+        setMusicStarted(true);
+      }
+    };
+
+    document.addEventListener('click', startMusic, { once: true });
+    document.addEventListener('touchstart', startMusic, { once: true });
+
+    return () => {
+      document.removeEventListener('click', startMusic);
+      document.removeEventListener('touchstart', startMusic);
+    };
+  }, [musicStarted]);
 
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
     
     const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
     setHappiness(newHappiness);
-    
-    // Increase scale
-    setScale(prev => Math.min(prev + 0.1, maxScale));
     
     // Trigger happy animation
     setIsHappy(true);
@@ -44,7 +73,6 @@ const FeedKPGame = () => {
 
   const handleReset = () => {
     setHappiness(0);
-    setScale(1);
     setFeedCount(0);
     setShowAirplane(false);
   };
@@ -103,24 +131,19 @@ const FeedKPGame = () => {
             <div className="relative">
               {/* Shadow/Platform */}
               <div 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm transition-all duration-300"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm"
                 style={{
-                  width: 70 * scale,
+                  width: 70,
                   height: 12,
                 }}
               />
               
               {/* Character */}
               <KPCharacter 
-                scale={scale} 
+                scale={1} 
                 isHappy={isHappy}
                 happiness={happiness}
               />
-            </div>
-            
-            {/* Size indicator */}
-            <div className="mt-2 md:mt-3 text-primary-foreground/70 text-xs md:text-sm">
-              Size: {Math.round(scale * 100)}%
             </div>
           </div>
 
