@@ -66,18 +66,14 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           ✈️
         </div>
         
-        {/* Dutch flag */}
-        <div className="my-6 flex justify-center">
-          <div className="inline-flex flex-col rounded-lg overflow-hidden shadow-lg border border-white/30">
-            <div className="w-24 md:w-32 h-4 md:h-5 bg-red-600" />
-            <div className="w-24 md:w-32 h-4 md:h-5 bg-white" />
-            <div className="w-24 md:w-32 h-4 md:h-5 bg-blue-800" />
-          </div>
+        {/* Milk glass emoji */}
+        <div className="my-6 text-6xl md:text-7xl">
+          🥛
         </div>
         
         {/* Text */}
         <h2 className="text-2xl md:text-4xl font-bold text-white text-shadow-game mb-8">
-          Bye guys, I'm going to Netherlands! 🇳🇱
+          Bye guys, I'm going to Netherlands!
         </h2>
         
         {/* Play Again button */}

@@ -121,25 +121,23 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
         <div className="absolute bottom-4 right-3 w-3 h-0.5 bg-yellow-600/30 rounded" />
       </div>
 
-      {/* Arms - always stay open */}
+      {/* Arms - straight down, not closing inwards */}
       <div 
         className="absolute rounded-full"
         style={{
-          width: width * 0.15,
-          height: height * 0.25,
-          bottom: height * 0.32,
-          left: -width * 0.08,
+          width: width * 0.12,
+          height: height * 0.22,
+          bottom: height * 0.28,
+          left: -width * 0.02,
           background: 'linear-gradient(145deg, #5a4535, #4a3828)',
-          transformOrigin: 'top center',
-          transform: 'rotate(-25deg)',
         }}
       >
         {/* Hand */}
         <div 
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
           style={{
-            width: width * 0.12,
-            height: width * 0.1,
+            width: width * 0.1,
+            height: width * 0.08,
             background: 'linear-gradient(145deg, #5a4535, #4a3828)',
           }}
         />
@@ -147,21 +145,19 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
       <div 
         className="absolute rounded-full"
         style={{
-          width: width * 0.15,
-          height: height * 0.25,
-          bottom: height * 0.32,
-          right: -width * 0.08,
+          width: width * 0.12,
+          height: height * 0.22,
+          bottom: height * 0.28,
+          right: -width * 0.02,
           background: 'linear-gradient(145deg, #5a4535, #4a3828)',
-          transformOrigin: 'top center',
-          transform: 'rotate(25deg)',
         }}
       >
         {/* Hand */}
         <div 
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
           style={{
-            width: width * 0.12,
-            height: width * 0.1,
+            width: width * 0.1,
+            height: width * 0.08,
             background: 'linear-gradient(145deg, #5a4535, #4a3828)',
           }}
         />
