@@ -1,52 +1,31 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import HappinessMeter from './HappinessMeter';
 import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
 import AirplaneAnimation from './AirplaneAnimation';
+import WelcomeScreen from './WelcomeScreen';
 
 const FeedKPGame = () => {
+  const [gameStarted, setGameStarted] = useState(false);
   const [happiness, setHappiness] = useState(0);
   const [isHappy, setIsHappy] = useState(false);
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
-  const [musicStarted, setMusicStarted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
-  // Initialize audio
-  useEffect(() => {
+  const handleStartGame = () => {
+    // Initialize and play audio
     audioRef.current = new Audio('/music/background.mp3');
     audioRef.current.loop = true;
     audioRef.current.volume = 0.5;
+    audioRef.current.play().catch(console.error);
     
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  // Play music on first interaction
-  useEffect(() => {
-    const startMusic = () => {
-      if (!musicStarted && audioRef.current) {
-        audioRef.current.play().catch(console.error);
-        setMusicStarted(true);
-      }
-    };
-
-    document.addEventListener('click', startMusic, { once: true });
-    document.addEventListener('touchstart', startMusic, { once: true });
-
-    return () => {
-      document.removeEventListener('click', startMusic);
-      document.removeEventListener('touchstart', startMusic);
-    };
-  }, [musicStarted]);
+    setGameStarted(true);
+  };
 
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
@@ -76,6 +55,10 @@ const FeedKPGame = () => {
     setFeedCount(0);
     setShowAirplane(false);
   };
+
+  if (!gameStarted) {
+    return <WelcomeScreen onStart={handleStartGame} />;
+  }
 
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleReset} />;
