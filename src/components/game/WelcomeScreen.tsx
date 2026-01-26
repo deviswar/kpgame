@@ -1,35 +1,67 @@
+import KPCharacter from './KPCharacter';
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
-const WelcomeScreen = ({
-  onStart
-}: WelcomeScreenProps) => {
-  return <div className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 cursor-pointer" onClick={onStart}>
-      {/* Main content */}
-      <div className="flex flex-col items-center gap-8">
-        {/* Bus ticket line */}
+
+const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
+  return (
+    <div 
+      className="min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center px-4 py-4 cursor-pointer overflow-hidden"
+      onClick={onStart}
+    >
+      {/* Header with title and KP */}
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground text-shadow-game tracking-wider">
+          KP Game
+        </h1>
+        <div className="scale-50 origin-center -my-10">
+          <KPCharacter scale={0.6} isHappy={false} happiness={50} />
+        </div>
+      </div>
+
+      {/* Fun Facts Section */}
+      <div className="flex flex-col items-center gap-1 flex-1 justify-center max-w-sm">
+        <h2 className="text-xl md:text-2xl font-bold text-primary-foreground mb-2 text-shadow-game">
+          Fun Facts about me
+        </h2>
         
-        
-        {/* Game title */}
-        <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground text-shadow-game tracking-wider">KP Game</h1>
-        
-        {/* Tap to start */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="bg-foreground/10 backdrop-blur-sm rounded-2xl px-8 py-4 border border-primary-foreground/20 animate-pulse">
-            <span className="text-primary-foreground text-xl md:text-2xl font-medium">
-              👆 Tap to start the game
-            </span>
-          </div>
+        <div className="space-y-1.5 text-center">
+          <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            I take money to buy an Airavat bus ticket, but I travel in an APSRTC bus 🚌
+          </p>
+          <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            i dont have ==D but i want ({'{}'}) 😏
+          </p>
+          <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            i do vaddi vyaparam, but no one pays my money back :( 💸
+          </p>
+          <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            (.) (.) i like milk :) 🥛
+          </p>
+          <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            btw north indian girls like krishna name {'<3'} 💕
+          </p>
+        </div>
+      </div>
+      
+      {/* Tap to start - Green button */}
+      <div className="flex flex-col items-center gap-2 mb-2">
+        <div className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg">
+          <span className="text-white text-lg md:text-xl font-bold">
+            👆 Tap to start the game
+          </span>
         </div>
       </div>
       
       {/* Footer */}
-      <div className="absolute bottom-8 flex flex-col items-center gap-3 text-center px-4">
-        <p className="text-primary-foreground/80 text-sm md:text-base font-medium">
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
-        
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default WelcomeScreen;
