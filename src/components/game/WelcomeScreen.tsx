@@ -10,6 +10,11 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
     >
       {/* Main content */}
       <div className="flex flex-col items-center gap-8">
+        {/* Bus ticket line */}
+        <p className="text-primary-foreground/90 text-sm md:text-base font-medium text-center max-w-xs md:max-w-md">
+          Take money to buy an airavat bus ticket, but go in apsrtc bus
+        </p>
+        
         {/* Game title */}
         <h1 className="text-5xl md:text-7xl font-bold text-primary-foreground text-shadow-game tracking-wider">
           🍚 KP Game 🍚

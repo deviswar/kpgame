@@ -359,9 +359,9 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
       <div 
         className="absolute z-20"
         style={{
-          top: height * 0.15,
-          right: -width * 0.05,
-          fontSize: Math.max(16, width * 0.25),
+          top: height * 0.18,
+          right: width * 0.08,
+          fontSize: Math.max(14, width * 0.22),
         }}
       >
         🎀
