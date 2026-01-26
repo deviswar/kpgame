@@ -121,18 +121,17 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
         <div className="absolute bottom-4 right-3 w-3 h-0.5 bg-yellow-600/30 rounded" />
       </div>
 
-      {/* Arms */}
+      {/* Arms - always stay open */}
       <div 
-        className={`absolute rounded-full transition-transform ${
-          animating ? 'rotate-[-50deg]' : 'rotate-[-15deg]'
-        }`}
+        className="absolute rounded-full"
         style={{
           width: width * 0.15,
           height: height * 0.25,
           bottom: height * 0.32,
-          left: -width * 0.05,
+          left: -width * 0.08,
           background: 'linear-gradient(145deg, #5a4535, #4a3828)',
           transformOrigin: 'top center',
+          transform: 'rotate(-25deg)',
         }}
       >
         {/* Hand */}
@@ -146,16 +145,15 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
         />
       </div>
       <div 
-        className={`absolute rounded-full transition-transform ${
-          animating ? 'rotate-[50deg]' : 'rotate-[15deg]'
-        }`}
+        className="absolute rounded-full"
         style={{
           width: width * 0.15,
           height: height * 0.25,
           bottom: height * 0.32,
-          right: -width * 0.05,
+          right: -width * 0.08,
           background: 'linear-gradient(145deg, #5a4535, #4a3828)',
           transformOrigin: 'top center',
+          transform: 'rotate(25deg)',
         }}
       >
         {/* Hand */}
