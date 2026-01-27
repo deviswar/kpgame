@@ -22,16 +22,16 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
   const width = height * 0.8;
 
   return (
-    <div 
-      className={`relative transition-transform duration-200 ${
-        isPunching ? 'animate-cow-punch' : isVictory ? 'animate-cow-victory' : 'animate-cow-idle'
-      }`}
-      style={{ 
-        width: width,
-        height: height,
-        transform: 'scaleX(-1)', // Flip to face right (towards KP)
-      }}
-    >
+    <div style={{ transform: 'scaleX(-1)' }}> {/* Wrapper to flip cow to face right */}
+      <div 
+        className={`relative transition-transform duration-200 ${
+          isPunching ? 'animate-cow-punch' : isVictory ? 'animate-cow-victory' : 'animate-cow-idle'
+        }`}
+        style={{ 
+          width: width,
+          height: height,
+        }}
+      >
       {/* Body */}
       <div 
         className="absolute rounded-[60%] overflow-hidden"
@@ -398,20 +398,20 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
         />
       </div>
 
-      {/* Sweat drops when punching */}
+      {/* Effort effect when punching - no tears/water drops */}
       {showSweat && (
         <>
           <div 
-            className="absolute text-blue-400 animate-ping"
-            style={{ top: height * 0.25, left: width * 0.1 }}
+            className="absolute animate-ping"
+            style={{ top: height * 0.25, left: width * 0.1, fontSize: '10px' }}
           >
-            💧
+            💢
           </div>
           <div 
-            className="absolute text-blue-400 animate-ping"
-            style={{ top: height * 0.3, right: width * 0.55, animationDelay: '0.1s' }}
+            className="absolute animate-ping"
+            style={{ top: height * 0.3, right: width * 0.55, animationDelay: '0.1s', fontSize: '10px' }}
           >
-            💧
+            💥
           </div>
         </>
       )}
@@ -422,6 +422,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           🏆
         </div>
       )}
+      </div>
     </div>
   );
 };
