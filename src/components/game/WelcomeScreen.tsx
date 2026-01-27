@@ -1,13 +1,48 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import qtGirlImage from '@/assets/qt-girl.jpg';
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
+
 const WelcomeScreen = ({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
+  const rizzAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (rizzAudioRef.current) {
+        rizzAudioRef.current.pause();
+        rizzAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleShowRizz = () => {
+    setShowRizzScene(true);
+    
+    // Start rizz audio
+    const audio = new Audio('/music/rizz.mp4');
+    audio.volume = 0.5;
+    audio.loop = true;
+    audio.play().catch(e => console.error('Rizz audio failed:', e));
+    rizzAudioRef.current = audio;
+  };
+
+  const handleStartGame = () => {
+    // Stop rizz audio
+    if (rizzAudioRef.current) {
+      rizzAudioRef.current.pause();
+      rizzAudioRef.current = null;
+    }
+    
+    // Call original onStart (which triggers Music 1)
+    onStart();
+  };
 
   // Phase 1: Initial Welcome Screen
   if (!showRizzScene) {
@@ -54,7 +89,7 @@ const WelcomeScreen = ({
         
         {/* Click to see rizz + Footer */}
         <div className="flex flex-col items-center gap-2">
-          <button onClick={() => setShowRizzScene(true)} className="bg-pink-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-pink-600 transition-colors active:scale-95">
+          <button onClick={handleShowRizz} className="bg-pink-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-pink-600 transition-colors active:scale-95">
             <span className="text-white text-lg md:text-xl font-bold">
               Click here to see my rizz 🥰 
             </span>
@@ -136,7 +171,7 @@ const WelcomeScreen = ({
       <div className="flex flex-col items-center gap-2 animate-fade-in" style={{
       animationDelay: '1.2s'
     }}>
-        <button onClick={onStart} className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-green-600 transition-colors active:scale-95">
+        <button onClick={handleStartGame} className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-green-600 transition-colors active:scale-95">
           <span className="text-white text-lg md:text-xl font-bold">
             👆 Tap to start the game
           </span>
