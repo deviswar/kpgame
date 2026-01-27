@@ -145,7 +145,7 @@ const WelcomeScreen = ({
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
         <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
-          🔊 Turn your volume up for the best experience
+          🔊 Turn up your volume for the best experience
         </p>
       </div>
     </div>;
