@@ -47,7 +47,7 @@ const WelcomeScreen = ({
               (.) (.) i like milk :) 🥛
             </p>
             <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
-              btw north indian girls like krishna name {'<3'} 💕
+              btw north indian girls like krishna name {'<3'}
             </p>
           </div>
         </div>
