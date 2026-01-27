@@ -1,135 +1,200 @@
 
 
-# Fix Music Playback: Music 1 (Welcome to Hospital) and Music 2 (Mourning to End)
+# Welcome Screen and Milk Hospital Scene Enhancements
 
-## The Problem
+## Overview
+Two areas need updates:
+1. **Welcome Screen**: Add volume hint text with blinking/bouncing animation
+2. **Milk Hospital Scene**: Adjust timing, positioning, and sizes
 
-There are 3 audio issues happening:
+---
 
-1. **Music 1 plays on end screen**: The code in FeedKPGame keeps trying to restart Music 1 even after Music 2 should be playing
-2. **Music 2 stops when leaving mourning scene**: When MilkHospitalScreen unmounts, it cleans up and stops Music 2
-3. **Music 1 doesn't play on game replay**: The audio state gets confused between replays
+## Part 1: Welcome Screen Changes
 
-## The Solution
+### Current State
+- "Powered by Rapido" text at line 56-58
+- No volume hint exists
 
-Move Music 2 management to the parent component (FeedKPGame) so it persists across scene transitions.
+### Changes
+Add a new line below "Powered by Rapido" with special animation:
 
-## Music Flow
+**New text**: "Turn your volume up for the best experience"
+- Emoji: speaker icon (🔊)
+- Animation: Blink 3 times + bounce once, then stop
 
-```text
-Welcome Screen -> Feed Game -> Cow Fight -> Milk Hospital
-      |______________ MUSIC 1 _______________|
-                                                    
-                                   Mourning Phase -> Airplane End Screen -> Go Home
-                                   |_______ MUSIC 2 ___________________|      |
-                                                                              v
-                                                                    (Stop Music 2)
-                                                                              |
-                                                                              v
-                                                              Welcome Screen (Music 1 on tap)
-```
+**Implementation**:
+- Add the text after the Rapido line
+- Create a custom animation class that combines blinking (3x) and one bounce
+- The animation runs once on page load
 
-## Technical Changes
+---
 
-### File 1: FeedKPGame.tsx
+## Part 2: Milk Hospital Scene Changes
 
-**Add mourning audio ref at component level:**
-```typescript
-const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
-```
+### 2a. Extend Scene by 1.5 Seconds
 
-**Update the audio check effect to not restart Music 1 when Music 2 is playing:**
-```typescript
-useEffect(() => {
-  if (gameStarted && audioRef.current && !showMilkHospital && !showAirplane) {
-    const checkAudio = setInterval(() => {
-      // Only keep Music 1 playing if mourning music is NOT playing
-      if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
-        audioRef.current.play().catch(() => {});
-      }
-    }, 1000);
-    return () => clearInterval(checkAudio);
-  }
-}, [gameStarted, showMilkHospital, showAirplane]);
-```
+Current timing progression:
+| Phase | Current Time |
+|-------|--------------|
+| Hospital shows | 2000ms |
+| KP exits | 4000ms |
+| Popup appears | 6000ms |
+| Enter car | 8000ms |
 
-**Add callback to start mourning music (passed to MilkHospitalScreen):**
-```typescript
-const handleStartMourningMusic = useCallback(() => {
-  // Stop Music 1 completely
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-  }
-  // Start Music 2 and keep it playing
-  const mourningAudio = new Audio('/music/mourning.mp3');
-  mourningAudio.volume = 0.5;
-  mourningAudio.loop = true;
-  mourningAudio.play().catch(() => {});
-  mourningAudioRef.current = mourningAudio;
-}, []);
-```
+**New timing** (add 1.5s buffer to kp-exit and popup phases):
 
-**Update handleGoHome to stop Music 2:**
-```typescript
-const handleGoHome = () => {
-  // Stop Music 2 if playing
-  if (mourningAudioRef.current) {
-    mourningAudioRef.current.pause();
-    mourningAudioRef.current = null;
-  }
-  // Stop Music 1 if playing
-  if (audioRef.current) {
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-  }
-  // ... rest of reset logic
-};
-```
+| Phase | New Time |
+|-------|----------|
+| Hospital shows | 2000ms |
+| KP exits | 3500ms (+1.5s for walking to left) |
+| Popup appears | 5500ms (simultaneous with left position) |
+| Enter car | 7500ms |
+| Driving | 9500ms |
+| Dog appears | 11500ms |
+| Crash | 14000ms |
+| Aftermath | 15500ms |
+| Mourning | 17500ms |
+| Music switch | 18500ms |
+| Complete | 28000ms |
 
-**Pass the callback to MilkHospitalScreen:**
-```typescript
-<MilkHospitalScreen 
-  onComplete={handleMilkHospitalComplete} 
-  onStartMourningMusic={handleStartMourningMusic}
-/>
-```
+### 2b. KP Exits Door and Moves to LEFT (not center)
 
-### File 2: MilkHospitalScreen.tsx
+**Current behavior** (lines 171-182):
+- KP starts at center (`left-1/2`) and stays at center
+- In `enter-car` phase, moves to right (`left-[65%]`)
 
-**Update props interface:**
-```typescript
-interface MilkHospitalScreenProps {
-  onComplete: () => void;
-  onStartMourningMusic?: () => void;
+**New behavior**:
+- `kp-exit`: KP appears at door (center), then transitions to LEFT side (`left-[25%]`)
+- `popup`: KP stays at left position while popup shows on RIGHT
+
+### 2c. Energy Popup on RIGHT Side
+
+**Current** (lines 184-195):
+- Popup appears centered (`left-1/2 -translate-x-1/2`)
+
+**New**:
+- Position on right side: `right-[10%]` or `left-[70%]`
+- Keep the same animation and styling
+
+### 2d. Ad Banners - Make BIGGER and Same Size
+
+**Current sizes** (lines 151-167):
+- Left banner: `w-20 h-28 md:w-28 md:h-40`
+- Right banner: `w-20 h-28 md:w-28 md:h-40`
+
+**New sizes** (all same, bigger):
+- Both banners: `w-28 h-40 md:w-36 md:h-52`
+
+### 2e. Hospital Building - Make Smaller
+
+**Current sizes** (lines 120-149):
+- Roof: `w-48 h-8`
+- Building body: `w-44 h-40`
+
+**New sizes** (reduce by ~20%):
+- Roof: `w-40 h-6`
+- Building body: `w-36 h-32`
+- Adjust windows and door proportionally
+
+---
+
+## Technical Details
+
+### File 1: src/index.css
+
+Add new keyframe animation for the volume hint:
+
+```css
+@keyframes blink-bounce {
+  0%, 20%, 40% { opacity: 0; transform: translateY(0); }
+  10%, 30%, 50% { opacity: 1; transform: translateY(0); }
+  60% { opacity: 1; transform: translateY(-8px); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-blink-bounce {
+  animation: blink-bounce 2s ease-out forwards;
 }
 ```
 
-**Remove local mourning audio handling, call parent callback instead:**
-```typescript
-// At 17000ms (1 second into mourning):
-timers.push(setTimeout(() => {
-  // Call parent to handle music switch
-  onStartMourningMusic?.();
-  
-  // 5 transparent flashes (keep this logic)
-  setShowMourningFlash(true);
-  // ... flash timing code stays the same
-}, 17000));
+### File 2: src/components/game/WelcomeScreen.tsx
+
+Add volume hint text after line 58:
+
+```tsx
+<p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
+  Powered by <span className="text-yellow-400 font-bold">Rapido</span>
+</p>
+{/* Volume hint with blinking and bounce animation */}
+<p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
+  🔊 Turn your volume up for the best experience
+</p>
 ```
 
-**Remove mourning audio cleanup from component** (parent now manages it)
+### File 3: src/components/game/MilkHospitalScreen.tsx
 
-## Summary of Changes
+**Timing changes** (useEffect timers):
+```typescript
+// Adjusted timings (+1.5s total)
+timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
+timers.push(setTimeout(() => setPhase('popup'), 3500));  // Was 4000
+timers.push(setTimeout(() => setPhase('enter-car'), 5500)); // Was 6000
+timers.push(setTimeout(() => setPhase('driving'), 7500));  // Was 8000
+// ... continue shifting all subsequent timers by +1500ms
+```
 
-| File | What Changes |
-|------|--------------|
-| `FeedKPGame.tsx` | Add `mourningAudioRef`, `handleStartMourningMusic` callback, update audio check effect, stop Music 2 in `handleGoHome` |
-| `MilkHospitalScreen.tsx` | Remove `audioRef` prop, add `onStartMourningMusic` prop, remove local mourning audio logic, call parent callback for music switch |
+**KP positioning** (update lines 171-182):
+```tsx
+{(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
+  <div 
+    className={`absolute transition-all duration-1000 ease-out ${
+      phase === 'kp-exit' ? 'top-[52%] left-[25%]' :  // Move to LEFT
+      phase === 'popup' ? 'top-[58%] left-[25%]' :     // Stay at LEFT
+      'top-[60%] left-[65%] scale-75 opacity-0'
+    }`}
+  >
+    <KPCharacter scale={0.7} isHappy={true} happiness={100} />
+  </div>
+)}
+```
 
-## Result
+**Energy popup on RIGHT** (update lines 184-195):
+```tsx
+{phase === 'popup' && (
+  <div className="absolute top-[50%] right-[15%] animate-energy-popup z-10">
+    {/* ... same popup content ... */}
+  </div>
+)}
+```
 
-- Music 1: Plays from Welcome through Hospital scene only
-- Music 2: Starts in mourning phase, continues through Airplane end screen
-- On "Go Home": Music 2 stops, game resets, Music 1 plays again on tap start
+**Smaller hospital building**:
+```tsx
+{/* Roof - smaller */}
+<div className="absolute -top-5 left-1/2 -translate-x-1/2 w-40 h-6 ..." />
+
+{/* Building Body - smaller */}
+<div className="w-36 h-32 bg-gradient-to-b ...">
+  {/* Adjust interior elements proportionally */}
+</div>
+```
+
+**Bigger ad banners (same size)**:
+```tsx
+{/* Left Banner */}
+<div className="absolute -left-28 md:-left-40 top-0 w-28 h-40 md:w-36 md:h-52 ...">
+
+{/* Right Banner */}
+<div className="absolute -right-28 md:-right-40 top-0 w-28 h-40 md:w-36 md:h-52 ...">
+```
+
+---
+
+## Summary of All Changes
+
+| File | Changes |
+|------|---------|
+| `src/index.css` | Add `blink-bounce` keyframe animation |
+| `src/components/game/WelcomeScreen.tsx` | Add volume hint text with animation below "Powered by Rapido" |
+| `src/components/game/MilkHospitalScreen.tsx` | Extend timing by 1.5s, move KP to left, popup to right, bigger banners, smaller hospital |
 
