@@ -124,26 +124,26 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         />
       </div>
 
-      {/* Background images */}
-      <div className="absolute inset-0">
-        {/* Honda Amaze on the right */}
+      {/* Background images - positioned at top */}
+      <div className="absolute top-20 left-0 right-0 flex justify-between px-4 z-10">
+        {/* Cement bags on the left */}
         <div 
-          className="absolute right-0 bottom-0 w-1/2 h-2/3 opacity-40"
+          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
           style={{
-            backgroundImage: `url(${hondaAmazeImg})`,
+            backgroundImage: `url(${cementBagsImg})`,
             backgroundSize: 'contain',
-            backgroundPosition: 'right bottom',
+            backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
           }}
         />
         
-        {/* Cement bags on the left */}
+        {/* Honda Amaze on the right */}
         <div 
-          className="absolute left-0 bottom-0 w-1/2 h-2/3 opacity-40"
+          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
           style={{
-            backgroundImage: `url(${cementBagsImg})`,
+            backgroundImage: `url(${hondaAmazeImg})`,
             backgroundSize: 'contain',
-            backgroundPosition: 'left bottom',
+            backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
           }}
         />
@@ -192,7 +192,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
             className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg border-4 border-yellow-400"
           >
             <p className="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap">
-              👆 Touch KP to punch! 🥊
+              Touch KP to punch! 🥊
             </p>
           </div>
         </div>
@@ -223,10 +223,10 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
           />
           <div className="text-center mt-2">
             <span 
-              className="bg-red-600 text-white px-4 py-1 rounded-lg font-bold text-lg"
+              className="bg-red-600 text-white px-2 py-1 rounded-lg font-bold text-sm md:text-base"
               style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
             >
-              ANGRY COW
+              CAR SCRATCHING COW
             </span>
           </div>
         </div>
