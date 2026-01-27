@@ -102,7 +102,7 @@ const WelcomeScreen = ({
             {/* Bubble tail pointing up */}
             <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white" />
             <p className="text-gray-800 text-xs md:text-sm font-medium text-center italic">
-              "my name is bava, nuvvu okkasari rava"
+              my name is bava, nuvvu okkasari rava
             </p>
           </div>
         </div>
