@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
@@ -9,20 +9,16 @@ import pugGrave from '@/assets/pug-grave.jpg';
 
 interface MilkHospitalScreenProps {
   onComplete: () => void;
-  audioRef?: React.RefObject<HTMLAudioElement | null>;
+  onStartMourningMusic?: () => void;
 }
 
 type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath' | 'mourning';
 
-// Track if crash happened for persistent text
-
-
-const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) => {
+const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalScreenProps) => {
   const [phase, setPhase] = useState<Phase>('hospital');
   const [showBuilding, setShowBuilding] = useState(false);
   const [showCrashText, setShowCrashText] = useState(false);
   const [showMourningFlash, setShowMourningFlash] = useState(false);
-  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Phase timing
@@ -60,17 +56,8 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
     
     // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
     timers.push(setTimeout(() => {
-      // Stop original music completely
-      if (audioRef?.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-      // Start mourning music (will continue to end screen)
-      const mourningAudio = new Audio('/music/mourning.mp3');
-      mourningAudio.volume = 0.5;
-      mourningAudio.loop = true; // Keep playing
-      mourningAudio.play().catch(() => {});
-      mourningAudioRef.current = mourningAudio;
+      // Call parent to handle music switch (stops Music 1, starts Music 2)
+      onStartMourningMusic?.();
       
       // 5 transparent flashes
       setShowMourningFlash(true);
@@ -87,19 +74,14 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
     
     // Complete - after mourning scene (extended by 4.5 seconds total)
     timers.push(setTimeout(() => {
-      // Don't stop mourning music - let it continue to end screen
       onComplete();
     }, 26500));
 
     return () => {
       timers.forEach(t => clearTimeout(t));
-      // Cleanup mourning audio on unmount
-      if (mourningAudioRef.current) {
-        mourningAudioRef.current.pause();
-        mourningAudioRef.current = null;
-      }
+      // Don't cleanup mourning audio here - parent manages it
     };
-  }, [onComplete, audioRef]);
+  }, [onComplete, onStartMourningMusic]);
 
   const isHospitalScene = ['hospital', 'kp-exit', 'popup', 'enter-car'].includes(phase);
   const isRoadScene = ['driving', 'dog-appears', 'crash', 'aftermath'].includes(phase);
