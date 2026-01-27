@@ -5,6 +5,7 @@ import DenguluFood from './DenguluFood';
 import AirplaneAnimation from './AirplaneAnimation';
 import WelcomeScreen from './WelcomeScreen';
 import CowFightScreen from './CowFightScreen';
+import MilkHospitalScreen from './MilkHospitalScreen';
 
 const FeedKPGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -13,6 +14,7 @@ const FeedKPGame = () => {
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [showCowFight, setShowCowFight] = useState(false);
+  const [showMilkHospital, setShowMilkHospital] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioInitialized = useRef(false);
@@ -137,18 +139,25 @@ const FeedKPGame = () => {
     setHappiness(0);
     setFeedCount(0);
     setShowCowFight(false);
+    setShowMilkHospital(false);
     setShowAirplane(false);
     setGameStarted(false);
   };
 
   const handleCowFightComplete = () => {
     setShowCowFight(false);
+    setShowMilkHospital(true);
+  };
+
+  const handleMilkHospitalComplete = () => {
+    setShowMilkHospital(false);
     setShowAirplane(true);
   };
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
     setShowCowFight(false);
+    setShowMilkHospital(false);
     setShowAirplane(false);
   };
   if (!gameStarted) {
@@ -158,6 +167,11 @@ const FeedKPGame = () => {
   if (showCowFight) {
     return <CowFightScreen onComplete={handleCowFightComplete} />;
   }
+
+  if (showMilkHospital) {
+    return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} />;
+  }
+
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
   }
