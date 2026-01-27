@@ -192,9 +192,9 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         </div>
       )}
 
-      {/* Touch popup - centered in the middle of screen */}
+      {/* Touch popup - positioned on left side */}
       {showPopup && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-bounce">
+        <div className="absolute top-1/2 left-[15%] -translate-y-1/2 z-30 animate-bounce">
           <div 
             className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg border-4 border-yellow-400"
           >
