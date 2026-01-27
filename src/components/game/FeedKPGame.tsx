@@ -4,12 +4,15 @@ import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
 import AirplaneAnimation from './AirplaneAnimation';
 import WelcomeScreen from './WelcomeScreen';
+import CowFightScreen from './CowFightScreen';
+
 const FeedKPGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [happiness, setHappiness] = useState(0);
   const [isHappy, setIsHappy] = useState(false);
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
+  const [showCowFight, setShowCowFight] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioInitialized = useRef(false);
@@ -119,9 +122,9 @@ const FeedKPGame = () => {
     // Increment feed count
     setFeedCount(prev => prev + 1);
 
-    // Check for 100% happiness
+    // Check for 100% happiness - go to cow fight first
     if (newHappiness >= maxHappiness) {
-      setTimeout(() => setShowAirplane(true), 800);
+      setTimeout(() => setShowCowFight(true), 800);
     }
   }, [happiness, showAirplane]);
   const handleGoHome = () => {
@@ -133,16 +136,27 @@ const FeedKPGame = () => {
     // Reset all state and go back to welcome screen
     setHappiness(0);
     setFeedCount(0);
+    setShowCowFight(false);
     setShowAirplane(false);
     setGameStarted(false);
+  };
+
+  const handleCowFightComplete = () => {
+    setShowCowFight(false);
+    setShowAirplane(true);
   };
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
+    setShowCowFight(false);
     setShowAirplane(false);
   };
   if (!gameStarted) {
     return <WelcomeScreen onStart={handleStartGame} />;
+  }
+
+  if (showCowFight) {
+    return <CowFightScreen onComplete={handleCowFightComplete} />;
   }
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
