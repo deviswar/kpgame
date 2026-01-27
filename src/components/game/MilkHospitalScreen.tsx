@@ -27,34 +27,34 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     // Phase 1: Building fades in
     timers.push(setTimeout(() => setShowBuilding(true), 100));
     
-    // Phase 2: KP exits hospital
+    // Phase 2: KP exits hospital (walks to left side)
     timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
     
-    // Phase 3: Energy popup
-    timers.push(setTimeout(() => setPhase('popup'), 4000));
+    // Phase 3: Energy popup (on right side while KP is on left) - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('popup'), 3500));
     
-    // Phase 4: KP walks to car
-    timers.push(setTimeout(() => setPhase('enter-car'), 6000));
+    // Phase 4: KP walks to car - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('enter-car'), 5500));
     
-    // Phase 5: Driving - car starts moving
-    timers.push(setTimeout(() => setPhase('driving'), 8000));
+    // Phase 5: Driving - car starts moving - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('driving'), 7500));
     
-    // Phase 6: Dog appears and walks while car is still driving
-    timers.push(setTimeout(() => setPhase('dog-appears'), 10000));
+    // Phase 6: Dog appears and walks while car is still driving - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('dog-appears'), 9500));
     
-    // Phase 7: Crash - both collide
+    // Phase 7: Crash - both collide - extended by 1.5s
     timers.push(setTimeout(() => {
       setPhase('crash');
       setShowCrashText(true); // Keep text visible from now on
-    }, 12500));
+    }, 12000));
     
-    // Phase 8: Aftermath
-    timers.push(setTimeout(() => setPhase('aftermath'), 14000));
+    // Phase 8: Aftermath - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('aftermath'), 13500));
     
-    // Phase 9: Mourning scene
-    timers.push(setTimeout(() => setPhase('mourning'), 16000));
+    // Phase 9: Mourning scene - extended by 1.5s
+    timers.push(setTimeout(() => setPhase('mourning'), 15500));
     
-    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
+    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes - extended by 1.5s
     timers.push(setTimeout(() => {
       // Call parent to handle music switch (stops Music 1, starts Music 2)
       onStartMourningMusic?.();
@@ -70,12 +70,12 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       setTimeout(() => setShowMourningFlash(false), 1050);
       setTimeout(() => setShowMourningFlash(true), 1200);
       setTimeout(() => setShowMourningFlash(false), 1350);
-    }, 17000));
+    }, 16500));
     
-    // Complete - after mourning scene (extended by 4.5 seconds total)
+    // Complete - after mourning scene - extended by 1.5s
     timers.push(setTimeout(() => {
       onComplete();
-    }, 26500));
+    }, 26000));
 
     return () => {
       timers.forEach(t => clearTimeout(t));
@@ -116,40 +116,40 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
               showBuilding ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            {/* Main Building */}
+            {/* Main Building - smaller */}
             <div className="relative">
-              {/* Roof */}
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-48 h-8 bg-gradient-to-b from-red-700 to-red-800 rounded-t-xl shadow-lg" />
+              {/* Roof - smaller */}
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-40 h-6 bg-gradient-to-b from-red-700 to-red-800 rounded-t-xl shadow-lg" />
               
               {/* MILK HOSPITAL Sign */}
-              <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 rounded-lg shadow-xl border-4 border-green-400">
-                <span className="text-white font-bold text-sm md:text-lg tracking-wide whitespace-nowrap">🏥 MILK HOSPITAL 🥛</span>
+              <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-600 px-3 py-1.5 rounded-lg shadow-xl border-3 border-green-400">
+                <span className="text-white font-bold text-xs md:text-base tracking-wide whitespace-nowrap">🏥 MILK HOSPITAL 🥛</span>
               </div>
 
-              {/* Building Body */}
-              <div className="w-44 h-40 bg-gradient-to-b from-white to-gray-100 rounded-t-lg shadow-2xl border-4 border-gray-300">
+              {/* Building Body - smaller */}
+              <div className="w-36 h-32 bg-gradient-to-b from-white to-gray-100 rounded-t-lg shadow-2xl border-4 border-gray-300">
                 {/* Red Cross */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2">
-                  <div className="w-8 h-8 relative">
-                    <div className="absolute top-1/2 left-0 w-full h-2 bg-red-600 rounded -translate-y-1/2" />
-                    <div className="absolute left-1/2 top-0 w-2 h-full bg-red-600 rounded -translate-x-1/2" />
+                <div className="absolute top-3 left-1/2 -translate-x-1/2">
+                  <div className="w-6 h-6 relative">
+                    <div className="absolute top-1/2 left-0 w-full h-1.5 bg-red-600 rounded -translate-y-1/2" />
+                    <div className="absolute left-1/2 top-0 w-1.5 h-full bg-red-600 rounded -translate-x-1/2" />
                   </div>
                 </div>
 
                 {/* Windows */}
-                <div className="flex justify-center gap-4 mt-14">
-                  <div className="w-8 h-10 bg-blue-300 rounded border-2 border-gray-400 shadow-inner" />
-                  <div className="w-8 h-10 bg-blue-300 rounded border-2 border-gray-400 shadow-inner" />
+                <div className="flex justify-center gap-3 mt-11">
+                  <div className="w-6 h-8 bg-blue-300 rounded border-2 border-gray-400 shadow-inner" />
+                  <div className="w-6 h-8 bg-blue-300 rounded border-2 border-gray-400 shadow-inner" />
                 </div>
 
                 {/* Door */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-16 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-lg border-4 border-amber-600">
-                  <div className="absolute top-1/2 right-2 w-2 h-2 bg-yellow-400 rounded-full" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-12 bg-gradient-to-b from-amber-700 to-amber-900 rounded-t-lg border-3 border-amber-600">
+                  <div className="absolute top-1/2 right-1.5 w-1.5 h-1.5 bg-yellow-400 rounded-full" />
                 </div>
               </div>
 
-              {/* Left Banner - Rose Milk (real image) */}
-              <div className="absolute -left-24 md:-left-32 top-0 w-20 h-28 md:w-28 md:h-40 rounded-lg shadow-lg transform -rotate-3 overflow-hidden border-2 border-white">
+              {/* Left Banner - Rose Milk (real image) - BIGGER, same size */}
+              <div className="absolute -left-32 md:-left-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform -rotate-3 overflow-hidden border-2 border-white">
                 <img 
                   src={roseMilkBanner} 
                   alt="Gomatha Village Rose Milk"
@@ -157,8 +157,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                 />
               </div>
 
-              {/* Right Banner - Village Milk (real image) */}
-              <div className="absolute -right-24 md:-right-32 top-0 w-20 h-28 md:w-28 md:h-40 rounded-lg shadow-lg transform rotate-3 overflow-hidden border-2 border-white">
+              {/* Right Banner - Village Milk (real image) - BIGGER, same size */}
+              <div className="absolute -right-32 md:-right-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform rotate-3 overflow-hidden border-2 border-white">
                 <img 
                   src={villageMilkBanner} 
                   alt="గోమాత పల్లె పాలు Village Raw Milk"
@@ -168,22 +168,22 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             </div>
           </div>
 
-          {/* KP Character exiting from door */}
+          {/* KP Character exiting from door - moves to LEFT side */}
           {(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
             <div 
               className={`absolute transition-all duration-1000 ease-out ${
-                phase === 'kp-exit' ? 'top-[52%] left-1/2 -translate-x-1/2' :
-                phase === 'popup' ? 'top-[58%] left-1/2 -translate-x-1/2' :
-                'top-[60%] left-[65%] -translate-x-1/2 scale-75 opacity-0'
+                phase === 'kp-exit' ? 'top-[52%] left-[25%]' :
+                phase === 'popup' ? 'top-[58%] left-[25%]' :
+                'top-[60%] left-[65%] scale-75 opacity-0'
               }`}
             >
               <KPCharacter scale={0.7} isHappy={true} happiness={100} />
             </div>
           )}
 
-          {/* Energy Popup - smaller and positioned below hospital */}
+          {/* Energy Popup - positioned on RIGHT side */}
           {phase === 'popup' && (
-            <div className="absolute top-[70%] left-1/2 -translate-x-1/2 animate-energy-popup z-10">
+            <div className="absolute top-[50%] right-[15%] animate-energy-popup z-10">
               <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-3 py-2 rounded-xl shadow-lg border-2 border-green-300">
                 <div className="text-center">
                   <span className="text-xl">🥛</span>
