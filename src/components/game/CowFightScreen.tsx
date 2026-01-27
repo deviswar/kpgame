@@ -185,9 +185,9 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         </div>
       )}
 
-      {/* Touch popup */}
+      {/* Touch popup - centered in the middle of screen */}
       {showPopup && (
-        <div className="absolute top-32 left-1/2 -translate-x-1/2 z-30 animate-bounce">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 animate-bounce">
           <div 
             className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg border-4 border-yellow-400"
           >
@@ -257,7 +257,8 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
           <KPCharacter 
             scale={1} 
             isHappy={false} 
-            happiness={isKPHit ? 0 : 50} 
+            happiness={isKPHit ? 0 : 50}
+            isCrying={isKPHit}
           />
           
           <div className="text-center mt-2">

@@ -29,6 +29,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
       style={{ 
         width: width,
         height: height,
+        transform: 'scaleX(-1)', // Flip to face right (towards KP)
       }}
     >
       {/* Body */}
