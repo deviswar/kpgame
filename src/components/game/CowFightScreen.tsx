@@ -82,9 +82,9 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         
         setTimeout(() => {
           setGameState('ko');
-          // Don't set cowVictory - keep cow in angry state
+          setCowVictory(true); // Show victory with trophy (cow still looks angry)
           
-          // Show cow angry + KP crying for 3 seconds before end screen
+          // Show cow victory + KP crying for 3 seconds before end screen
           setTimeout(() => {
             onComplete();
           }, 3000);
