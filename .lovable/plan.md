@@ -1,200 +1,183 @@
 
 
-# Welcome Screen and Milk Hospital Scene Enhancements
+# Rizz Scene - Welcome Screen Enhancement
 
 ## Overview
-Two areas need updates:
-1. **Welcome Screen**: Add volume hint text with blinking/bouncing animation
-2. **Milk Hospital Scene**: Adjust timing, positioning, and sizes
+Add a two-phase welcome screen experience:
+1. **Phase 1**: Current welcome content with a new "Click here to see my rizz" button
+2. **Phase 2**: New "Rizz Scene" showing KP trying to impress a girl (QT), followed by "Tap to start game" button
 
 ---
 
-## Part 1: Welcome Screen Changes
+## Current Flow vs New Flow
 
-### Current State
-- "Powered by Rapido" text at line 56-58
-- No volume hint exists
+```text
+CURRENT:
+Welcome Screen → [Tap to start] → Feed Game
 
-### Changes
-Add a new line below "Powered by Rapido" with special animation:
-
-**New text**: "Turn your volume up for the best experience"
-- Emoji: speaker icon (🔊)
-- Animation: Blink 3 times + bounce once, then stop
-
-**Implementation**:
-- Add the text after the Rapido line
-- Create a custom animation class that combines blinking (3x) and one bounce
-- The animation runs once on page load
+NEW:
+Welcome Screen → [Click here to see my rizz] → Rizz Scene → [Tap to start] → Feed Game
+```
 
 ---
 
-## Part 2: Milk Hospital Scene Changes
+## Technical Implementation
 
-### 2a. Extend Scene by 1.5 Seconds
+### File 1: src/components/game/QTCharacter.tsx (NEW FILE)
 
-Current timing progression:
-| Phase | Current Time |
-|-------|--------------|
-| Hospital shows | 2000ms |
-| KP exits | 4000ms |
-| Popup appears | 6000ms |
-| Enter car | 8000ms |
+Create a new girl character component similar to KPCharacter but styled as a female:
+- Same proportions as KP but feminine styling
+- Pink/purple dress instead of yellow t-shirt
+- Long black hair with ponytail
+- Angry expression (to match the 😡🤬 dialogue)
+- Pink bow accessory
 
-**New timing** (add 1.5s buffer to kp-exit and popup phases):
+### File 2: src/components/game/WelcomeScreen.tsx (MODIFY)
 
-| Phase | New Time |
-|-------|----------|
-| Hospital shows | 2000ms |
-| KP exits | 3500ms (+1.5s for walking to left) |
-| Popup appears | 5500ms (simultaneous with left position) |
-| Enter car | 7500ms |
-| Driving | 9500ms |
-| Dog appears | 11500ms |
-| Crash | 14000ms |
-| Aftermath | 15500ms |
-| Mourning | 17500ms |
-| Music switch | 18500ms |
-| Complete | 28000ms |
+Add state management and new scene:
 
-### 2b. KP Exits Door and Moves to LEFT (not center)
+**State Changes:**
+```typescript
+const [showRizzScene, setShowRizzScene] = useState(false);
+```
 
-**Current behavior** (lines 171-182):
-- KP starts at center (`left-1/2`) and stays at center
-- In `enter-car` phase, moves to right (`left-[65%]`)
+**Phase 1 (Initial Welcome):**
+- Keep all current content (title, fun facts, footer)
+- Replace "Tap to start the game" button with "Click here to see my rizz" button
+- When clicked, set `showRizzScene = true`
 
-**New behavior**:
-- `kp-exit`: KP appears at door (center), then transitions to LEFT side (`left-[25%]`)
-- `popup`: KP stays at left position while popup shows on RIGHT
+**Phase 2 (Rizz Scene):**
+When `showRizzScene` is true, render:
 
-### 2c. Energy Popup on RIGHT Side
+```text
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│     ┌─────┐                            ┌─────┐     │
+│     │ KP  │                            │ QT  │     │
+│     └─────┘                            └─────┘     │
+│                                                     │
+│     ┌───────────────────┐                          │
+│     │ "my name is bava, │                          │
+│     │  nuvvu okkasari   │                          │
+│     │  rava"            │                          │
+│     └───────────────────┘                          │
+│                            ┌───────────────────┐   │
+│                            │     😡🤬          │   │
+│                            └───────────────────┘   │
+│                                                     │
+│   ┌───────────────────────────────────────────┐    │
+│   │ [QT Character - angry girl]   │           │    │
+│   └───────────────────────────────────────────┘    │
+│                                                     │
+│        [👆 Tap to start the game]                  │
+│                                                     │
+│        Powered by Rapido                            │
+│        🔊 Turn your volume up...                   │
+└─────────────────────────────────────────────────────┘
+```
 
-**Current** (lines 184-195):
-- Popup appears centered (`left-1/2 -translate-x-1/2`)
+**Layout for Rizz Scene:**
+- Use `flex` layout with KP on LEFT and QT on RIGHT
+- Name badges ("KP" and "QT") positioned above each character
+- Speech bubbles with pointed tails directed at each character
+- KP's dialogue in a rounded bubble pointing from him
+- QT's angry response (😡🤬) in a bubble pointing from her
+- "Tap to start the game" button at the bottom
+- Keep footer elements
 
-**New**:
-- Position on right side: `right-[10%]` or `left-[70%]`
-- Keep the same animation and styling
+### File 3: src/index.css (MODIFY)
 
-### 2d. Ad Banners - Make BIGGER and Same Size
-
-**Current sizes** (lines 151-167):
-- Left banner: `w-20 h-28 md:w-28 md:h-40`
-- Right banner: `w-20 h-28 md:w-28 md:h-40`
-
-**New sizes** (all same, bigger):
-- Both banners: `w-28 h-40 md:w-36 md:h-52`
-
-### 2e. Hospital Building - Make Smaller
-
-**Current sizes** (lines 120-149):
-- Roof: `w-48 h-8`
-- Building body: `w-44 h-40`
-
-**New sizes** (reduce by ~20%):
-- Roof: `w-40 h-6`
-- Building body: `w-36 h-32`
-- Adjust windows and door proportionally
-
----
-
-## Technical Details
-
-### File 1: src/index.css
-
-Add new keyframe animation for the volume hint:
+Add speech bubble animations:
 
 ```css
-@keyframes blink-bounce {
-  0%, 20%, 40% { opacity: 0; transform: translateY(0); }
-  10%, 30%, 50% { opacity: 1; transform: translateY(0); }
-  60% { opacity: 1; transform: translateY(-8px); }
-  80% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes speech-bubble-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.animate-blink-bounce {
-  animation: blink-bounce 2s ease-out forwards;
+.animate-speech-bubble {
+  animation: speech-bubble-pop 0.4s ease-out forwards;
 }
 ```
 
-### File 2: src/components/game/WelcomeScreen.tsx
+---
 
-Add volume hint text after line 58:
+## Detailed Component Structure
+
+### QTCharacter Component
+
+The girl character will have:
+- **Head**: Rounded shape with fair skin tone
+- **Hair**: Long black hair with side ponytail
+- **Expression**: Angry eyes (slanted eyebrows) and frowning mouth
+- **Body**: Pink/magenta dress with short sleeves
+- **Arms**: Similar proportions to KP, hanging straight
+- **Legs**: Same style as KP but in black leggings
+- **Accessory**: Pink bow in hair
+
+### Speech Bubbles
+
+Style both speech bubbles with:
+- Rounded corners (`rounded-xl`)
+- White/cream background
+- Border for definition
+- Tail/pointer using CSS triangle (::before or ::after pseudo-element)
+- Text inside with appropriate padding
+
+**KP's bubble**: Points to the left (toward KP)
+**QT's bubble**: Points to the right (toward QT)
+
+### Rizz Scene Layout
 
 ```tsx
-<p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
-  Powered by <span className="text-yellow-400 font-bold">Rapido</span>
-</p>
-{/* Volume hint with blinking and bounce animation */}
-<p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
-  🔊 Turn your volume up for the best experience
-</p>
-```
-
-### File 3: src/components/game/MilkHospitalScreen.tsx
-
-**Timing changes** (useEffect timers):
-```typescript
-// Adjusted timings (+1.5s total)
-timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
-timers.push(setTimeout(() => setPhase('popup'), 3500));  // Was 4000
-timers.push(setTimeout(() => setPhase('enter-car'), 5500)); // Was 6000
-timers.push(setTimeout(() => setPhase('driving'), 7500));  // Was 8000
-// ... continue shifting all subsequent timers by +1500ms
-```
-
-**KP positioning** (update lines 171-182):
-```tsx
-{(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
-  <div 
-    className={`absolute transition-all duration-1000 ease-out ${
-      phase === 'kp-exit' ? 'top-[52%] left-[25%]' :  // Move to LEFT
-      phase === 'popup' ? 'top-[58%] left-[25%]' :     // Stay at LEFT
-      'top-[60%] left-[65%] scale-75 opacity-0'
-    }`}
-  >
-    <KPCharacter scale={0.7} isHappy={true} happiness={100} />
+<div className="flex items-center justify-center gap-8 md:gap-16">
+  {/* KP Side */}
+  <div className="flex flex-col items-center">
+    {/* Name Badge */}
+    <div className="bg-blue-500 px-4 py-1 rounded-lg mb-2">
+      <span className="text-white font-bold">KP</span>
+    </div>
+    {/* KP Character */}
+    <KPCharacter scale={0.8} isHappy={true} happiness={80} />
+    {/* Speech Bubble */}
+    <div className="speech-bubble-left bg-white rounded-xl px-4 py-2 mt-2 shadow-lg">
+      <p className="text-gray-800 text-sm">"my name is bava, nuvvu okkasari rava"</p>
+    </div>
   </div>
-)}
-```
 
-**Energy popup on RIGHT** (update lines 184-195):
-```tsx
-{phase === 'popup' && (
-  <div className="absolute top-[50%] right-[15%] animate-energy-popup z-10">
-    {/* ... same popup content ... */}
+  {/* QT Side */}
+  <div className="flex flex-col items-center">
+    {/* Name Badge */}
+    <div className="bg-pink-500 px-4 py-1 rounded-lg mb-2">
+      <span className="text-white font-bold">QT</span>
+    </div>
+    {/* QT Character */}
+    <QTCharacter scale={0.8} isAngry={true} />
+    {/* Speech Bubble */}
+    <div className="speech-bubble-right bg-white rounded-xl px-4 py-2 mt-2 shadow-lg">
+      <p className="text-2xl">😡🤬</p>
+    </div>
   </div>
-)}
-```
-
-**Smaller hospital building**:
-```tsx
-{/* Roof - smaller */}
-<div className="absolute -top-5 left-1/2 -translate-x-1/2 w-40 h-6 ..." />
-
-{/* Building Body - smaller */}
-<div className="w-36 h-32 bg-gradient-to-b ...">
-  {/* Adjust interior elements proportionally */}
 </div>
 ```
 
-**Bigger ad banners (same size)**:
-```tsx
-{/* Left Banner */}
-<div className="absolute -left-28 md:-left-40 top-0 w-28 h-40 md:w-36 md:h-52 ...">
-
-{/* Right Banner */}
-<div className="absolute -right-28 md:-right-40 top-0 w-28 h-40 md:w-36 md:h-52 ...">
-```
-
 ---
 
-## Summary of All Changes
+## Summary of Changes
 
 | File | Changes |
 |------|---------|
-| `src/index.css` | Add `blink-bounce` keyframe animation |
-| `src/components/game/WelcomeScreen.tsx` | Add volume hint text with animation below "Powered by Rapido" |
-| `src/components/game/MilkHospitalScreen.tsx` | Extend timing by 1.5s, move KP to left, popup to right, bigger banners, smaller hospital |
+| `src/components/game/QTCharacter.tsx` | NEW - Create girl character component with angry expression |
+| `src/components/game/WelcomeScreen.tsx` | Add state for rizz scene, replace button text, add new scene layout with both characters and dialogue |
+| `src/index.css` | Add speech bubble animation and styles |
+
+---
+
+## Button Flow
+
+1. **"Click here to see my rizz"** → Shows Rizz Scene (same screen, state change)
+2. **"Tap to start the game"** → Calls `onStart()` to begin the game (same as before)
+
+This maintains the original game flow while adding the new rizz interaction in between.
 
