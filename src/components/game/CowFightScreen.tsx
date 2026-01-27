@@ -73,15 +73,18 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
       
       // Check for KO
       if (newHealth <= 0) {
+        // Keep KP hit/crying state active
+        setIsKPHit(true);
+        
         setTimeout(() => {
           setGameState('ko');
           setCowVictory(true);
           
-          // Transition to end screen after 2 seconds
+          // Show cow angry + KP crying for 3 seconds before end screen
           setTimeout(() => {
             onComplete();
-          }, 2000);
-        }, 800);
+          }, 3000);
+        }, 500);
       }
     }, 300);
     
