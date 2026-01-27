@@ -63,7 +63,7 @@ const WelcomeScreen = ({
             Powered by <span className="text-yellow-400 font-bold">Rapido</span>
           </p>
           <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
-            🔊 Turn your volume up for the best experience
+            🔊 Turn up your volume for the best experience
           </p>
         </div>
       </div>;
@@ -117,11 +117,7 @@ const WelcomeScreen = ({
           </div>
           
           {/* QT Character - Image */}
-          <img 
-            src={qtGirlImage} 
-            alt="QT" 
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
-          />
+          <img src={qtGirlImage} alt="QT" className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg" />
           
           {/* Speech Bubble - angry response */}
           <div className="relative bg-white rounded-xl px-4 py-3 mt-4 shadow-lg animate-speech-bubble" style={{
