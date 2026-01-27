@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
+import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
+import villageMilkBanner from '@/assets/village-milk-banner.jpg';
 
 interface MilkHospitalScreenProps {
   onComplete: () => void;
@@ -111,24 +113,22 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
                 </div>
               </div>
 
-              {/* Left Banner - Rose Milk */}
-              <div className="absolute -left-24 md:-left-28 top-0 w-20 h-32 md:w-24 md:h-36 bg-gradient-to-b from-pink-100 to-pink-200 rounded-lg shadow-lg transform -rotate-3 border-2 border-pink-300 overflow-hidden">
-                <div className="flex flex-col items-center justify-center h-full p-1 bg-white/80">
-                  <span className="text-green-700 text-[7px] md:text-[8px] font-bold text-center">Gomatha Village</span>
-                  <span className="text-3xl md:text-4xl">🥛</span>
-                  <span className="text-pink-600 text-[8px] md:text-[10px] font-bold text-center">ROSE MILK</span>
-                  <span className="text-yellow-600 text-[7px] md:text-[8px] font-bold">Rs. 40</span>
-                </div>
+              {/* Left Banner - Rose Milk (real image) */}
+              <div className="absolute -left-24 md:-left-32 top-0 w-20 h-28 md:w-28 md:h-40 rounded-lg shadow-lg transform -rotate-3 overflow-hidden border-2 border-white">
+                <img 
+                  src={roseMilkBanner} 
+                  alt="Gomatha Village Rose Milk"
+                  className="w-full h-full object-cover"
+                />
               </div>
 
-              {/* Right Banner - Village Milk */}
-              <div className="absolute -right-24 md:-right-28 top-0 w-20 h-32 md:w-24 md:h-36 bg-gradient-to-b from-blue-600 to-blue-800 rounded-lg shadow-lg transform rotate-3 border-2 border-blue-400 overflow-hidden">
-                <div className="flex flex-col items-center justify-center h-full p-1">
-                  <span className="text-white text-[7px] md:text-[8px] font-bold text-center">గోమాత పల్లె పాలు</span>
-                  <span className="text-3xl md:text-4xl">🐄</span>
-                  <span className="text-white text-[8px] md:text-[10px] font-bold text-center">VILLAGE RAW MILK</span>
-                  <span className="text-yellow-300 text-[7px] md:text-[8px]">Home Delivery</span>
-                </div>
+              {/* Right Banner - Village Milk (real image) */}
+              <div className="absolute -right-24 md:-right-32 top-0 w-20 h-28 md:w-28 md:h-40 rounded-lg shadow-lg transform rotate-3 overflow-hidden border-2 border-white">
+                <img 
+                  src={villageMilkBanner} 
+                  alt="గోమాత పల్లె పాలు Village Raw Milk"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
