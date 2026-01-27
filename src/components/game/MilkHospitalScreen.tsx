@@ -21,7 +21,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showMourningFlash, setShowMourningFlash] = useState(false);
 
   useEffect(() => {
-    // Phase timing
+    // Phase timing - extended KP exit by 1 second, smoother crash sequence
     const timers: NodeJS.Timeout[] = [];
 
     // Phase 1: Building fades in
@@ -30,33 +30,32 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     // Phase 2: KP exits hospital (walks to left side)
     timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
     
-    // Phase 3: Energy popup (on right side while KP is on left) - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('popup'), 3500));
+    // Phase 3: Energy popup (on right side while KP is on left) - extended by 1 more second
+    timers.push(setTimeout(() => setPhase('popup'), 4500));
     
-    // Phase 4: KP walks to car - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('enter-car'), 5500));
+    // Phase 4: KP walks to car - extended
+    timers.push(setTimeout(() => setPhase('enter-car'), 6500));
     
-    // Phase 5: Driving - car starts moving - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('driving'), 7500));
+    // Phase 5: Driving - car starts moving - longer drive time
+    timers.push(setTimeout(() => setPhase('driving'), 8500));
     
-    // Phase 6: Dog appears and walks while car is still driving - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('dog-appears'), 9500));
+    // Phase 6: Dog appears - give more time to see both moving
+    timers.push(setTimeout(() => setPhase('dog-appears'), 12000));
     
-    // Phase 7: Crash - both collide - extended by 1.5s
+    // Phase 7: Crash - dramatic pause before impact
     timers.push(setTimeout(() => {
       setPhase('crash');
-      setShowCrashText(true); // Keep text visible from now on
-    }, 12000));
+      setShowCrashText(true);
+    }, 16000));
     
-    // Phase 8: Aftermath - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('aftermath'), 13500));
+    // Phase 8: Aftermath - let it sink in
+    timers.push(setTimeout(() => setPhase('aftermath'), 18000));
     
-    // Phase 9: Mourning scene - extended by 1.5s
-    timers.push(setTimeout(() => setPhase('mourning'), 15500));
+    // Phase 9: Mourning scene
+    timers.push(setTimeout(() => setPhase('mourning'), 20000));
     
-    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes - extended by 1.5s
+    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
     timers.push(setTimeout(() => {
-      // Call parent to handle music switch (stops Music 1, starts Music 2)
       onStartMourningMusic?.();
       
       // 5 transparent flashes
@@ -70,16 +69,15 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       setTimeout(() => setShowMourningFlash(false), 1050);
       setTimeout(() => setShowMourningFlash(true), 1200);
       setTimeout(() => setShowMourningFlash(false), 1350);
-    }, 16500));
+    }, 21000));
     
-    // Complete - after mourning scene - extended by 1.5s
+    // Complete - after mourning scene
     timers.push(setTimeout(() => {
       onComplete();
-    }, 26000));
+    }, 30000));
 
     return () => {
       timers.forEach(t => clearTimeout(t));
-      // Don't cleanup mourning audio here - parent manages it
     };
   }, [onComplete, onStartMourningMusic]);
 
@@ -240,8 +238,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             className={`absolute bottom-16 w-32 md:w-40 ${
               phase === 'driving' ? 'animate-car-drive-continuous' :
               phase === 'dog-appears' ? 'animate-car-drive-to-crash' :
-              phase === 'crash' ? 'left-[45%] animate-car-crash' :
-              'left-[45%]'
+              phase === 'crash' ? 'left-[42%] animate-car-crash' :
+              'left-[42%]'
             }`}
           >
             <img 
@@ -254,10 +252,10 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           {/* Pug Dog - bigger size matching car */}
           {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && (
             <div 
-              className={`absolute bottom-16 w-32 md:w-40 ${
+              className={`absolute bottom-16 w-28 md:w-36 ${
                 phase === 'dog-appears' ? 'animate-dog-walk-to-crash' :
-                phase === 'crash' ? 'left-[55%] animate-dog-hit' :
-                'left-[70%] rotate-180 opacity-50'
+                phase === 'crash' ? 'left-[52%] animate-dog-hit' :
+                'left-[75%] rotate-180 opacity-50'
               }`}
             >
               <img 
