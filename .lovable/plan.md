@@ -1,174 +1,190 @@
 
-# Cow Fight Screen Implementation Plan
+# Milk Hospital & Dog Crash Sequence
 
 ## Overview
-After KP finishes eating (100% happiness), a new "Cow Fight" screen will appear before the airplane end screen. This screen features KP being punched by a boxing cow in an epic showdown.
+After the cow fight KO, a new "Milk Hospital" screen will appear with an animated sequence:
+1. Hospital building with ad banners displayed
+2. KP emerges from the hospital
+3. "Drank milk, energy boosted!" popup appears for 2 seconds
+4. KP enters the Honda Amaze car
+5. Car drives forward on a road
+6. Pug dog appears on the road
+7. Car hits the dog
+
+---
 
 ## Game Flow Update
+
 ```text
-[Feeding Screen] -> [NEW: Cow Fight Screen] -> [Airplane End Screen]
-     100%                  3 punches                   bye bye
++------------------+     +----------------+     +-------------------+     +------------------+
+| Welcome Screen   | --> | Feeding Screen | --> | Cow Fight Screen  | --> | Milk Hospital    |
++------------------+     +----------------+     +-------------------+     +------------------+
+                                                                                    |
+                                                                                    v
+                                                                          +------------------+
+                                                                          | End Screen       |
+                                                                          | (Airplane)       |
+                                                                          +------------------+
 ```
 
-## New Components
+---
 
-### 1. CowFightScreen.tsx
-The main new screen component with the following features:
+## Implementation Steps
 
-**Background Setup:**
-- Honda Amaze car image positioned on the right side
-- Cement bags image positioned on the left side
-- Dramatic arena-style gradient background (dark with spotlights effect)
+### Step 1: Copy All Images to Project Assets
+Copy the uploaded images to `src/assets/`:
+- `honda-amaze-car.jpg` - Honda Amaze car image
+- `pug-dog.webp` - Pug dog image  
+- `rose-milk-banner.png` - Gomatha Village Rose Milk banner
+- `village-milk-banner.png` - Village Raw Milk banner (Telugu)
 
-**Character Entrances (after 4 seconds):**
-- KP slides in from the right with a smooth entrance animation
-- Boxing Cow slides in from the left with menacing entrance
+### Step 2: Create MilkHospitalScreen Component
+New file: `src/components/game/MilkHospitalScreen.tsx`
 
-**Boxing Cow Character:**
-- Built using CSS/div elements (similar to KPCharacter.tsx)
-- White/cream colored body with cow spots
-- Red boxing gloves on front legs
-- Angry expression with flared nostrils
-- Sweat drops during punching
+**Visual Layout:**
+- Dark blue/purple gradient background (similar to cow fight arena)
+- Hospital building in the center-bottom area with:
+  - Building facade with windows
+  - Large "MILK HOSPITAL" sign on top
+  - Red cross symbols
+  - Two ad banners (Rose Milk & Village Milk) on building sides
+  - Hospital entrance door at bottom
 
-**Gameplay:**
-- "Touch KP to punch" popup appears after characters enter
-- Tapping near KP triggers the cow's punch animation
-- Health bar for KP (3 hearts or health meter)
-- After 3 punches, KP loses and transitions to end screen
+**Animation Phases:**
+1. **Phase 1 (0-2s)**: Hospital building fades in
+2. **Phase 2 (2-4s)**: KP walks out from hospital door
+3. **Phase 3 (4-6s)**: Popup "Drank milk, energy boosted! +100% Energy" appears with milk emoji
+4. **Phase 4 (6-8s)**: KP walks toward car, car appears on right side
+5. **Phase 5 (8-10s)**: KP enters car (shrinks/fades into car)
+6. **Phase 6 (10-14s)**: Scene transitions to road view, car drives left-to-right
+7. **Phase 7 (14-16s)**: Pug dog appears walking on road from right side
+8. **Phase 8 (16-17s)**: Car hits dog - impact animation with screen shake
+9. **Phase 9 (17-19s)**: Brief pause showing aftermath
+10. **Phase 10 (19s+)**: Transition to Airplane/End screen
 
-### 2. BoxingCow.tsx
-A dedicated component for the animated boxing cow:
-- Idle stance with subtle breathing animation
-- Punch animation with glove extending forward
-- Victory celebration after winning
+### Step 3: Add New Keyframe Animations to CSS
 
-## Detailed Animations
-
-### Professional Animation List:
-
-1. **Character Entrance Animations**
-   - `slide-in-from-right`: KP enters with a bounce
-   - `slide-in-from-left`: Cow enters with a menacing shake
-
-2. **Boxing Cow Animations**
-   - `cow-idle`: Subtle bobbing, breathing effect
-   - `cow-punch`: Fast jab with glove extending, body lunging forward
-   - `cow-victory`: Raising gloves in triumph
-
-3. **KP Hit Reactions**
-   - `kp-hit`: KP recoils backward, stars appear around head
-   - `kp-dizzy`: Swirly eyes effect when taking damage
-
-4. **Screen Effects**
-   - `screen-shake`: Entire screen shakes on punch impact
-   - `flash-impact`: White flash on hit
-   - `dust-particles`: Ground dust when characters land
-
-5. **Health System**
-   - 3 heart icons that break/disappear on each hit
-   - Red damage flash overlay
-
-## CSS Keyframes to Add
-
-```text
-@keyframes slide-from-right {
-  0% { transform: translateX(100vw); }
-  70% { transform: translateX(-20px); }
-  100% { transform: translateX(0); }
+Add to `src/index.css`:
+```css
+/* Milk Hospital animations */
+@keyframes walk-out {
+  0% { transform: translateX(0) scale(0.3); opacity: 0; }
+  50% { transform: translateX(30px) scale(0.7); opacity: 1; }
+  100% { transform: translateX(60px) scale(1); opacity: 1; }
 }
 
-@keyframes slide-from-left {
-  0% { transform: translateX(-100vw) rotate(-5deg); }
-  70% { transform: translateX(20px) rotate(5deg); }
-  100% { transform: translateX(0) rotate(0); }
+@keyframes car-drive {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
 }
 
-@keyframes cow-punch {
-  0% { transform: translateX(0); }
-  20% { transform: translateX(-30px) rotate(-10deg); }
-  40% { transform: translateX(80px) rotate(5deg); }
-  60% { transform: translateX(60px); }
-  100% { transform: translateX(0); }
+@keyframes dog-walk {
+  0% { transform: translateX(100vw) scaleX(-1); }
+  100% { transform: translateX(40vw) scaleX(-1); }
 }
 
-@keyframes screen-shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-10px); }
-  40%, 80% { transform: translateX(10px); }
+@keyframes car-crash {
+  0% { transform: translateX(var(--car-x)) rotate(0deg); }
+  30% { transform: translateX(calc(var(--car-x) + 20px)) rotate(-5deg); }
+  60% { transform: translateX(calc(var(--car-x) - 10px)) rotate(3deg); }
+  100% { transform: translateX(var(--car-x)) rotate(0deg); }
 }
 
-@keyframes hit-flash {
-  0% { opacity: 0; }
-  50% { opacity: 0.5; }
-  100% { opacity: 0; }
+@keyframes dog-hit {
+  0% { transform: translateX(40vw) scaleX(-1) rotate(0deg); }
+  30% { transform: translateX(50vw) scaleX(-1) rotate(45deg) translateY(-30px); }
+  60% { transform: translateX(60vw) scaleX(-1) rotate(90deg) translateY(10px); }
+  100% { transform: translateX(70vw) scaleX(-1) rotate(180deg) translateY(0); }
 }
 
-@keyframes stars-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes energy-popup {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes heart-break {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(0); opacity: 0; }
+@keyframes building-fade-in {
+  0% { opacity: 0; transform: translateY(50px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 ```
 
-## Screen States
+### Step 4: Update Game Flow in FeedKPGame.tsx
 
-1. **Loading** (0-4s): Background visible, characters haven't entered
-2. **Entrance** (4-5s): Characters slide in from opposite sides
-3. **Ready**: "Touch KP to punch!" popup appears
-4. **Fighting**: Player can tap KP, cow punches
-5. **KO**: KP loses, transition to airplane screen
+Modify `FeedKPGame.tsx` to:
+1. Add new state: `showMilkHospital`
+2. After cow fight completes, show Milk Hospital screen instead of Airplane
+3. After Milk Hospital completes, show Airplane/End screen
+
+```text
+Current flow:
+  CowFight -> onComplete() -> showAirplane = true
+
+New flow:
+  CowFight -> onComplete() -> showMilkHospital = true
+  MilkHospital -> onComplete() -> showAirplane = true
+```
+
+---
+
+## Technical Details
+
+### MilkHospitalScreen Component Structure
+
+```text
+MilkHospitalScreen
+├── Background (gradient + road)
+├── Hospital Building
+│   ├── Main Structure (windows, door)
+│   ├── "MILK HOSPITAL" Sign
+│   ├── Red Cross Symbols
+│   ├── Left Banner (Rose Milk)
+│   └── Right Banner (Village Raw Milk)
+├── KP Character (animated walk out)
+├── Energy Popup ("Drank milk, energy boosted!")
+├── Honda Amaze Car (animated entry + drive)
+├── Road Scene
+│   ├── Road with lane markings
+│   └── Simple background (trees/buildings silhouettes)
+├── Pug Dog (animated walk + crash)
+└── Crash Effects (stars, shake, impact text)
+```
+
+### Props Interface
+```typescript
+interface MilkHospitalScreenProps {
+  onComplete: () => void;
+}
+```
+
+### State Management
+```typescript
+type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath';
+const [phase, setPhase] = useState<Phase>('hospital');
+```
+
+---
 
 ## Files to Create/Modify
 
-### New Files:
-1. `src/components/game/CowFightScreen.tsx` - Main fight screen
-2. `src/components/game/BoxingCow.tsx` - Animated cow character
+| File | Action | Description |
+|------|--------|-------------|
+| `src/assets/honda-amaze-car.jpg` | Create | Copy Honda Amaze image |
+| `src/assets/pug-dog.webp` | Create | Copy Pug dog image |
+| `src/assets/rose-milk-banner.png` | Create | Copy Rose Milk banner |
+| `src/assets/village-milk-banner.png` | Create | Copy Village Raw Milk banner |
+| `src/components/game/MilkHospitalScreen.tsx` | Create | New hospital + car crash sequence component |
+| `src/index.css` | Modify | Add new animation keyframes |
+| `src/components/game/FeedKPGame.tsx` | Modify | Add MilkHospital state and flow |
 
-### Modified Files:
-1. `src/components/game/FeedKPGame.tsx` - Update flow to include fight screen
-2. `src/index.css` - Add new keyframe animations
+---
 
-## Technical Implementation Details
+## Visual Quality Notes
 
-### FeedKPGame.tsx Flow Update:
-```text
-Current:  gameStarted -> feeding -> showAirplane
-New:      gameStarted -> feeding -> showCowFight -> showAirplane
-```
-
-### Image Assets:
-- Copy Honda Amaze image to `src/assets/honda-amaze.jpg`
-- Copy Cement bags image to `src/assets/cement-bags.jpg`
-- Import and use in CowFightScreen background
-
-### BoxingCow Component Structure:
-- Body: Oval white shape with black spots
-- Head: Rounded with horns, pink nose, angry eyes
-- Front legs: With red boxing gloves (animated)
-- Back legs: Stationary
-- Tail: Swishing animation
-- Expression changes: Normal -> Punching -> Victory
-
-### Touch Detection:
-- Create a touch zone around KP
-- On tap, trigger cow punch animation
-- After punch animation completes, reduce KP health
-- Screen shake effect on impact
-
-### Health Display:
-- 3 heart emojis at top of screen
-- Hearts animate out when KP takes damage
-- At 0 health, 2-second delay then transition to airplane
-
-## Visual Style
-Matching the existing game's professional mobile-first aesthetic with:
-- Bouncy, satisfying animations
-- Clear visual feedback for actions
-- Fredoka font for text
-- Consistent color palette from existing screens
+- Hospital building will be CSS-drawn with gradient backgrounds, shadows, and glow effects
+- Ad banners will be displayed as images with perspective/skew transforms for realistic placement
+- Car and dog images will have drop shadows and smooth animations
+- Impact effects include screen shake, star particles, and "BONK!" text
+- Road scene will have lane markings and simple ambient details
+- All animations will be smooth with proper easing (ease-out, ease-in-out)
+- Mobile-first design optimized for 100dvh viewport
