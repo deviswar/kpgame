@@ -101,17 +101,38 @@ const FeedKPGame = () => {
   }, [happiness, showAirplane]);
   // Callback to start mourning music - passed to MilkHospitalScreen
   const handleStartMourningMusic = useCallback(() => {
+    console.log('Starting mourning music (Music 2)');
+    
     // Stop Music 1 completely
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      console.log('Music 1 stopped');
     }
+    
     // Start Music 2 and keep it playing
     const mourningAudio = new Audio('/music/mourning.mp3');
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
-    mourningAudio.play().catch(() => {});
-    mourningAudioRef.current = mourningAudio;
+    mourningAudio.preload = 'auto';
+    
+    mourningAudio.play()
+      .then(() => {
+        console.log('Music 2 playing successfully');
+        mourningAudioRef.current = mourningAudio;
+      })
+      .catch((error) => {
+        console.error('Music 2 play failed:', error);
+        // Retry after a short delay
+        setTimeout(() => {
+          mourningAudio.play()
+            .then(() => {
+              console.log('Music 2 playing on retry');
+              mourningAudioRef.current = mourningAudio;
+            })
+            .catch((e) => console.error('Music 2 retry failed:', e));
+        }, 200);
+      });
   }, []);
 
   const handleGoHome = () => {
