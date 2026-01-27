@@ -58,36 +58,38 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
     // Phase 9: Mourning scene
     timers.push(setTimeout(() => setPhase('mourning'), 16000));
     
-    // Phase 10: Switch to mourning music (1 second after mourning starts) + 3 flashes
+    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
     timers.push(setTimeout(() => {
-      // Fade out original music
+      // Stop original music completely
       if (audioRef?.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
-      // Start mourning music
+      // Start mourning music (will continue to end screen)
       const mourningAudio = new Audio('/music/mourning.mp3');
       mourningAudio.volume = 0.5;
+      mourningAudio.loop = true; // Keep playing
       mourningAudio.play().catch(() => {});
       mourningAudioRef.current = mourningAudio;
       
-      // 3 transparent flashes
+      // 5 transparent flashes
       setShowMourningFlash(true);
       setTimeout(() => setShowMourningFlash(false), 150);
       setTimeout(() => setShowMourningFlash(true), 300);
       setTimeout(() => setShowMourningFlash(false), 450);
       setTimeout(() => setShowMourningFlash(true), 600);
       setTimeout(() => setShowMourningFlash(false), 750);
+      setTimeout(() => setShowMourningFlash(true), 900);
+      setTimeout(() => setShowMourningFlash(false), 1050);
+      setTimeout(() => setShowMourningFlash(true), 1200);
+      setTimeout(() => setShowMourningFlash(false), 1350);
     }, 17000));
     
-    // Complete - after mourning scene (extended by 3 seconds)
+    // Complete - after mourning scene (extended by 4.5 seconds total)
     timers.push(setTimeout(() => {
-      // Stop mourning music before completing
-      if (mourningAudioRef.current) {
-        mourningAudioRef.current.pause();
-        mourningAudioRef.current = null;
-      }
+      // Don't stop mourning music - let it continue to end screen
       onComplete();
-    }, 25000));
+    }, 26500));
 
     return () => {
       timers.forEach(t => clearTimeout(t));

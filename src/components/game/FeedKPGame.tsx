@@ -21,48 +21,16 @@ const FeedKPGame = () => {
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
-  // Initialize and keep audio alive
+  // Initialize audio - recreate fresh on every mount
   useEffect(() => {
-    const initAudio = () => {
-      if (audioInitialized.current) return;
-      
-      const audio = new Audio('/music/background.mp3');
-      audio.loop = true;
-      audio.volume = 0.5;
-      audio.preload = 'auto';
-      
-      // Handle audio interruptions (e.g., phone call, tab switch)
-      audio.addEventListener('pause', () => {
-        if (gameStarted && audioRef.current && !audioRef.current.ended) {
-          // Try to resume if paused unexpectedly during game
-          setTimeout(() => {
-            if (audioRef.current && gameStarted) {
-              audioRef.current.play().catch(() => {});
-            }
-          }, 100);
-        }
-      });
-
-      // Handle audio errors
-      audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-        // Try to recreate audio on error
-        if (gameStarted) {
-          audioInitialized.current = false;
-          initAudio();
-        }
-      });
-
-      // Ensure audio is ready to play
-      audio.addEventListener('canplaythrough', () => {
-        console.log('Audio ready to play');
-      });
-
-      audioRef.current = audio;
-      audioInitialized.current = true;
-    };
-
-    initAudio();
+    // Always create fresh audio instance
+    const audio = new Audio('/music/background.mp3');
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.preload = 'auto';
+    
+    audioRef.current = audio;
+    audioInitialized.current = true;
     
     return () => {
       if (audioRef.current) {
@@ -72,7 +40,7 @@ const FeedKPGame = () => {
         audioInitialized.current = false;
       }
     };
-  }, [gameStarted]);
+  }, []);
 
   // Keep audio playing when game is active
   useEffect(() => {
@@ -130,11 +98,14 @@ const FeedKPGame = () => {
     }
   }, [happiness, showAirplane]);
   const handleGoHome = () => {
-    // Stop the music
+    // Stop the background music if playing
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current = null;
+      audioRef.current.currentTime = 0;
     }
+    // Reset audio initialized flag so it can play again on restart
+    audioInitialized.current = false;
+    
     // Reset all state and go back to welcome screen
     setHappiness(0);
     setFeedCount(0);
@@ -142,6 +113,14 @@ const FeedKPGame = () => {
     setShowMilkHospital(false);
     setShowAirplane(false);
     setGameStarted(false);
+    
+    // Recreate audio for next game
+    const audio = new Audio('/music/background.mp3');
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.preload = 'auto';
+    audioRef.current = audio;
+    audioInitialized.current = true;
   };
 
   const handleCowFightComplete = () => {
