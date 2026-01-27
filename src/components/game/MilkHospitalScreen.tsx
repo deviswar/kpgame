@@ -21,6 +21,7 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
   const [phase, setPhase] = useState<Phase>('hospital');
   const [showBuilding, setShowBuilding] = useState(false);
   const [showCrashText, setShowCrashText] = useState(false);
+  const [showMourningFlash, setShowMourningFlash] = useState(false);
   const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
     // Phase 9: Mourning scene
     timers.push(setTimeout(() => setPhase('mourning'), 16000));
     
-    // Phase 10: Switch to mourning music (1 second after mourning starts)
+    // Phase 10: Switch to mourning music (1 second after mourning starts) + 3 flashes
     timers.push(setTimeout(() => {
       // Fade out original music
       if (audioRef?.current) {
@@ -68,6 +69,14 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
       mourningAudio.volume = 0.5;
       mourningAudio.play().catch(() => {});
       mourningAudioRef.current = mourningAudio;
+      
+      // 3 transparent flashes
+      setShowMourningFlash(true);
+      setTimeout(() => setShowMourningFlash(false), 150);
+      setTimeout(() => setShowMourningFlash(true), 300);
+      setTimeout(() => setShowMourningFlash(false), 450);
+      setTimeout(() => setShowMourningFlash(true), 600);
+      setTimeout(() => setShowMourningFlash(false), 750);
     }, 17000));
     
     // Complete - after mourning scene (extended by 3 seconds)
@@ -317,6 +326,11 @@ const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) =
       {/* Mourning Scene */}
       {isMourningScene && (
         <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-center gap-4 py-4 animate-fade-in">
+          {/* 3x Flash Overlay */}
+          {showMourningFlash && (
+            <div className="absolute inset-0 bg-white/70 z-50 pointer-events-none" />
+          )}
+          
           {/* Top - Pug Memorial Photo - BIGGER */}
           <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
             <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" />
