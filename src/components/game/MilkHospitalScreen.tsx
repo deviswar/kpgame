@@ -73,9 +73,9 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
           {/* Ground */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-800 to-gray-700" />
 
-          {/* Hospital Building */}
+          {/* Hospital Building - positioned higher */}
           <div 
-            className={`absolute bottom-20 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
+            className={`absolute bottom-40 md:bottom-48 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
               showBuilding ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
@@ -111,27 +111,29 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
                 </div>
               </div>
 
-              {/* Left Banner */}
-              <div className="absolute -left-20 top-8 w-16 h-28 bg-gradient-to-b from-pink-400 to-pink-600 rounded-lg shadow-lg transform -rotate-3 border-2 border-pink-300">
-                <div className="flex flex-col items-center justify-center h-full p-1">
-                  <span className="text-white text-[8px] font-bold text-center">ROSE</span>
-                  <span className="text-2xl">🥛</span>
-                  <span className="text-white text-[8px] font-bold text-center">MILK</span>
+              {/* Left Banner - Rose Milk */}
+              <div className="absolute -left-24 md:-left-28 top-0 w-20 h-32 md:w-24 md:h-36 bg-gradient-to-b from-pink-100 to-pink-200 rounded-lg shadow-lg transform -rotate-3 border-2 border-pink-300 overflow-hidden">
+                <div className="flex flex-col items-center justify-center h-full p-1 bg-white/80">
+                  <span className="text-green-700 text-[7px] md:text-[8px] font-bold text-center">Gomatha Village</span>
+                  <span className="text-3xl md:text-4xl">🥛</span>
+                  <span className="text-pink-600 text-[8px] md:text-[10px] font-bold text-center">ROSE MILK</span>
+                  <span className="text-yellow-600 text-[7px] md:text-[8px] font-bold">Rs. 40</span>
                 </div>
               </div>
 
-              {/* Right Banner */}
-              <div className="absolute -right-20 top-8 w-16 h-28 bg-gradient-to-b from-amber-400 to-orange-500 rounded-lg shadow-lg transform rotate-3 border-2 border-amber-300">
+              {/* Right Banner - Village Milk */}
+              <div className="absolute -right-24 md:-right-28 top-0 w-20 h-32 md:w-24 md:h-36 bg-gradient-to-b from-blue-600 to-blue-800 rounded-lg shadow-lg transform rotate-3 border-2 border-blue-400 overflow-hidden">
                 <div className="flex flex-col items-center justify-center h-full p-1">
-                  <span className="text-white text-[8px] font-bold text-center">VILLAGE</span>
-                  <span className="text-2xl">🐄</span>
-                  <span className="text-white text-[8px] font-bold text-center">MILK</span>
+                  <span className="text-white text-[7px] md:text-[8px] font-bold text-center">గోమాత పల్లె పాలు</span>
+                  <span className="text-3xl md:text-4xl">🐄</span>
+                  <span className="text-white text-[8px] md:text-[10px] font-bold text-center">VILLAGE RAW MILK</span>
+                  <span className="text-yellow-300 text-[7px] md:text-[8px]">Home Delivery</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* KP Character exiting */}
+          {/* KP Character exiting - bigger size */}
           {(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
             <div 
               className={`absolute bottom-24 transition-all duration-1000 ease-out ${
@@ -140,7 +142,7 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
                 'left-[65%] -translate-x-1/2 scale-75 opacity-0'
               }`}
             >
-              <KPCharacter scale={0.5} isHappy={true} happiness={100} />
+              <KPCharacter scale={0.9} isHappy={true} happiness={100} />
             </div>
           )}
 
@@ -216,10 +218,10 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
             />
           </div>
 
-          {/* Pug Dog */}
+          {/* Pug Dog - bigger size matching car */}
           {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && (
             <div 
-              className={`absolute bottom-20 w-20 md:w-24 ${
+              className={`absolute bottom-16 w-32 md:w-40 ${
                 phase === 'dog-appears' ? 'animate-dog-walk' :
                 phase === 'crash' ? 'animate-dog-hit' :
                 'left-[70%] rotate-180 opacity-50'
@@ -228,7 +230,7 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
               <img 
                 src={pugDog} 
                 alt="Pug Dog"
-                className="w-full h-auto drop-shadow-lg"
+                className="w-full h-auto drop-shadow-xl"
               />
             </div>
           )}

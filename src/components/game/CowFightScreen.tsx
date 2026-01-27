@@ -23,7 +23,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
 
   // Stage timing
   useEffect(() => {
-    // After 3 seconds, characters enter
+    // After 1 second, characters enter
     const entranceTimer = setTimeout(() => {
       setGameState('entrance');
       setCharactersEntered(true);
@@ -33,7 +33,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         setGameState('ready');
         setShowPopup(true);
       }, 1200);
-    }, 3000);
+    }, 1000);
 
     return () => clearTimeout(entranceTimer);
   }, []);
