@@ -458,3 +458,14 @@
 .animate-blink-bounce {
   animation: blink-bounce 2s ease-out forwards;
 }
+
+/* Speech bubble animation */
+@keyframes speech-bubble-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-speech-bubble {
+  animation: speech-bubble-pop 0.4s ease-out forwards;
+}
