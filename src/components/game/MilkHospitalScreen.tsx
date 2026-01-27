@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
@@ -9,6 +9,7 @@ import pugGrave from '@/assets/pug-grave.jpg';
 
 interface MilkHospitalScreenProps {
   onComplete: () => void;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
 }
 
 type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath' | 'mourning';
@@ -16,10 +17,11 @@ type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-a
 // Track if crash happened for persistent text
 
 
-const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
+const MilkHospitalScreen = ({ onComplete, audioRef }: MilkHospitalScreenProps) => {
   const [phase, setPhase] = useState<Phase>('hospital');
   const [showBuilding, setShowBuilding] = useState(false);
   const [showCrashText, setShowCrashText] = useState(false);
+  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Phase timing
@@ -55,11 +57,38 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
     // Phase 9: Mourning scene
     timers.push(setTimeout(() => setPhase('mourning'), 16000));
     
-    // Complete - after mourning scene
-    timers.push(setTimeout(() => onComplete(), 22000));
+    // Phase 10: Switch to mourning music (1 second after mourning starts)
+    timers.push(setTimeout(() => {
+      // Fade out original music
+      if (audioRef?.current) {
+        audioRef.current.pause();
+      }
+      // Start mourning music
+      const mourningAudio = new Audio('/music/mourning.mp3');
+      mourningAudio.volume = 0.5;
+      mourningAudio.play().catch(() => {});
+      mourningAudioRef.current = mourningAudio;
+    }, 17000));
+    
+    // Complete - after mourning scene (extended by 3 seconds)
+    timers.push(setTimeout(() => {
+      // Stop mourning music before completing
+      if (mourningAudioRef.current) {
+        mourningAudioRef.current.pause();
+        mourningAudioRef.current = null;
+      }
+      onComplete();
+    }, 25000));
 
-    return () => timers.forEach(t => clearTimeout(t));
-  }, [onComplete]);
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+      // Cleanup mourning audio on unmount
+      if (mourningAudioRef.current) {
+        mourningAudioRef.current.pause();
+        mourningAudioRef.current = null;
+      }
+    };
+  }, [onComplete, audioRef]);
 
   const isHospitalScene = ['hospital', 'kp-exit', 'popup', 'enter-car'].includes(phase);
   const isRoadScene = ['driving', 'dog-appears', 'crash', 'aftermath'].includes(phase);
@@ -287,20 +316,20 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
 
       {/* Mourning Scene */}
       {isMourningScene && (
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-between py-8 animate-fade-in">
-          {/* Top - Pug Memorial Photo */}
-          <div className="w-40 md:w-56 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-center gap-4 py-4 animate-fade-in">
+          {/* Top - Pug Memorial Photo - BIGGER */}
+          <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
             <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" />
           </div>
           
           {/* Center - KP Crying */}
           <div className="flex flex-col items-center">
             <KPCharacter scale={1} isCrying={true} isHappy={false} happiness={0} />
-            <p className="text-white text-xl font-bold mt-4">Sorry... 😢</p>
+            <p className="text-white text-xl font-bold mt-2">Sorry... 😢</p>
           </div>
           
-          {/* Bottom - Pug Grave */}
-          <div className="w-48 md:w-64 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
+          {/* Bottom - Pug Grave - BIGGER */}
+          <div className="w-64 md:w-80 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
             <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" />
           </div>
         </div>

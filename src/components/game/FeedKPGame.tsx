@@ -169,7 +169,7 @@ const FeedKPGame = () => {
   }
 
   if (showMilkHospital) {
-    return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} />;
+    return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} audioRef={audioRef} />;
   }
 
   if (showAirplane) {
