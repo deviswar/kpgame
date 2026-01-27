@@ -21,7 +21,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showMourningFlash, setShowMourningFlash] = useState(false);
 
   useEffect(() => {
-    // Phase timing - extended KP exit by 1 second, smoother crash sequence
+    // Phase timing
     const timers: NodeJS.Timeout[] = [];
 
     // Phase 1: Building fades in
@@ -33,26 +33,26 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     // Phase 3: Energy popup (on right side while KP is on left) - extended by 1 more second
     timers.push(setTimeout(() => setPhase('popup'), 4500));
     
-    // Phase 4: KP walks to car - extended
-    timers.push(setTimeout(() => setPhase('enter-car'), 6500));
+    // Phase 4: EXTRA WAIT (2s) before KP goes to car (keeps hospital + banners visible longer)
+    timers.push(setTimeout(() => setPhase('enter-car'), 8500));
     
     // Phase 5: Driving - car starts moving - longer drive time
-    timers.push(setTimeout(() => setPhase('driving'), 8500));
+    timers.push(setTimeout(() => setPhase('driving'), 10500));
     
     // Phase 6: Dog appears - give more time to see both moving
-    timers.push(setTimeout(() => setPhase('dog-appears'), 12000));
+    timers.push(setTimeout(() => setPhase('dog-appears'), 14000));
     
     // Phase 7: Crash - dramatic pause before impact
     timers.push(setTimeout(() => {
       setPhase('crash');
       setShowCrashText(true);
-    }, 16000));
+    }, 18000));
     
     // Phase 8: Aftermath - let it sink in
-    timers.push(setTimeout(() => setPhase('aftermath'), 18000));
+    timers.push(setTimeout(() => setPhase('aftermath'), 20000));
     
     // Phase 9: Mourning scene
-    timers.push(setTimeout(() => setPhase('mourning'), 20000));
+    timers.push(setTimeout(() => setPhase('mourning'), 22000));
     
     // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
     timers.push(setTimeout(() => {
@@ -69,12 +69,12 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       setTimeout(() => setShowMourningFlash(false), 1050);
       setTimeout(() => setShowMourningFlash(true), 1200);
       setTimeout(() => setShowMourningFlash(false), 1350);
-    }, 21000));
+    }, 23000));
     
     // Complete - after mourning scene
     timers.push(setTimeout(() => {
       onComplete();
-    }, 30000));
+    }, 32000));
 
     return () => {
       timers.forEach(t => clearTimeout(t));
