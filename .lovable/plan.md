@@ -1,165 +1,123 @@
 
-# Fix Music 2 Playback - Add "Take Puppy to Hospital" Button
+# Add Rizz Scene Audio
 
-## The Problem
-Mobile browsers (Safari, Chrome) have strict autoplay policies that block audio playback unless triggered by a direct user gesture (tap/click). The current implementation tries to start Music 2 via a `setTimeout` callback, which browsers don't recognize as user-initiated.
-
-## The Solution
-Add a button during the aftermath phase (after the car hits the puppy) that the user must tap. When tapped, it will:
-1. Start the mourning music (Music 2) - now with valid user gesture
-2. Transition to the mourning phase
-3. Continue to end screen as before
+## Overview
+Add a dedicated audio track that plays **only** during the rizz scene (Phase 2 of the Welcome Screen). The audio will:
+1. Start when user clicks "Click here to see my rizz" button
+2. Play during the entire rizz scene
+3. Stop when user clicks "Tap to start the game" button
+4. Then Music 1 (background.mp3) starts as usual
 
 ---
 
-## Technical Implementation
+## File Changes
 
-### File: `src/components/game/MilkHospitalScreen.tsx`
+### 1. Copy Audio File to Project
+Copy the uploaded audio file to the public music folder for consistent audio file organization.
+
+| Source | Destination |
+|--------|-------------|
+| `user-uploads://audio.mp4` | `public/music/rizz.mp4` |
+
+---
+
+### 2. Update WelcomeScreen Component
+
+**File:** `src/components/game/WelcomeScreen.tsx`
 
 **Changes:**
 
-1. **Add new state for button interaction:**
+1. **Add useRef for audio management:**
 ```typescript
-const [waitingForUserTap, setWaitingForUserTap] = useState(false);
+import { useState, useRef, useEffect } from 'react';
+
+const rizzAudioRef = useRef<HTMLAudioElement | null>(null);
 ```
 
-2. **Modify phase timing logic:**
-   - Remove the automatic transition from `aftermath` to `mourning`
-   - Remove the automatic `onStartMourningMusic` call
-   - Instead, after crash, set `waitingForUserTap = true` and STOP the timer sequence
-   - The user must tap the button to proceed
-
-3. **Add button handler:**
+2. **Add cleanup effect:**
 ```typescript
-const handleTakePuppyToHospital = () => {
-  // Start mourning music (user gesture makes this work on mobile)
-  onStartMourningMusic?.();
+useEffect(() => {
+  return () => {
+    // Cleanup audio on unmount
+    if (rizzAudioRef.current) {
+      rizzAudioRef.current.pause();
+      rizzAudioRef.current = null;
+    }
+  };
+}, []);
+```
+
+3. **Create handler for "see my rizz" button:**
+```typescript
+const handleShowRizz = () => {
+  setShowRizzScene(true);
   
-  // Transition to mourning phase
-  setPhase('mourning');
-  setWaitingForUserTap(false);
-  
-  // Flash effects
-  // ... existing flash logic
-  
-  // Set timeout for completion
-  setTimeout(() => onComplete(), 10000);
+  // Start rizz audio
+  const audio = new Audio('/music/rizz.mp4');
+  audio.volume = 0.5;
+  audio.loop = true;
+  audio.play().catch(e => console.error('Rizz audio failed:', e));
+  rizzAudioRef.current = audio;
 };
 ```
 
-4. **Render button during aftermath phase:**
-   - Display a prominent button: "🏥 Touch to take puppy to hospital"
-   - Position it below the crash text
-   - Add pulsing animation to draw attention
-
----
-
-## Updated Phase Flow
-
-```text
-BEFORE (broken on mobile):
-crash (18s) → aftermath (20s) → mourning (22s, auto-play music) → complete (32s)
-
-AFTER (works on mobile):
-crash (18s) → aftermath (20s) → [WAIT for user tap] → mourning + music → complete (10s later)
-```
-
----
-
-## UI Design for the Button
-
-The button will appear during the aftermath phase, positioned below the "BONK! Oops..." text:
-
-```text
-┌─────────────────────────────────────────┐
-│                                         │
-│            💥 BONK! 💥                  │
-│               😱                        │
-│             Oops...                     │
-│          ⭐ 💫 ✨ ⭐ 💫                 │
-│                                         │
-│    ┌─────────────────────────────┐      │
-│    │  🏥 Touch to take puppy     │      │
-│    │     to the hospital         │      │
-│    └─────────────────────────────┘      │
-│                                         │
-│   [crashed car]       [injured pug]     │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-Button styling:
-- Red/emergency gradient background
-- White text with emoji
-- Pulsing animation (scale + glow)
-- Large touch target for mobile
-
----
-
-## Summary of Changes
-
-| File | Changes |
-|------|---------|
-| `src/components/game/MilkHospitalScreen.tsx` | Add `waitingForUserTap` state, add button handler, modify timing to pause at aftermath, render button with styling |
-
----
-
-## Code Details
-
-### Timer Changes
-
-Remove these automatic timers:
-- Phase 9: Mourning scene (line 55)
-- Phase 10: Start mourning music (lines 57-72)
-- Complete timer (lines 74-77)
-
-Replace with:
-- After aftermath phase, set `waitingForUserTap = true` and stop timer progression
-
-### Button Handler Implementation
-
+4. **Create handler for "start game" button:**
 ```typescript
-const handleTakePuppyToHospital = () => {
-  // User tapped - this is a valid gesture for audio!
-  onStartMourningMusic?.();
+const handleStartGame = () => {
+  // Stop rizz audio
+  if (rizzAudioRef.current) {
+    rizzAudioRef.current.pause();
+    rizzAudioRef.current = null;
+  }
   
-  // Go to mourning phase
-  setPhase('mourning');
-  setWaitingForUserTap(false);
-  
-  // Trigger flashes
-  setShowMourningFlash(true);
-  setTimeout(() => setShowMourningFlash(false), 150);
-  setTimeout(() => setShowMourningFlash(true), 300);
-  setTimeout(() => setShowMourningFlash(false), 450);
-  setTimeout(() => setShowMourningFlash(true), 600);
-  setTimeout(() => setShowMourningFlash(false), 750);
-  setTimeout(() => setShowMourningFlash(true), 900);
-  setTimeout(() => setShowMourningFlash(false), 1050);
-  setTimeout(() => setShowMourningFlash(true), 1200);
-  setTimeout(() => setShowMourningFlash(false), 1350);
-  
-  // Complete after mourning duration
-  setTimeout(() => onComplete(), 10000);
+  // Call original onStart (which triggers Music 1)
+  onStart();
 };
 ```
 
-### Button JSX
+5. **Update button onClick handlers:**
+   - "Click here to see my rizz" button: `onClick={handleShowRizz}` (instead of inline setState)
+   - "Tap to start the game" button: `onClick={handleStartGame}` (instead of `onStart`)
 
-```tsx
-{phase === 'aftermath' && waitingForUserTap && (
-  <button
-    onClick={handleTakePuppyToHospital}
-    className="absolute bottom-1/4 left-1/2 -translate-x-1/2 z-50 
-               bg-gradient-to-r from-red-600 to-red-700 
-               hover:from-red-500 hover:to-red-600
-               text-white font-bold text-lg md:text-xl 
-               px-6 py-4 rounded-2xl shadow-2xl 
-               border-4 border-red-400
-               animate-pulse
-               active:scale-95 transition-transform"
-  >
-    🏥 Touch to take puppy to the hospital
-  </button>
-)}
+---
+
+## Audio Flow Diagram
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                      WELCOME SCREEN                          │
+│                                                              │
+│  Phase 1: Fun Facts                                          │
+│  ┌──────────────────────────────────┐                        │
+│  │  "Click here to see my rizz" 🥰  │ ── Click ──┐          │
+│  └──────────────────────────────────┘            │          │
+│                                                   ▼          │
+│  Phase 2: Rizz Scene                     🎵 RIZZ AUDIO       │
+│  ┌──────────────────────────────────┐    (starts playing)    │
+│  │  👆 Tap to start the game        │ ── Click ──┐          │
+│  └──────────────────────────────────┘            │          │
+│                                                   ▼          │
+└─────────────────────────────────────────────────────────────┘
+                                                   │
+                                          🔇 RIZZ AUDIO STOPS
+                                          🎵 MUSIC 1 STARTS
+                                                   │
+                                                   ▼
+                                        ┌──────────────────┐
+                                        │   FEED KP GAME   │
+                                        └──────────────────┘
 ```
+
+---
+
+## Summary
+
+| Step | Action |
+|------|--------|
+| 1 | Copy `audio.mp4` to `public/music/rizz.mp4` |
+| 2 | Add `useRef` and `useEffect` for audio management |
+| 3 | Create `handleShowRizz()` to play rizz audio |
+| 4 | Create `handleStartGame()` to stop rizz audio and call `onStart()` |
+| 5 | Update both button onClick handlers |
+
+The rizz audio will loop continuously during the rizz scene, giving it its own unique vibe before transitioning to the main game with Music 1.
