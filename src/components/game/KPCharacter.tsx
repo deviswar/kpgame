@@ -4,9 +4,10 @@ interface KPCharacterProps {
   scale: number;
   isHappy: boolean;
   happiness: number;
+  isCrying?: boolean;
 }
 
-const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
+const KPCharacter = ({ scale, isHappy, happiness, isCrying = false }: KPCharacterProps) => {
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
   }, [isHappy, happiness]);
 
   const getExpression = () => {
+    if (isCrying) return 'crying';
     if (happiness >= 100) return 'ecstatic';
     if (happiness >= 80) return 'super-happy';
     if (happiness >= 60) return 'happy';
@@ -319,6 +321,12 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
 
           {/* Mouth */}
           <div className="mt-0.5">
+            {expression === 'crying' && (
+              <div 
+                className="rounded-t-full bg-gray-900 flex items-start justify-center overflow-hidden"
+                style={{ width: width * 0.16, height: height * 0.03 }}
+              />
+            )}
             {expression === 'ecstatic' && (
               <div 
                 className="rounded-b-full bg-gray-900 flex items-end justify-center overflow-hidden"
@@ -352,6 +360,33 @@ const KPCharacter = ({ scale, isHappy, happiness }: KPCharacterProps) => {
               />
             )}
           </div>
+
+          {/* Tears when crying */}
+          {isCrying && (
+            <>
+              <div 
+                className="absolute animate-ping"
+                style={{ 
+                  top: '45%', 
+                  left: '15%',
+                  fontSize: Math.max(8, width * 0.12),
+                }}
+              >
+                💧
+              </div>
+              <div 
+                className="absolute animate-ping"
+                style={{ 
+                  top: '45%', 
+                  right: '15%',
+                  fontSize: Math.max(8, width * 0.12),
+                  animationDelay: '0.15s',
+                }}
+              >
+                💧
+              </div>
+            </>
+          )}
         </div>
       </div>
 
