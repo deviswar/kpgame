@@ -4,12 +4,14 @@ import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
 import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
 import villageMilkBanner from '@/assets/village-milk-banner.jpg';
+import pugMemorial from '@/assets/pug-memorial.jpg';
+import pugGrave from '@/assets/pug-grave.jpg';
 
 interface MilkHospitalScreenProps {
   onComplete: () => void;
 }
 
-type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath';
+type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath' | 'mourning';
 
 // Track if crash happened for persistent text
 
@@ -50,14 +52,18 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
     // Phase 8: Aftermath
     timers.push(setTimeout(() => setPhase('aftermath'), 14000));
     
-    // Complete - longer delay to show text
-    timers.push(setTimeout(() => onComplete(), 18000));
+    // Phase 9: Mourning scene
+    timers.push(setTimeout(() => setPhase('mourning'), 16000));
+    
+    // Complete - after mourning scene
+    timers.push(setTimeout(() => onComplete(), 22000));
 
     return () => timers.forEach(t => clearTimeout(t));
   }, [onComplete]);
 
   const isHospitalScene = ['hospital', 'kp-exit', 'popup', 'enter-car'].includes(phase);
   const isRoadScene = ['driving', 'dog-appears', 'crash', 'aftermath'].includes(phase);
+  const isMourningScene = phase === 'mourning';
 
   return (
     <div className={`h-screen h-[100dvh] overflow-hidden relative ${phase === 'crash' ? 'animate-screen-shake' : ''}`}>
@@ -276,6 +282,27 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Mourning Scene */}
+      {isMourningScene && (
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-between py-8 animate-fade-in">
+          {/* Top - Pug Memorial Photo */}
+          <div className="w-40 md:w-56 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
+            <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" />
+          </div>
+          
+          {/* Center - KP Crying */}
+          <div className="flex flex-col items-center">
+            <KPCharacter scale={1} isCrying={true} isHappy={false} happiness={0} />
+            <p className="text-white text-xl font-bold mt-4">Sorry... 😢</p>
+          </div>
+          
+          {/* Bottom - Pug Grave */}
+          <div className="w-48 md:w-64 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
+            <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" />
+          </div>
         </div>
       )}
     </div>
