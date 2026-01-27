@@ -140,28 +140,27 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
             </div>
           </div>
 
-          {/* KP Character exiting - bigger size */}
+          {/* KP Character exiting from door */}
           {(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
             <div 
-              className={`absolute bottom-24 transition-all duration-1000 ease-out ${
-                phase === 'kp-exit' ? 'left-1/2 -translate-x-1/2' :
-                phase === 'popup' ? 'left-1/2 -translate-x-1/2' :
-                'left-[65%] -translate-x-1/2 scale-75 opacity-0'
+              className={`absolute transition-all duration-1000 ease-out ${
+                phase === 'kp-exit' ? 'top-[52%] left-1/2 -translate-x-1/2' :
+                phase === 'popup' ? 'top-[58%] left-1/2 -translate-x-1/2' :
+                'top-[60%] left-[65%] -translate-x-1/2 scale-75 opacity-0'
               }`}
             >
-              <KPCharacter scale={0.9} isHappy={true} happiness={100} />
+              <KPCharacter scale={0.7} isHappy={true} happiness={100} />
             </div>
           )}
 
-          {/* Energy Popup */}
+          {/* Energy Popup - smaller and positioned below hospital */}
           {phase === 'popup' && (
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 animate-energy-popup">
-              <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-6 py-4 rounded-2xl shadow-2xl border-4 border-green-300">
+            <div className="absolute top-[70%] left-1/2 -translate-x-1/2 animate-energy-popup z-10">
+              <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-3 py-2 rounded-xl shadow-lg border-2 border-green-300">
                 <div className="text-center">
-                  <span className="text-3xl">🥛</span>
-                  <p className="text-white font-bold text-lg md:text-xl mt-1">Drank milk!</p>
-                  <p className="text-yellow-200 font-bold text-sm md:text-base">⚡ Energy Boosted! ⚡</p>
-                  <p className="text-white font-bold text-lg">+100% 💪</p>
+                  <span className="text-xl">🥛</span>
+                  <p className="text-white font-bold text-sm">Drank milk!</p>
+                  <p className="text-yellow-200 font-bold text-xs">⚡ Energy Boosted! ⚡</p>
                 </div>
               </div>
             </div>
