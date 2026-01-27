@@ -11,9 +11,13 @@ interface MilkHospitalScreenProps {
 
 type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath';
 
+// Track if crash happened for persistent text
+
+
 const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
   const [phase, setPhase] = useState<Phase>('hospital');
   const [showBuilding, setShowBuilding] = useState(false);
+  const [showCrashText, setShowCrashText] = useState(false);
 
   useEffect(() => {
     // Phase timing
@@ -31,20 +35,23 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
     // Phase 4: KP walks to car
     timers.push(setTimeout(() => setPhase('enter-car'), 6000));
     
-    // Phase 5: Driving
+    // Phase 5: Driving - car starts moving
     timers.push(setTimeout(() => setPhase('driving'), 8000));
     
-    // Phase 6: Dog appears
-    timers.push(setTimeout(() => setPhase('dog-appears'), 11000));
+    // Phase 6: Dog appears and walks while car is still driving
+    timers.push(setTimeout(() => setPhase('dog-appears'), 10000));
     
-    // Phase 7: Crash
-    timers.push(setTimeout(() => setPhase('crash'), 13000));
+    // Phase 7: Crash - both collide
+    timers.push(setTimeout(() => {
+      setPhase('crash');
+      setShowCrashText(true); // Keep text visible from now on
+    }, 12500));
     
     // Phase 8: Aftermath
     timers.push(setTimeout(() => setPhase('aftermath'), 14000));
     
-    // Complete
-    timers.push(setTimeout(() => onComplete(), 16000));
+    // Complete - longer delay to show text
+    timers.push(setTimeout(() => onComplete(), 18000));
 
     return () => timers.forEach(t => clearTimeout(t));
   }, [onComplete]);
@@ -77,7 +84,7 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
 
           {/* Hospital Building - positioned higher */}
           <div 
-            className={`absolute bottom-40 md:bottom-48 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
+            className={`absolute top-1/4 md:top-1/5 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
               showBuilding ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
@@ -203,13 +210,12 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
 
           {/* Honda Amaze Car Driving */}
           <div 
-            className={`absolute bottom-16 w-32 md:w-40 transition-all ${
-              phase === 'driving' ? 'animate-car-drive' :
-              phase === 'dog-appears' ? 'left-[30%]' :
-              phase === 'crash' ? 'left-[35%] animate-car-crash' :
-              'left-[35%]'
+            className={`absolute bottom-16 w-32 md:w-40 ${
+              phase === 'driving' ? 'animate-car-drive-continuous' :
+              phase === 'dog-appears' ? 'animate-car-drive-to-crash' :
+              phase === 'crash' ? 'left-[45%] animate-car-crash' :
+              'left-[45%]'
             }`}
-            style={{ '--car-x': '35%' } as React.CSSProperties}
           >
             <img 
               src={hondaAmaze} 
@@ -222,40 +228,46 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
           {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && (
             <div 
               className={`absolute bottom-16 w-32 md:w-40 ${
-                phase === 'dog-appears' ? 'animate-dog-walk' :
-                phase === 'crash' ? 'animate-dog-hit' :
+                phase === 'dog-appears' ? 'animate-dog-walk-to-crash' :
+                phase === 'crash' ? 'left-[55%] animate-dog-hit' :
                 'left-[70%] rotate-180 opacity-50'
               }`}
             >
               <img 
                 src={pugDog} 
                 alt="Pug Dog"
-                className="w-full h-auto drop-shadow-xl"
+                className="w-full h-auto drop-shadow-xl transform -scale-x-100"
               />
             </div>
           )}
 
-          {/* Crash Effects */}
+          {/* Crash Effects - Impact Flash only during crash */}
           {phase === 'crash' && (
-            <>
-              {/* Impact Flash */}
-              <div className="absolute inset-0 bg-white animate-hit-flash pointer-events-none" />
-              
-              {/* BONK Text */}
-              <div className="absolute top-1/3 left-1/2 -translate-x-1/2 animate-energy-popup">
-                <span className="text-6xl md:text-8xl font-bold text-red-600 text-shadow-game">
+            <div className="absolute inset-0 bg-white animate-hit-flash pointer-events-none" />
+          )}
+
+          {/* BONK and Oops Text - stays visible after crash */}
+          {showCrashText && (
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 text-center z-50">
+              <div className="animate-energy-popup">
+                <span className="text-5xl md:text-7xl font-bold text-red-600 text-shadow-game block">
                   💥 BONK! 💥
                 </span>
               </div>
-
+              <div className="mt-4">
+                <span className="text-4xl md:text-5xl">😱</span>
+                <p className="text-red-600 font-bold text-xl md:text-2xl mt-2 text-shadow-game">
+                  Oops...
+                </p>
+              </div>
+              
               {/* Stars */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="relative mt-4">
                 {['⭐', '💫', '✨', '⭐', '💫'].map((star, i) => (
                   <span 
                     key={i} 
-                    className="absolute text-3xl animate-confetti"
+                    className="inline-block text-2xl md:text-3xl mx-1 animate-bounce"
                     style={{
-                      left: `${(i - 2) * 30}px`,
                       animationDelay: `${i * 0.1}s`
                     }}
                   >
@@ -263,16 +275,6 @@ const MilkHospitalScreen = ({ onComplete }: MilkHospitalScreenProps) => {
                   </span>
                 ))}
               </div>
-            </>
-          )}
-
-          {/* Aftermath */}
-          {phase === 'aftermath' && (
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 text-center">
-              <span className="text-5xl md:text-6xl">😱</span>
-              <p className="text-red-600 font-bold text-xl md:text-2xl mt-2 text-shadow-game">
-                Oops...
-              </p>
             </div>
           )}
         </div>
