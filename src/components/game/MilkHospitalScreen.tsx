@@ -19,6 +19,32 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showBuilding, setShowBuilding] = useState(false);
   const [showCrashText, setShowCrashText] = useState(false);
   const [showMourningFlash, setShowMourningFlash] = useState(false);
+  const [waitingForUserTap, setWaitingForUserTap] = useState(false);
+
+  // Handler for the hospital button - user tap triggers mourning music (works on mobile!)
+  const handleTakePuppyToHospital = () => {
+    // User tapped - this is a valid gesture for audio!
+    onStartMourningMusic?.();
+    
+    // Go to mourning phase
+    setPhase('mourning');
+    setWaitingForUserTap(false);
+    
+    // Trigger flashes
+    setShowMourningFlash(true);
+    setTimeout(() => setShowMourningFlash(false), 150);
+    setTimeout(() => setShowMourningFlash(true), 300);
+    setTimeout(() => setShowMourningFlash(false), 450);
+    setTimeout(() => setShowMourningFlash(true), 600);
+    setTimeout(() => setShowMourningFlash(false), 750);
+    setTimeout(() => setShowMourningFlash(true), 900);
+    setTimeout(() => setShowMourningFlash(false), 1050);
+    setTimeout(() => setShowMourningFlash(true), 1200);
+    setTimeout(() => setShowMourningFlash(false), 1350);
+    
+    // Complete after mourning duration
+    setTimeout(() => onComplete(), 10000);
+  };
 
   useEffect(() => {
     // Phase timing
@@ -48,33 +74,13 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       setShowCrashText(true);
     }, 18000));
     
-    // Phase 8: Aftermath - let it sink in
-    timers.push(setTimeout(() => setPhase('aftermath'), 20000));
-    
-    // Phase 9: Mourning scene
-    timers.push(setTimeout(() => setPhase('mourning'), 22000));
-    
-    // Phase 10: Switch to mourning music (1 second after mourning starts) + 5 flashes
+    // Phase 8: Aftermath - show button and WAIT for user tap (no auto transition)
     timers.push(setTimeout(() => {
-      onStartMourningMusic?.();
-      
-      // 5 transparent flashes
-      setShowMourningFlash(true);
-      setTimeout(() => setShowMourningFlash(false), 150);
-      setTimeout(() => setShowMourningFlash(true), 300);
-      setTimeout(() => setShowMourningFlash(false), 450);
-      setTimeout(() => setShowMourningFlash(true), 600);
-      setTimeout(() => setShowMourningFlash(false), 750);
-      setTimeout(() => setShowMourningFlash(true), 900);
-      setTimeout(() => setShowMourningFlash(false), 1050);
-      setTimeout(() => setShowMourningFlash(true), 1200);
-      setTimeout(() => setShowMourningFlash(false), 1350);
-    }, 23000));
+      setPhase('aftermath');
+      setWaitingForUserTap(true);
+    }, 20000));
     
-    // Complete - after mourning scene
-    timers.push(setTimeout(() => {
-      onComplete();
-    }, 32000));
+    // NO automatic mourning phase - user must tap the button!
 
     return () => {
       timers.forEach(t => clearTimeout(t));
@@ -300,6 +306,22 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                   </span>
                 ))}
               </div>
+
+              {/* Hospital Button - requires user tap to proceed (fixes mobile audio!) */}
+              {phase === 'aftermath' && waitingForUserTap && (
+                <button
+                  onClick={handleTakePuppyToHospital}
+                  className="mt-6 bg-gradient-to-r from-red-600 to-red-700 
+                             hover:from-red-500 hover:to-red-600
+                             text-white font-bold text-lg md:text-xl 
+                             px-6 py-4 rounded-2xl shadow-2xl 
+                             border-4 border-red-400
+                             animate-pulse
+                             active:scale-95 transition-transform"
+                >
+                  🏥 Touch to take puppy to the hospital
+                </button>
+              )}
             </div>
           )}
         </div>
