@@ -1,98 +1,91 @@
 
 
-# Add Mourning Scene After Car Crash
+# Enhance Mourning Scene with Bigger Images, Longer Duration, and Music Switch
 
 ## Overview
-After the car hits the pug dog, a new emotional scene will appear showing KP crying in the center with two memorial images - one at the top and one at the bottom.
+Make the mourning scene more impactful by:
+1. Making the pug memorial and grave images larger and closer to KP
+2. Extending the scene duration by 3 seconds
+3. Switching from music 1 to music 2 after 1 second of the mourning scene
 
-## The New Scene Layout
+## Changes Summary
 
-```text
-+--------------------------------+
-|                                |
-|     [Pug Memorial Photo]       |  <- pug1.jpeg (framed with garland)
-|                                |
-|                                |
-|         😢 KP Crying 😢        |  <- KP character with isCrying=true
-|                                |
-|                                |
-|      [Pug Grave Scene]         |  <- pug2.jpeg (grave with photo)
-|                                |
-+--------------------------------+
-```
+### 1. Mourning Scene Layout Changes
+**Current**: Images are `w-40 md:w-56` (top) and `w-48 md:w-64` (bottom), spread apart with `justify-between`  
+**New**: Images will be `w-56 md:w-72` (top) and `w-64 md:w-80` (bottom), using `justify-center gap-4` to bring them closer to KP
 
-## Implementation Steps
+### 2. Timing Adjustments
+| Event | Current | New |
+|-------|---------|-----|
+| Mourning starts | 16000ms | 16000ms (unchanged) |
+| Switch to music 2 | - | 17000ms (1 second after mourning) |
+| Scene complete | 22000ms | 25000ms (+3 seconds) |
 
-### 1. Copy Uploaded Images to Assets
-- Copy `pug1.jpeg` to `src/assets/pug-memorial.jpg` (the framed photo with garland)
-- Copy `pug2.jpeg` to `src/assets/pug-grave.jpg` (the grave scene)
-
-### 2. Update Phase Types
-Add a new `mourning` phase to the Phase type:
-```typescript
-type Phase = 'hospital' | 'kp-exit' | 'popup' | 'enter-car' | 'driving' | 'dog-appears' | 'crash' | 'aftermath' | 'mourning';
-```
-
-### 3. Update Phase Timing
-Adjust the sequence timing:
-- Current `aftermath` phase: 14000ms
-- New `mourning` phase: 16000ms (after the crash text has been shown)
-- Move `onComplete()` call to 22000ms to give time for mourning scene
-
-### 4. Create Mourning Scene UI
-A new scene section with:
-- Sad gradient background (dark/somber colors)
-- Top image: Pug memorial photo with decorative frame styling
-- Center: KP character with `isCrying={true}` prop
-- Bottom image: Pug grave scene
-- Optional sad emojis or text like "RIP" or "Sorry..."
-
-### 5. Update Scene Conditionals
-Add `mourning` to the scene logic and hide the road scene when mourning begins.
+### 3. Music Switching Logic
+- Add a new audio file: `public/music/mourning.mp3` (you'll upload this)
+- At mourning phase + 1 second: fade out music 1, start music 2
+- The component will need access to control the audio (pass audioRef as prop or manage internally)
 
 ## Technical Details
 
-### Files to Modify
+### Files to Modify/Create
+
 | File | Changes |
 |------|---------|
-| `src/assets/pug-memorial.jpg` | Copy pug1.jpeg |
-| `src/assets/pug-grave.jpg` | Copy pug2.jpeg |
-| `src/components/game/MilkHospitalScreen.tsx` | Add mourning phase, imports, and UI |
+| `public/music/mourning.mp3` | Add the new music file (you'll upload) |
+| `src/components/game/MilkHospitalScreen.tsx` | Update image sizes, layout, timing, and add music switching logic |
+| `src/components/game/FeedKPGame.tsx` | Pass audio ref to MilkHospitalScreen for music control |
 
-### New Phase Timing Sequence
-| Phase | Time (ms) | Description |
-|-------|-----------|-------------|
-| hospital | 0 | Building fades in |
-| kp-exit | 2000 | KP exits door |
-| popup | 4000 | Energy boosted popup |
-| enter-car | 6000 | KP walks to car |
-| driving | 8000 | Car starts moving |
-| dog-appears | 10000 | Dog enters from right |
-| crash | 12500 | Collision with BONK text |
-| aftermath | 14000 | After crash effects |
-| mourning | 16000 | KP crying scene |
-| complete | 22000 | Transition to airplane |
-
-### Mourning Scene Structure
+### Updated MilkHospitalScreen Props
 ```typescript
-{phase === 'mourning' && (
-  <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-between py-8">
-    {/* Top - Pug Memorial Photo */}
-    <div className="w-40 md:w-56 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600">
+interface MilkHospitalScreenProps {
+  onComplete: () => void;
+  audioRef?: React.RefObject<HTMLAudioElement | null>;
+}
+```
+
+### Music Switch Logic in MilkHospitalScreen
+```typescript
+const [mourningMusicRef, setMourningMusicRef] = useState<HTMLAudioElement | null>(null);
+
+// When mourning phase starts + 1 second:
+timers.push(setTimeout(() => {
+  // Fade out original music
+  if (audioRef?.current) {
+    audioRef.current.pause();
+  }
+  // Start mourning music
+  const mourningAudio = new Audio('/music/mourning.mp3');
+  mourningAudio.volume = 0.5;
+  mourningAudio.play();
+  setMourningMusicRef(mourningAudio);
+}, 17000)); // 1 second after mourning starts at 16000ms
+```
+
+### Updated Mourning Scene Layout
+```typescript
+{isMourningScene && (
+  <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 
+                  flex flex-col items-center justify-center gap-4 py-4 animate-fade-in">
+    {/* Top - Pug Memorial Photo - BIGGER */}
+    <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
       <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" />
     </div>
     
     {/* Center - KP Crying */}
     <div className="flex flex-col items-center">
       <KPCharacter scale={1} isCrying={true} isHappy={false} happiness={0} />
-      <p className="text-white text-xl font-bold mt-4">Sorry... 😢</p>
+      <p className="text-white text-xl font-bold mt-2">Sorry... 😢</p>
     </div>
     
-    {/* Bottom - Pug Grave */}
-    <div className="w-48 md:w-64 rounded-xl overflow-hidden shadow-2xl">
+    {/* Bottom - Pug Grave - BIGGER */}
+    <div className="w-64 md:w-80 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
       <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" />
     </div>
   </div>
 )}
 ```
+
+## Next Steps
+Please upload the mourning music file (music 2) and I'll implement all these changes together.
 
