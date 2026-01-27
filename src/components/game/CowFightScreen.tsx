@@ -23,7 +23,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
 
   // Stage timing
   useEffect(() => {
-    // After 4 seconds, characters enter
+    // After 3 seconds, characters enter
     const entranceTimer = setTimeout(() => {
       setGameState('entrance');
       setCharactersEntered(true);
@@ -33,7 +33,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         setGameState('ready');
         setShowPopup(true);
       }, 1200);
-    }, 4000);
+    }, 3000);
 
     return () => clearTimeout(entranceTimer);
   }, []);
@@ -66,19 +66,23 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         setHitFlash(false);
       }, 300);
       
-      setTimeout(() => {
-        setIsKPHit(false);
-        setShowStars(false);
-      }, 600);
+      // Only clear hit effects if NOT a KO
+      if (newHealth > 0) {
+        setTimeout(() => {
+          setIsKPHit(false);
+          setShowStars(false);
+        }, 600);
+      }
       
       // Check for KO
       if (newHealth <= 0) {
-        // Keep KP hit/crying state active
+        // Keep KP crying and cow angry for 3 seconds
         setIsKPHit(true);
+        setShowStars(true);
         
         setTimeout(() => {
           setGameState('ko');
-          setCowVictory(true);
+          // Don't set cowVictory - keep cow in angry state
           
           // Show cow angry + KP crying for 3 seconds before end screen
           setTimeout(() => {
