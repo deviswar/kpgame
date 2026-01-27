@@ -41,7 +41,7 @@ const WelcomeScreen = ({
               i dont have ==D but i want  ({'{}'})
             </p>
             <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
-              i do vaddi vyaparam, but no one pays my money back :( 💸
+              i do vaddi vyaparam, but no one pays my money back :( 
             </p>
             <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
               (.) (.) i like milk :) 🥛
