@@ -56,6 +56,9 @@ const WelcomeScreen = ({
         <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
+        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
+          🔊 Turn your volume up for the best experience
+        </p>
       </div>
     </div>;
 };
