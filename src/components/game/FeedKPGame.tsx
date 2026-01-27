@@ -17,6 +17,7 @@ const FeedKPGame = () => {
   const [showMilkHospital, setShowMilkHospital] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioInitialized = useRef(false);
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
@@ -42,18 +43,19 @@ const FeedKPGame = () => {
     };
   }, []);
 
-  // Keep audio playing when game is active
+  // Keep audio playing when game is active (but NOT when mourning music is playing)
   useEffect(() => {
-    if (gameStarted && audioRef.current) {
+    if (gameStarted && audioRef.current && !showMilkHospital && !showAirplane) {
       const checkAudio = setInterval(() => {
-        if (audioRef.current && audioRef.current.paused && !showAirplane) {
+        // Only keep Music 1 playing if mourning music is NOT playing
+        if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
           audioRef.current.play().catch(() => {});
         }
       }, 1000);
 
       return () => clearInterval(checkAudio);
     }
-  }, [gameStarted, showAirplane]);
+  }, [gameStarted, showMilkHospital, showAirplane]);
 
   const handleStartGame = () => {
     setGameStarted(true);
@@ -97,8 +99,28 @@ const FeedKPGame = () => {
       setTimeout(() => setShowCowFight(true), 800);
     }
   }, [happiness, showAirplane]);
+  // Callback to start mourning music - passed to MilkHospitalScreen
+  const handleStartMourningMusic = useCallback(() => {
+    // Stop Music 1 completely
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    // Start Music 2 and keep it playing
+    const mourningAudio = new Audio('/music/mourning.mp3');
+    mourningAudio.volume = 0.5;
+    mourningAudio.loop = true;
+    mourningAudio.play().catch(() => {});
+    mourningAudioRef.current = mourningAudio;
+  }, []);
+
   const handleGoHome = () => {
-    // Stop the background music if playing
+    // Stop Music 2 if playing
+    if (mourningAudioRef.current) {
+      mourningAudioRef.current.pause();
+      mourningAudioRef.current = null;
+    }
+    // Stop Music 1 if playing
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -148,7 +170,7 @@ const FeedKPGame = () => {
   }
 
   if (showMilkHospital) {
-    return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} audioRef={audioRef} />;
+    return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} onStartMourningMusic={handleStartMourningMusic} />;
   }
 
   if (showAirplane) {
