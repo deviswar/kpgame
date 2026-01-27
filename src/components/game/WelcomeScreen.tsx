@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import KPCharacter from './KPCharacter';
-import QTCharacter from './QTCharacter';
+import qtGirlImage from '@/assets/qt-girl.jpg';
 interface WelcomeScreenProps {
   onStart: () => void;
 }
@@ -116,8 +116,12 @@ const WelcomeScreen = ({
             <span className="text-white font-bold text-sm md:text-base">QT</span>
           </div>
           
-          {/* QT Character */}
-          <QTCharacter scale={0.7} isAngry={true} />
+          {/* QT Character - Image */}
+          <img 
+            src={qtGirlImage} 
+            alt="QT" 
+            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
+          />
           
           {/* Speech Bubble - angry response */}
           <div className="relative bg-white rounded-xl px-4 py-3 mt-4 shadow-lg animate-speech-bubble" style={{
