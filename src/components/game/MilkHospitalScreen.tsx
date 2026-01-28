@@ -31,9 +31,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showMourningFlash, setShowMourningFlash] = useState(false);
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Preload mourning images and audio on mount
+  // Preload mourning images on mount (audio is handled by parent)
   useEffect(() => {
     const loadAssets = async () => {
       // Preload mourning images
@@ -44,37 +43,12 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       setImagesLoaded(true);
     };
     loadAssets();
-
-    // Preload mourning audio
-    const audio = new Audio('/music/mourning.mp3');
-    audio.volume = 0.5;
-    audio.loop = true;
-    audio.preload = 'auto';
-    mourningAudioRef.current = audio;
-
-    return () => {
-      if (mourningAudioRef.current) {
-        mourningAudioRef.current.pause();
-        mourningAudioRef.current = null;
-      }
-    };
   }, []);
 
   // Handler for the hospital button - user tap triggers mourning music (works on mobile!)
   const handleTakePuppyToHospital = () => {
-    // User tapped - this is a valid gesture for audio!
-    // Try to play preloaded audio first, fallback to callback
-    if (mourningAudioRef.current) {
-      mourningAudioRef.current.currentTime = 0;
-      mourningAudioRef.current.play()
-        .then(() => console.log('Mourning audio playing from preload'))
-        .catch(() => {
-          console.log('Preload failed, using callback');
-          onStartMourningMusic?.();
-        });
-    } else {
-      onStartMourningMusic?.();
-    }
+    // Parent handles all audio (stops Music 1, starts Music 2)
+    onStartMourningMusic?.();
     
     // Go to mourning phase
     setPhase('mourning');

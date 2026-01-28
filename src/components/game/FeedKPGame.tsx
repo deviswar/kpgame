@@ -43,33 +43,19 @@ const FeedKPGame = () => {
     };
   }, []);
 
-  // Keep audio playing when game is active (but NOT when mourning music is playing)
+  // Keep Music 1 playing UNTIL mourning music starts (tracked by mourningAudioRef)
   useEffect(() => {
-    // Only run the interval when NOT in mourning/airplane screens
-    if (gameStarted && audioRef.current && !showMilkHospital && !showAirplane) {
+    if (gameStarted && audioRef.current && !mourningAudioRef.current) {
       const checkAudio = setInterval(() => {
-        // Only keep Music 1 playing if NOT in mourning phase
-        if (audioRef.current && audioRef.current.paused && !showMilkHospital && !showAirplane) {
+        // Only keep Music 1 playing if mourning hasn't started
+        if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
           audioRef.current.play().catch(() => {});
         }
       }, 1000);
 
       return () => clearInterval(checkAudio);
     }
-  }, [gameStarted, showMilkHospital, showAirplane]);
-
-  // CRITICAL: Stop Music 1 immediately when transitioning to airplane (end screen)
-  // Music 2 (mourning) should CONTINUE playing through the airplane screen
-  useEffect(() => {
-    if (showAirplane) {
-      // Stop Music 1 completely when entering airplane phase
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        console.log('Music 1 stopped for airplane phase - mourning music continues');
-      }
-    }
-  }, [showAirplane]);
+  }, [gameStarted]);
 
   const handleStartGame = () => {
     setGameStarted(true);
