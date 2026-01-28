@@ -61,15 +61,76 @@ const WelcomeScreen = ({
         {/* Header with title and KP */}
         <div className="flex items-center gap-2 -mt-48">
           <h1 
-            className="text-5xl md:text-7xl tracking-wide"
+            className="text-5xl md:text-7xl tracking-wide relative"
             style={{ 
-              fontFamily: '"Bungee Shade", cursive',
-              color: '#FFF8DC',
-              textShadow: '3px 3px 0px #8B4513, 6px 6px 0px rgba(0,0,0,0.3)',
-              WebkitTextStroke: '1px #CD853F'
+              fontFamily: '"Bangers", cursive',
+              color: '#FFD93D',
+              textShadow: `
+                0 3px 0 #E8A800,
+                0 6px 0 #D4950A,
+                0 9px 0 #B87A00,
+                0 12px 4px rgba(0,0,0,0.3),
+                0 14px 8px rgba(0,0,0,0.2)
+              `,
+              WebkitTextStroke: '3px #FFFFFF',
+              paintOrder: 'stroke fill',
+              letterSpacing: '0.05em',
             }}
           >
             KP Game
+            {/* Drip effects */}
+            <span 
+              className="absolute text-2xl md:text-4xl"
+              style={{
+                bottom: '-0.4em',
+                left: '0.1em',
+                color: '#FFD93D',
+                textShadow: '0 2px 0 #E8A800, 0 4px 0 #D4950A',
+                WebkitTextStroke: '2px #FFFFFF',
+                paintOrder: 'stroke fill',
+              }}
+            >
+              ◣
+            </span>
+            <span 
+              className="absolute text-lg md:text-2xl"
+              style={{
+                bottom: '-0.6em',
+                left: '1.8em',
+                color: '#FFD93D',
+                textShadow: '0 2px 0 #E8A800',
+                WebkitTextStroke: '1.5px #FFFFFF',
+                paintOrder: 'stroke fill',
+              }}
+            >
+              ◣
+            </span>
+            <span 
+              className="absolute text-xl md:text-3xl"
+              style={{
+                bottom: '-0.5em',
+                right: '1.5em',
+                color: '#FFD93D',
+                textShadow: '0 2px 0 #E8A800, 0 4px 0 #D4950A',
+                WebkitTextStroke: '2px #FFFFFF',
+                paintOrder: 'stroke fill',
+              }}
+            >
+              ◣
+            </span>
+            <span 
+              className="absolute text-lg md:text-2xl"
+              style={{
+                bottom: '-0.55em',
+                right: '0.2em',
+                color: '#FFD93D',
+                textShadow: '0 2px 0 #E8A800',
+                WebkitTextStroke: '1.5px #FFFFFF',
+                paintOrder: 'stroke fill',
+              }}
+            >
+              ◣
+            </span>
           </h1>
           <div className="scale-75 origin-center -my-8">
             <KPCharacter scale={0.8} isHappy={false} happiness={50} />
