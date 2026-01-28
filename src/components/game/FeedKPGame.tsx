@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import HappinessMeter from './HappinessMeter';
 import KPCharacter from './KPCharacter';
 import DenguluFood from './DenguluFood';
@@ -6,6 +6,7 @@ import AirplaneAnimation from './AirplaneAnimation';
 import WelcomeScreen from './WelcomeScreen';
 import CowFightScreen from './CowFightScreen';
 import MilkHospitalScreen from './MilkHospitalScreen';
+import { playGameMusic, playMourningMusic, stopAll } from '@/lib/audioManager';
 
 const FeedKPGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
@@ -16,68 +17,15 @@ const FeedKPGame = () => {
   const [showCowFight, setShowCowFight] = useState(false);
   const [showMilkHospital, setShowMilkHospital] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
-  const audioInitialized = useRef(false);
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
-  // Initialize audio - recreate fresh on every mount
-  useEffect(() => {
-    // Always create fresh audio instance
-    const audio = new Audio('/music/background.mp3');
-    audio.loop = true;
-    audio.volume = 0.5;
-    audio.preload = 'auto';
-    
-    audioRef.current = audio;
-    audioInitialized.current = true;
-    
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
-        audioInitialized.current = false;
-      }
-    };
-  }, []);
-
-  // Keep Music 1 playing UNTIL mourning music starts (tracked by mourningAudioRef)
-  useEffect(() => {
-    if (gameStarted && audioRef.current && !mourningAudioRef.current) {
-      const checkAudio = setInterval(() => {
-        // Only keep Music 1 playing if mourning hasn't started
-        if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
-          audioRef.current.play().catch(() => {});
-        }
-      }, 1000);
-
-      return () => clearInterval(checkAudio);
-    }
-  }, [gameStarted]);
-
   const handleStartGame = () => {
     setGameStarted(true);
-    
-    // Play audio with retry logic
-    const playAudio = (attempts = 0) => {
-      if (!audioRef.current || attempts > 3) return;
-      
-      audioRef.current.currentTime = 0;
-      audioRef.current.play()
-        .then(() => {
-          console.log('Audio playing successfully');
-        })
-        .catch((error) => {
-          console.error('Audio play failed, attempt:', attempts + 1, error);
-          // Retry after a short delay
-          setTimeout(() => playAudio(attempts + 1), 200);
-        });
-    };
-    
-    playAudio();
+    // Start Music 2 via audio manager
+    playGameMusic();
   };
+
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
     const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
@@ -99,56 +47,17 @@ const FeedKPGame = () => {
       setTimeout(() => setShowCowFight(true), 800);
     }
   }, [happiness, showAirplane]);
+
   // Callback to start mourning music - passed to MilkHospitalScreen
-  // This music should continue playing through the airplane/end screen!
+  // This IMMEDIATELY stops Music 2 and starts Music 3
   const handleStartMourningMusic = useCallback(() => {
-    console.log('Starting mourning music (Music 2) - will continue through end screen');
-    
-    // Stop Music 1 completely
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      console.log('Music 1 stopped for mourning phase');
-    }
-    
-    // Start Music 2 and keep it playing (it will loop through airplane screen too)
-    const mourningAudio = new Audio('/music/mourning.mp3');
-    mourningAudio.volume = 0.5;
-    mourningAudio.loop = true;
-    mourningAudio.preload = 'auto';
-    
-    mourningAudio.play()
-      .then(() => {
-        console.log('Music 2 playing successfully - will continue to end screen');
-        mourningAudioRef.current = mourningAudio;
-      })
-      .catch((error) => {
-        console.error('Music 2 play failed:', error);
-        // Retry after a short delay
-        setTimeout(() => {
-          mourningAudio.play()
-            .then(() => {
-              console.log('Music 2 playing on retry');
-              mourningAudioRef.current = mourningAudio;
-            })
-            .catch((e) => console.error('Music 2 retry failed:', e));
-        }, 200);
-      });
+    // Audio manager handles stopping Music 2 and starting Music 3 atomically
+    playMourningMusic();
   }, []);
 
   const handleGoHome = () => {
-    // Stop Music 2 if playing
-    if (mourningAudioRef.current) {
-      mourningAudioRef.current.pause();
-      mourningAudioRef.current = null;
-    }
-    // Stop Music 1 if playing
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    // Reset audio initialized flag so it can play again on restart
-    audioInitialized.current = false;
+    // Stop all music via audio manager
+    stopAll();
     
     // Reset all state and go back to welcome screen
     setHappiness(0);
@@ -157,14 +66,6 @@ const FeedKPGame = () => {
     setShowMilkHospital(false);
     setShowAirplane(false);
     setGameStarted(false);
-    
-    // Recreate audio for next game
-    const audio = new Audio('/music/background.mp3');
-    audio.loop = true;
-    audio.volume = 0.5;
-    audio.preload = 'auto';
-    audioRef.current = audio;
-    audioInitialized.current = true;
   };
 
   const handleCowFightComplete = () => {
@@ -176,6 +77,7 @@ const FeedKPGame = () => {
     setShowMilkHospital(false);
     setShowAirplane(true);
   };
+
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
@@ -183,6 +85,7 @@ const FeedKPGame = () => {
     setShowMilkHospital(false);
     setShowAirplane(false);
   };
+
   if (!gameStarted) {
     return <WelcomeScreen onStart={handleStartGame} />;
   }
@@ -198,6 +101,7 @@ const FeedKPGame = () => {
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
   }
+
   return <div className="h-screen h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-2 flex items-center justify-between gap-2">
