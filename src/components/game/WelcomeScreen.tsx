@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -13,9 +13,14 @@ const WelcomeScreen = ({
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
 
+  // Preload all audio on mount so they're ready for instant playback
+  useEffect(() => {
+    preloadAllAudio();
+  }, []);
+
   const handleShowRizz = () => {
     setShowRizzScene(true);
-    // Play Music 1 via audio manager
+    // Play Music 1 via audio manager (now preloaded)
     playRizz();
   };
 
