@@ -45,10 +45,11 @@ const FeedKPGame = () => {
 
   // Keep audio playing when game is active (but NOT when mourning music is playing)
   useEffect(() => {
+    // Only run the interval when NOT in mourning/airplane screens
     if (gameStarted && audioRef.current && !showMilkHospital && !showAirplane) {
       const checkAudio = setInterval(() => {
-        // Only keep Music 1 playing if mourning music is NOT playing
-        if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
+        // Only keep Music 1 playing if NOT in mourning phase
+        if (audioRef.current && audioRef.current.paused && !showMilkHospital && !showAirplane) {
           audioRef.current.play().catch(() => {});
         }
       }, 1000);
@@ -57,17 +58,18 @@ const FeedKPGame = () => {
     }
   }, [gameStarted, showMilkHospital, showAirplane]);
 
-  // CRITICAL: Stop Music 1 immediately when entering mourning-related screens
+  // CRITICAL: Stop Music 1 immediately when transitioning to airplane (end screen)
+  // Music 2 (mourning) should CONTINUE playing through the airplane screen
   useEffect(() => {
-    if (showMilkHospital || showAirplane) {
-      // Stop Music 1 completely when entering mourning phase
+    if (showAirplane) {
+      // Stop Music 1 completely when entering airplane phase
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
-        console.log('Music 1 force-stopped for mourning phase');
+        console.log('Music 1 stopped for airplane phase - mourning music continues');
       }
     }
-  }, [showMilkHospital, showAirplane]);
+  }, [showAirplane]);
 
   const handleStartGame = () => {
     setGameStarted(true);
@@ -112,17 +114,18 @@ const FeedKPGame = () => {
     }
   }, [happiness, showAirplane]);
   // Callback to start mourning music - passed to MilkHospitalScreen
+  // This music should continue playing through the airplane/end screen!
   const handleStartMourningMusic = useCallback(() => {
-    console.log('Starting mourning music (Music 2)');
+    console.log('Starting mourning music (Music 2) - will continue through end screen');
     
     // Stop Music 1 completely
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      console.log('Music 1 stopped');
+      console.log('Music 1 stopped for mourning phase');
     }
     
-    // Start Music 2 and keep it playing
+    // Start Music 2 and keep it playing (it will loop through airplane screen too)
     const mourningAudio = new Audio('/music/mourning.mp3');
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
@@ -130,7 +133,7 @@ const FeedKPGame = () => {
     
     mourningAudio.play()
       .then(() => {
-        console.log('Music 2 playing successfully');
+        console.log('Music 2 playing successfully - will continue to end screen');
         mourningAudioRef.current = mourningAudio;
       })
       .catch((error) => {

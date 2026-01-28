@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import KPCharacter from './KPCharacter';
 
 interface AirplaneAnimationProps {
@@ -30,6 +30,8 @@ const ConfettiPiece = ({ delay, left }: { delay: number; left: number }) => {
 
 const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   const [phase, setPhase] = useState<'celebrating' | 'flying'>('celebrating');
+  const [showVideo, setShowVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setPhase('flying'), 1500);
@@ -41,6 +43,53 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
     delay: Math.random() * 2,
     left: Math.random() * 100,
   }));
+
+  const handleWatchVideo = () => {
+    setShowVideo(true);
+    // Auto-play video when shown
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(console.error);
+      }
+    }, 100);
+  };
+
+  // Video screen
+  if (showVideo) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+        {/* Video - top half */}
+        <div className="flex-1 w-full flex items-center justify-center p-4 max-h-[60vh]">
+          <video
+            ref={videoRef}
+            src="/music/leaked-video.mp4"
+            controls
+            autoPlay
+            playsInline
+            preload="auto"
+            className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50"
+            style={{ maxHeight: '50vh' }}
+          />
+        </div>
+
+        {/* Bottom section */}
+        <div className="flex flex-col items-center justify-center p-6 gap-4">
+          {/* Go to Home button */}
+          <button
+            onClick={onComplete}
+            className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
+          >
+            Go to Home 🏠
+          </button>
+          
+          {/* PhonePe request */}
+          <p className="text-white/90 text-base md:text-lg font-medium">
+            Can you give 100 rupees cash? I will do PhonePe 💸
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200">
@@ -89,12 +138,12 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           Bye guys, I'm going to Netherlands!
         </h2>
         
-        {/* Go to Home button */}
+        {/* Watch my leaked video button */}
         <button
-          onClick={onComplete}
-          className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
+          onClick={handleWatchVideo}
+          className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl animate-pulse"
         >
-          Go to Home 🏠
+          🎬 Watch my leaked video 🔥
         </button>
         
         {/* PhonePe request */}
