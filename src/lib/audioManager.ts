@@ -61,6 +61,40 @@ export const preloadAllAudio = () => {
   }
 };
 
+// Specific preload for mourning music - call this when entering milk hospital
+export const preloadMourningMusic = () => {
+  if (!mourningAudio) {
+    mourningAudio = new Audio('/music/mourning.mp3');
+    mourningAudio.volume = 0.5;
+    mourningAudio.loop = true;
+    mourningAudio.preload = 'auto';
+  }
+  
+  // Force reload to ensure it's cached
+  mourningAudio.load();
+  
+  // Also try to "prime" the audio by playing silently for a moment
+  const originalVolume = mourningAudio.volume;
+  mourningAudio.volume = 0;
+  mourningAudio.currentTime = 0;
+  
+  const primePromise = mourningAudio.play();
+  if (primePromise !== undefined) {
+    primePromise.then(() => {
+      // Immediately pause after priming
+      mourningAudio!.pause();
+      mourningAudio!.currentTime = 0;
+      mourningAudio!.volume = originalVolume;
+      mourningPreloaded = true;
+      console.log('Mourning audio primed and ready');
+    }).catch(() => {
+      // If priming fails, at least the load() will help
+      mourningAudio!.volume = originalVolume;
+      console.log('Mourning audio loaded (prime failed, but ready)');
+    });
+  }
+};
+
 // ============ MUSIC 1: RIZZ ============
 export const playRizz = () => {
   if (rizzPlaying) return;

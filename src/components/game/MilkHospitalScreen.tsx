@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
@@ -6,6 +6,7 @@ import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
 import villageMilkBanner from '@/assets/village-milk-banner.jpg';
 import pugMemorial from '@/assets/pug-memorial.jpg';
 import pugGrave from '@/assets/pug-grave.jpg';
+import { preloadMourningMusic } from '@/lib/audioManager';
 
 // Preload images helper
 const preloadImage = (src: string): Promise<void> => {
@@ -32,9 +33,12 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Preload mourning images on mount (audio is handled by parent)
+  // Preload mourning music AND images on mount so they're ready for instant playback
   useEffect(() => {
     const loadAssets = async () => {
+      // Preload mourning audio immediately (primes it for instant playback)
+      preloadMourningMusic();
+      
       // Preload mourning images
       await Promise.all([
         preloadImage(pugMemorial),
