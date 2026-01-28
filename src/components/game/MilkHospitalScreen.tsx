@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
@@ -6,6 +6,16 @@ import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
 import villageMilkBanner from '@/assets/village-milk-banner.jpg';
 import pugMemorial from '@/assets/pug-memorial.jpg';
 import pugGrave from '@/assets/pug-grave.jpg';
+
+// Preload images helper
+const preloadImage = (src: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    img.src = src;
+  });
+};
 
 interface MilkHospitalScreenProps {
   onComplete: () => void;
@@ -20,11 +30,51 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showCrashText, setShowCrashText] = useState(false);
   const [showMourningFlash, setShowMourningFlash] = useState(false);
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const mourningAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Preload mourning images and audio on mount
+  useEffect(() => {
+    const loadAssets = async () => {
+      // Preload mourning images
+      await Promise.all([
+        preloadImage(pugMemorial),
+        preloadImage(pugGrave)
+      ]);
+      setImagesLoaded(true);
+    };
+    loadAssets();
+
+    // Preload mourning audio
+    const audio = new Audio('/music/mourning.mp3');
+    audio.volume = 0.5;
+    audio.loop = true;
+    audio.preload = 'auto';
+    mourningAudioRef.current = audio;
+
+    return () => {
+      if (mourningAudioRef.current) {
+        mourningAudioRef.current.pause();
+        mourningAudioRef.current = null;
+      }
+    };
+  }, []);
 
   // Handler for the hospital button - user tap triggers mourning music (works on mobile!)
   const handleTakePuppyToHospital = () => {
     // User tapped - this is a valid gesture for audio!
-    onStartMourningMusic?.();
+    // Try to play preloaded audio first, fallback to callback
+    if (mourningAudioRef.current) {
+      mourningAudioRef.current.currentTime = 0;
+      mourningAudioRef.current.play()
+        .then(() => console.log('Mourning audio playing from preload'))
+        .catch(() => {
+          console.log('Preload failed, using callback');
+          onStartMourningMusic?.();
+        });
+    } else {
+      onStartMourningMusic?.();
+    }
     
     // Go to mourning phase
     setPhase('mourning');
@@ -42,8 +92,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     setTimeout(() => setShowMourningFlash(true), 1200);
     setTimeout(() => setShowMourningFlash(false), 1350);
     
-    // Complete after mourning duration
-    setTimeout(() => onComplete(), 10000);
+    // Complete after mourning duration (extended by 1.3s: 10000 + 1300 = 11300)
+    setTimeout(() => onComplete(), 11300);
   };
 
   useEffect(() => {
@@ -243,8 +293,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           <div 
             className={`absolute bottom-16 w-32 md:w-40 ${
               phase === 'driving' ? 'animate-car-drive-continuous' :
-              phase === 'dog-appears' ? 'animate-car-drive-to-crash' :
-              phase === 'crash' ? 'left-[42%] animate-car-crash' :
+              phase === 'dog-appears' ? 'animate-car-drive-to-crash-smooth' :
+              phase === 'crash' ? 'left-[42%] animate-car-crash-smooth' :
               'left-[42%]'
             }`}
           >
@@ -259,8 +309,8 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && (
             <div 
               className={`absolute bottom-16 w-28 md:w-36 ${
-                phase === 'dog-appears' ? 'animate-dog-walk-to-crash' :
-                phase === 'crash' ? 'left-[52%] animate-dog-hit' :
+                phase === 'dog-appears' ? 'animate-dog-walk-to-crash-smooth' :
+                phase === 'crash' ? 'left-[52%] animate-dog-hit-smooth' :
                 'left-[75%] rotate-180 opacity-50'
               }`}
             >
@@ -336,9 +386,11 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           )}
           
           {/* Top - Pug Memorial Photo - BIGGER */}
-          <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
-            <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" />
-          </div>
+          {imagesLoaded && (
+            <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
+              <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" loading="eager" />
+            </div>
+          )}
           
           {/* Center - KP Crying */}
           <div className="flex flex-col items-center">
@@ -347,9 +399,11 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           </div>
           
           {/* Bottom - Pug Grave - BIGGER */}
-          <div className="w-64 md:w-80 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
-            <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" />
-          </div>
+          {imagesLoaded && (
+            <div className="w-64 md:w-80 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
+              <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" loading="eager" />
+            </div>
+          )}
         </div>
       )}
     </div>

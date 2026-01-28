@@ -469,3 +469,73 @@
 .animate-speech-bubble {
   animation: speech-bubble-pop 0.4s ease-out forwards;
 }
+
+/* Text shine/highlight animation - sweeping light effect */
+@keyframes text-shine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-text-shine {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 1) 25%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: text-shine 2s ease-in-out infinite;
+}
+
+/* Smoother car-dog crash animations */
+@keyframes car-drive-to-crash-smooth {
+  0% { left: 25%; }
+  70% { left: 40%; }
+  85% { left: 41.5%; }
+  100% { left: 42%; }
+}
+
+@keyframes dog-walk-to-crash-smooth {
+  0% { left: 100%; transform: translateX(0); }
+  60% { left: 60%; transform: translateX(0); }
+  85% { left: 54%; transform: translateX(0); }
+  100% { left: 52%; transform: translateX(0); }
+}
+
+@keyframes car-crash-smooth {
+  0% { transform: rotate(0deg) scale(1); }
+  15% { transform: translateX(12px) rotate(-10deg) scale(1.03); }
+  30% { transform: translateX(-6px) rotate(6deg) scale(1.01); }
+  50% { transform: translateX(4px) rotate(-3deg) scale(1); }
+  70% { transform: translateX(-2px) rotate(1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes dog-hit-smooth {
+  0% { transform: rotate(0deg) scale(1); opacity: 1; }
+  15% { transform: translateX(15px) rotate(20deg) translateY(-25px) scale(1.05); opacity: 1; }
+  35% { transform: translateX(40px) rotate(70deg) translateY(-45px) scale(1); opacity: 1; }
+  55% { transform: translateX(70px) rotate(120deg) translateY(-30px) scale(0.95); opacity: 0.9; }
+  75% { transform: translateX(95px) rotate(160deg) translateY(-5px) scale(0.88); opacity: 0.85; }
+  100% { transform: translateX(115px) rotate(185deg) translateY(0) scale(0.82); opacity: 0.8; }
+}
+
+.animate-car-drive-to-crash-smooth {
+  animation: car-drive-to-crash-smooth 4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-dog-walk-to-crash-smooth {
+  animation: dog-walk-to-crash-smooth 4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.animate-car-crash-smooth {
+  animation: car-crash-smooth 0.6s ease-out;
+}
+
+.animate-dog-hit-smooth {
+  animation: dog-hit-smooth 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
