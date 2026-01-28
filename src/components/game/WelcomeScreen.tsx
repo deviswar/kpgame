@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
+import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
 
 interface WelcomeScreenProps {
@@ -102,8 +103,8 @@ const WelcomeScreen = ({
           <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
             Powered by <span className="text-yellow-400 font-bold">Rapido</span>
           </p>
-        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce animate-text-shine">
-          🔊 Turn up your volume for the best experience
+        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
+          🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
         </div>
       </div>;
@@ -184,8 +185,8 @@ const WelcomeScreen = ({
         <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
-        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-text-shine">
-          🔊 Turn up your volume for the best experience
+        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
+          🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
       </div>
     </div>;
