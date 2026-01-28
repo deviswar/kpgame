@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
+import { playRizz, stopRizz } from '@/lib/audioManager';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -11,42 +12,17 @@ const WelcomeScreen = ({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
-  const rizzAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Preload rizz audio on mount to prevent delay
-  useEffect(() => {
-    const audio = new Audio('/music/rizz.mp4');
-    audio.volume = 0.5;
-    audio.loop = true;
-    audio.preload = 'auto';
-    rizzAudioRef.current = audio;
-    
-    return () => {
-      if (rizzAudioRef.current) {
-        rizzAudioRef.current.pause();
-        rizzAudioRef.current = null;
-      }
-    };
-  }, []);
 
   const handleShowRizz = () => {
     setShowRizzScene(true);
-    
-    // Play preloaded audio immediately
-    if (rizzAudioRef.current) {
-      rizzAudioRef.current.currentTime = 0;
-      rizzAudioRef.current.play().catch(e => console.error('Rizz audio failed:', e));
-    }
+    // Play Music 1 via audio manager
+    playRizz();
   };
 
   const handleStartGame = () => {
-    // Stop rizz audio
-    if (rizzAudioRef.current) {
-      rizzAudioRef.current.pause();
-      rizzAudioRef.current = null;
-    }
-    
-    // Call original onStart (which triggers Music 1)
+    // Stop Music 1 via audio manager
+    stopRizz();
+    // Call onStart (which triggers Music 2 in parent)
     onStart();
   };
 
