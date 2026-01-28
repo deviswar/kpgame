@@ -148,7 +148,7 @@ const WelcomeScreen = ({
               letterSpacing: '0.1em'
             }}
           >
-            🎮 Fun Facts about me 🎮
+            Fun Facts about me
           </h2>
           
           <div className="space-y-1.5 text-center">
