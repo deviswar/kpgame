@@ -294,7 +294,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             className={`absolute bottom-16 w-32 md:w-40 ${
               phase === 'driving' ? 'animate-car-drive-continuous' :
               phase === 'dog-appears' ? 'animate-car-drive-to-crash-smooth' :
-              phase === 'crash' ? 'left-[45%] animate-car-crash-smooth' :
+              phase === 'crash' ? 'left-[42%] animate-car-crash-smooth' :
               'left-[42%]'
             }`}
           >
@@ -310,7 +310,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             <div 
               className={`absolute bottom-16 w-28 md:w-36 ${
                 phase === 'dog-appears' ? 'animate-dog-walk-to-crash-smooth' :
-                phase === 'crash' ? 'left-[48%] animate-dog-hit-smooth' :
+                phase === 'crash' ? 'left-[52%] animate-dog-hit-smooth' :
                 'left-[75%] rotate-180 opacity-50'
               }`}
             >

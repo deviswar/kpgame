@@ -122,7 +122,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
 
       {/* Front Left Leg with Boxing Glove - THE PUNCHING ARM */}
       <div 
-        className={`absolute ${isPunching ? 'animate-glove-punch' : ''}`}
+        className={`absolute transition-transform duration-100 ${isPunching ? 'translate-x-12' : ''}`}
         style={{
           width: width * 0.08,
           height: height * 0.28,
@@ -206,42 +206,6 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
             }}
           />
         </div>
-        
-        {/* Speed lines when punching */}
-        {isPunching && (
-          <>
-            <div 
-              className="absolute bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-80"
-              style={{
-                top: '55%',
-                left: '-120%',
-                width: '180%',
-                height: '4px',
-                animation: 'fade-out 0.25s forwards',
-              }}
-            />
-            <div 
-              className="absolute bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-70"
-              style={{
-                top: '68%',
-                left: '-100%',
-                width: '150%',
-                height: '3px',
-                animation: 'fade-out 0.35s forwards',
-              }}
-            />
-            <div 
-              className="absolute bg-gradient-to-r from-transparent via-red-400 to-transparent opacity-60"
-              style={{
-                top: '80%',
-                left: '-80%',
-                width: '120%',
-                height: '2px',
-                animation: 'fade-out 0.4s forwards',
-              }}
-            />
-          </>
-        )}
       </div>
       
       {/* Second front leg */}
@@ -367,22 +331,15 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           />
         </div>
 
-        {/* Angry eyes with improved eyebrows */}
+        {/* Angry eyes */}
         <div className="absolute top-[30%] left-1/2 -translate-x-1/2 flex gap-2">
           <div className="relative">
-            {/* Left angry eyebrow - thicker and more expressive */}
+            {/* Left angry eyebrow */}
             <div 
-              className="absolute rounded-sm transition-transform duration-75"
+              className="absolute -top-2 left-0 h-1 rounded-full bg-gray-800"
               style={{ 
-                width: width * 0.13, 
-                height: height * 0.02,
-                top: '-10px',
-                left: '-2px',
-                background: 'linear-gradient(to bottom, #1a1a1a, #3d3d3d)',
-                transform: isPunching ? 'rotate(28deg) scaleY(1.3)' : 'rotate(22deg)',
-                transformOrigin: 'right center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
-                borderRadius: '3px',
+                width: width * 0.1, 
+                transform: isPunching ? 'rotate(20deg)' : 'rotate(15deg)',
               }}
             />
             <div 
@@ -393,25 +350,17 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
                 className="rounded-full bg-gray-900"
                 style={{ width: width * 0.05, height: width * 0.05 }}
               >
-                {/* Angry pupil - looking at target */}
                 <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-white" />
               </div>
             </div>
           </div>
           <div className="relative">
-            {/* Right angry eyebrow - thicker and more expressive */}
+            {/* Right angry eyebrow */}
             <div 
-              className="absolute rounded-sm transition-transform duration-75"
+              className="absolute -top-2 right-0 h-1 rounded-full bg-gray-800"
               style={{ 
-                width: width * 0.13, 
-                height: height * 0.02,
-                top: '-10px',
-                right: '-2px',
-                background: 'linear-gradient(to bottom, #1a1a1a, #3d3d3d)',
-                transform: isPunching ? 'rotate(-28deg) scaleY(1.3)' : 'rotate(-22deg)',
-                transformOrigin: 'left center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
-                borderRadius: '3px',
+                width: width * 0.1, 
+                transform: isPunching ? 'rotate(-20deg)' : 'rotate(-15deg)',
               }}
             />
             <div 
@@ -469,44 +418,26 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
         />
       </div>
 
-      {/* Tail - Improved with better curve and animation */}
+      {/* Tail */}
       <div 
-        className={`absolute ${isPunching ? 'animate-wiggle-fast' : 'animate-wiggle'}`}
+        className="absolute animate-wiggle"
         style={{
-          width: width * 0.05,
-          height: height * 0.24,
-          bottom: height * 0.42,
+          width: width * 0.04,
+          height: height * 0.2,
+          bottom: height * 0.4,
           right: width * 0.02,
-          background: 'linear-gradient(to bottom, #f5f5ed, #e8e8e0, #d8d8d0)',
-          borderRadius: '40% 40% 30% 30%',
+          background: 'linear-gradient(to bottom, #f0f0e8, #ddd)',
+          borderRadius: '30%',
           transformOrigin: 'top center',
-          transform: 'rotate(18deg)',
-          boxShadow: '1px 1px 4px rgba(0,0,0,0.12)',
         }}
       >
-        {/* Tail curve segment */}
+        {/* Tail tuft */}
         <div 
-          className="absolute"
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full"
           style={{
-            bottom: '8%',
-            left: '50%',
-            transform: 'translateX(-50%) rotate(-8deg)',
-            width: '95%',
-            height: '35%',
-            background: 'linear-gradient(to bottom, #e0e0d8, #d0d0c8)',
-            borderRadius: '30%',
-          }}
-        />
-        {/* Tail tuft - Bigger and fluffier */}
-        <div 
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{
-            bottom: '-15%',
-            width: width * 0.10,
-            height: width * 0.08,
-            background: 'radial-gradient(ellipse, #3a3a3a, #2a2a2a, #1a1a1a)',
-            borderRadius: '50%',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.35)',
+            width: width * 0.06,
+            height: width * 0.06,
+            background: '#2a2a2a',
           }}
         />
       </div>
