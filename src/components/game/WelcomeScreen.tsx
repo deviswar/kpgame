@@ -1,21 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
 import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
 
+// Preload images for later screens
+import hondaAmazeImg from '@/assets/honda-amaze.jpg';
+import cementBagsImg from '@/assets/cement-bags.jpg';
+import hondaAmaze from '@/assets/honda-amaze-car.jpg';
+import pugDog from '@/assets/pug-dog.webp';
+import pugMemorial from '@/assets/pug-memorial.jpg';
+import pugGrave from '@/assets/pug-grave.jpg';
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
 
-const WelcomeScreen = ({
+const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
 
-  // Preload all audio on mount so they're ready for instant playback
+  // Preload all audio AND images on mount for instant loading
   useEffect(() => {
     preloadAllAudio();
+    
+    // Preload all game images in background
+    const images = [
+      hondaAmazeImg, cementBagsImg, hondaAmaze, 
+      pugDog, pugMemorial, pugGrave, qtGirlImage
+    ];
+    images.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+    
+    // Preload video
+    const video = document.createElement('video');
+    video.src = '/music/kpfall.mp4';
+    video.preload = 'auto';
+    video.muted = true;
+    video.load();
   }, []);
 
   const handleShowRizz = () => {
@@ -195,5 +220,8 @@ const WelcomeScreen = ({
         </p>
       </div>
     </div>;
-};
+});
+
+WelcomeScreen.displayName = 'WelcomeScreen';
+
 export default WelcomeScreen;

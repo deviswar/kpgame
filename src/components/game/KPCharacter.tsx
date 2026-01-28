@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 
 interface KPCharacterProps {
   scale: number;
@@ -7,7 +7,7 @@ interface KPCharacterProps {
   isCrying?: boolean;
 }
 
-const KPCharacter = ({ scale, isHappy, happiness, isCrying = false }: KPCharacterProps) => {
+const KPCharacter = memo(({ scale, isHappy, happiness, isCrying = false }: KPCharacterProps) => {
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
@@ -412,6 +412,8 @@ const KPCharacter = ({ scale, isHappy, happiness, isCrying = false }: KPCharacte
       )}
     </div>
   );
-};
+});
+
+KPCharacter.displayName = 'KPCharacter';
 
 export default KPCharacter;

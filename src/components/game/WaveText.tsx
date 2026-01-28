@@ -1,9 +1,11 @@
+import { memo } from 'react';
+
 interface WaveTextProps {
   text: string;
   className?: string;
 }
 
-const WaveText = ({ text, className }: WaveTextProps) => {
+const WaveText = memo(({ text, className }: WaveTextProps) => {
   return (
     <span className={className}>
       {text.split('').map((char, index) => (
@@ -20,6 +22,8 @@ const WaveText = ({ text, className }: WaveTextProps) => {
       ))}
     </span>
   );
-};
+});
+
+WaveText.displayName = 'WaveText';
 
 export default WaveText;
