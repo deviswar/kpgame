@@ -542,15 +542,15 @@
 
 /* Letter-by-letter wave animation */
 @keyframes letter-wave {
-  0%, 100% { 
+  0%, 8%, 100% { 
     transform: scale(1); 
   }
-  50% { 
+  4% { 
     transform: scale(1.3); 
   }
 }
 
 .animate-letter-wave {
   display: inline-block;
-  animation: letter-wave 1.5s ease-in-out infinite;
+  animation: letter-wave 3s ease-in-out infinite;
 }
