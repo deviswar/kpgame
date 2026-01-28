@@ -57,6 +57,18 @@ const FeedKPGame = () => {
     }
   }, [gameStarted, showMilkHospital, showAirplane]);
 
+  // CRITICAL: Stop Music 1 immediately when entering mourning-related screens
+  useEffect(() => {
+    if (showMilkHospital || showAirplane) {
+      // Stop Music 1 completely when entering mourning phase
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        console.log('Music 1 force-stopped for mourning phase');
+      }
+    }
+  }, [showMilkHospital, showAirplane]);
+
   const handleStartGame = () => {
     setGameStarted(true);
     
