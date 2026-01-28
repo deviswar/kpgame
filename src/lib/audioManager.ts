@@ -13,11 +13,60 @@ let mourningStartingOrPlaying = false;
 let gameMusicPlaying = false;
 let rizzPlaying = false;
 
+// Preload flags
+let rizzPreloaded = false;
+let gameMusicPreloaded = false;
+let mourningPreloaded = false;
+
+// ============ PRELOAD ALL AUDIO ============
+// Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
+export const preloadAllAudio = () => {
+  // Preload Rizz (Music 1)
+  if (!rizzAudio) {
+    rizzAudio = new Audio('/music/rizz.mp4');
+    rizzAudio.volume = 0.5;
+    rizzAudio.loop = true;
+    rizzAudio.preload = 'auto';
+    rizzAudio.load();
+    rizzAudio.oncanplaythrough = () => {
+      rizzPreloaded = true;
+      console.log('Rizz audio preloaded');
+    };
+  }
+  
+  // Preload Game Music (Music 2)
+  if (!gameMusicAudio) {
+    gameMusicAudio = new Audio('/music/background.mp3');
+    gameMusicAudio.volume = 0.5;
+    gameMusicAudio.loop = true;
+    gameMusicAudio.preload = 'auto';
+    gameMusicAudio.load();
+    gameMusicAudio.oncanplaythrough = () => {
+      gameMusicPreloaded = true;
+      console.log('Game music preloaded');
+    };
+  }
+  
+  // Preload Mourning (Music 3)
+  if (!mourningAudio) {
+    mourningAudio = new Audio('/music/mourning.mp3');
+    mourningAudio.volume = 0.5;
+    mourningAudio.loop = true;
+    mourningAudio.preload = 'auto';
+    mourningAudio.load();
+    mourningAudio.oncanplaythrough = () => {
+      mourningPreloaded = true;
+      console.log('Mourning audio preloaded');
+    };
+  }
+};
+
 // ============ MUSIC 1: RIZZ ============
 export const playRizz = () => {
   if (rizzPlaying) return;
   
   try {
+    // Ensure audio is created if not preloaded
     if (!rizzAudio) {
       rizzAudio = new Audio('/music/rizz.mp4');
       rizzAudio.volume = 0.5;
@@ -28,10 +77,13 @@ export const playRizz = () => {
     rizzAudio.currentTime = 0;
     rizzPlaying = true;
     
-    rizzAudio.play().catch((e) => {
-      console.error('Rizz audio failed:', e);
-      rizzPlaying = false;
-    });
+    const playPromise = rizzAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.error('Rizz audio failed:', e);
+        rizzPlaying = false;
+      });
+    }
   } catch (e) {
     console.error('Rizz audio error:', e);
     rizzPlaying = false;
@@ -52,6 +104,7 @@ export const playGameMusic = () => {
   if (mourningStartingOrPlaying || gameMusicPlaying) return;
   
   try {
+    // Ensure audio is created if not preloaded
     if (!gameMusicAudio) {
       gameMusicAudio = new Audio('/music/background.mp3');
       gameMusicAudio.volume = 0.5;
@@ -62,15 +115,18 @@ export const playGameMusic = () => {
     gameMusicAudio.currentTime = 0;
     gameMusicPlaying = true;
     
-    gameMusicAudio.play().catch((e) => {
-      console.error('Game music failed:', e);
-      // Retry once
-      setTimeout(() => {
-        if (gameMusicPlaying && !mourningStartingOrPlaying && gameMusicAudio) {
-          gameMusicAudio.play().catch(() => {});
-        }
-      }, 200);
-    });
+    const playPromise = gameMusicAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.error('Game music failed:', e);
+        // Retry once
+        setTimeout(() => {
+          if (gameMusicPlaying && !mourningStartingOrPlaying && gameMusicAudio) {
+            gameMusicAudio.play().catch(() => {});
+          }
+        }, 200);
+      });
+    }
   } catch (e) {
     console.error('Game music error:', e);
     gameMusicPlaying = false;
@@ -112,6 +168,7 @@ export const playMourningMusic = () => {
   console.log('Starting mourning music - game music stopped');
   
   try {
+    // Ensure audio is created if not preloaded
     if (!mourningAudio) {
       mourningAudio = new Audio('/music/mourning.mp3');
       mourningAudio.volume = 0.5;
@@ -121,15 +178,18 @@ export const playMourningMusic = () => {
     
     mourningAudio.currentTime = 0;
     
-    mourningAudio.play().catch((e) => {
-      console.error('Mourning music failed:', e);
-      // Retry once
-      setTimeout(() => {
-        if (mourningStartingOrPlaying && mourningAudio) {
-          mourningAudio.play().catch(() => {});
-        }
-      }, 200);
-    });
+    const playPromise = mourningAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.error('Mourning music failed:', e);
+        // Retry once
+        setTimeout(() => {
+          if (mourningStartingOrPlaying && mourningAudio) {
+            mourningAudio.play().catch(() => {});
+          }
+        }, 200);
+      });
+    }
   } catch (e) {
     console.error('Mourning music error:', e);
   }
