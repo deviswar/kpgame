@@ -1,123 +1,150 @@
 
-# Add Rizz Scene Audio
+
+# Letter-by-Letter Wave Animation for "Turn Up Your Volume" Text
 
 ## Overview
-Add a dedicated audio track that plays **only** during the rizz scene (Phase 2 of the Welcome Screen). The audio will:
-1. Start when user clicks "Click here to see my rizz" button
-2. Play during the entire rizz scene
-3. Stop when user clicks "Tap to start the game" button
-4. Then Music 1 (background.mp3) starts as usual
+Replace the current gradient shine effect with a **letter-by-letter scaling animation** where each character gets slightly bigger one at a time, moving from left to right like a wave.
 
 ---
 
-## File Changes
+## Technical Approach
 
-### 1. Copy Audio File to Project
-Copy the uploaded audio file to the public music folder for consistent audio file organization.
-
-| Source | Destination |
-|--------|-------------|
-| `user-uploads://audio.mp4` | `public/music/rizz.mp4` |
+Since CSS cannot animate individual letters within a text string, we need to:
+1. Create a **reusable React component** that splits text into individual `<span>` elements
+2. Apply **staggered CSS animations** to each letter with increasing delays
+3. Each letter will scale up slightly and return to normal size
 
 ---
 
-### 2. Update WelcomeScreen Component
+## Implementation Details
+
+### 1. Create New Component: `WaveText.tsx`
+
+**File:** `src/components/game/WaveText.tsx`
+
+A simple component that:
+- Takes a text string as a prop
+- Splits it into individual characters
+- Wraps each character in a `<span>` with a staggered animation delay
+
+```tsx
+interface WaveTextProps {
+  text: string;
+  className?: string;
+}
+
+const WaveText = ({ text, className }: WaveTextProps) => {
+  return (
+    <span className={className}>
+      {text.split('').map((char, index) => (
+        <span
+          key={index}
+          className="inline-block animate-letter-wave"
+          style={{ 
+            animationDelay: `${index * 0.05}s`,
+            // Preserve spaces
+            whiteSpace: char === ' ' ? 'pre' : 'normal'
+          }}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+};
+```
+
+---
+
+### 2. Add CSS Animation
+
+**File:** `src/index.css`
+
+Add a new keyframes animation for the letter wave effect:
+
+```css
+/* Letter-by-letter wave animation */
+@keyframes letter-wave {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.3); 
+  }
+}
+
+.animate-letter-wave {
+  display: inline-block;
+  animation: letter-wave 1.5s ease-in-out infinite;
+}
+```
+
+The animation:
+- Each letter scales from 1 → 1.3 → 1 (gets bigger then returns)
+- Duration: 1.5s per letter cycle
+- Delay: 0.05s between each letter (creates the wave effect)
+- Loops infinitely
+
+---
+
+### 3. Update WelcomeScreen
 
 **File:** `src/components/game/WelcomeScreen.tsx`
 
-**Changes:**
+Replace the current static text with the WaveText component:
 
-1. **Add useRef for audio management:**
-```typescript
-import { useState, useRef, useEffect } from 'react';
-
-const rizzAudioRef = useRef<HTMLAudioElement | null>(null);
+**Before (lines 105-107):**
+```tsx
+<p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce animate-text-shine">
+  🔊 Turn up your volume for the best experience
+</p>
 ```
 
-2. **Add cleanup effect:**
-```typescript
-useEffect(() => {
-  return () => {
-    // Cleanup audio on unmount
-    if (rizzAudioRef.current) {
-      rizzAudioRef.current.pause();
-      rizzAudioRef.current = null;
-    }
-  };
-}, []);
+**After:**
+```tsx
+<p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
+  🔊 <WaveText text="Turn up your volume for the best experience" />
+</p>
 ```
 
-3. **Create handler for "see my rizz" button:**
-```typescript
-const handleShowRizz = () => {
-  setShowRizzScene(true);
-  
-  // Start rizz audio
-  const audio = new Audio('/music/rizz.mp4');
-  audio.volume = 0.5;
-  audio.loop = true;
-  audio.play().catch(e => console.error('Rizz audio failed:', e));
-  rizzAudioRef.current = audio;
-};
-```
-
-4. **Create handler for "start game" button:**
-```typescript
-const handleStartGame = () => {
-  // Stop rizz audio
-  if (rizzAudioRef.current) {
-    rizzAudioRef.current.pause();
-    rizzAudioRef.current = null;
-  }
-  
-  // Call original onStart (which triggers Music 1)
-  onStart();
-};
-```
-
-5. **Update button onClick handlers:**
-   - "Click here to see my rizz" button: `onClick={handleShowRizz}` (instead of inline setState)
-   - "Tap to start the game" button: `onClick={handleStartGame}` (instead of `onStart`)
+Same update needed for the rizz scene (line 187-189).
 
 ---
 
-## Audio Flow Diagram
+## Visual Effect
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                      WELCOME SCREEN                          │
-│                                                              │
-│  Phase 1: Fun Facts                                          │
-│  ┌──────────────────────────────────┐                        │
-│  │  "Click here to see my rizz" 🥰  │ ── Click ──┐          │
-│  └──────────────────────────────────┘            │          │
-│                                                   ▼          │
-│  Phase 2: Rizz Scene                     🎵 RIZZ AUDIO       │
-│  ┌──────────────────────────────────┐    (starts playing)    │
-│  │  👆 Tap to start the game        │ ── Click ──┐          │
-│  └──────────────────────────────────┘            │          │
-│                                                   ▼          │
-└─────────────────────────────────────────────────────────────┘
-                                                   │
-                                          🔇 RIZZ AUDIO STOPS
-                                          🎵 MUSIC 1 STARTS
-                                                   │
-                                                   ▼
-                                        ┌──────────────────┐
-                                        │   FEED KP GAME   │
-                                        └──────────────────┘
+Time 0.0s:  T u r n   u p   y o u r   v o l u m e
+            ↑
+           (big)
+
+Time 0.05s: T u r n   u p   y o u r   v o l u m e
+              ↑
+             (big)
+
+Time 0.10s: T u r n   u p   y o u r   v o l u m e
+                ↑
+               (big)
+
+... continues left to right, then loops
 ```
 
 ---
 
-## Summary
+## Files to Change
 
-| Step | Action |
+| File | Action |
 |------|--------|
-| 1 | Copy `audio.mp4` to `public/music/rizz.mp4` |
-| 2 | Add `useRef` and `useEffect` for audio management |
-| 3 | Create `handleShowRizz()` to play rizz audio |
-| 4 | Create `handleStartGame()` to stop rizz audio and call `onStart()` |
-| 5 | Update both button onClick handlers |
+| `src/components/game/WaveText.tsx` | **Create** - New component for letter animation |
+| `src/index.css` | **Add** - `@keyframes letter-wave` and `.animate-letter-wave` |
+| `src/components/game/WelcomeScreen.tsx` | **Update** - Use `WaveText` component in both phases |
 
-The rizz audio will loop continuously during the rizz scene, giving it its own unique vibe before transitioning to the main game with Music 1.
+---
+
+## Animation Tuning
+
+The animation can be customized:
+- **Speed**: Change `1.5s` duration (faster = quicker pulse)
+- **Wave speed**: Change `0.05s` delay multiplier (smaller = faster wave travel)
+- **Scale amount**: Change `1.3` scale factor (bigger = more dramatic effect)
+
