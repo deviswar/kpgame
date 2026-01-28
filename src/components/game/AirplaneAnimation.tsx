@@ -31,7 +31,28 @@ const ConfettiPiece = ({ delay, left }: { delay: number; left: number }) => {
 const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   const [phase, setPhase] = useState<'celebrating' | 'flying'>('celebrating');
   const [showVideo, setShowVideo] = useState(false);
+  const [videoPreloaded, setVideoPreloaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const preloadedVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Preload video immediately on mount
+  useEffect(() => {
+    const video = document.createElement('video');
+    video.src = '/music/kpfall.mp4';
+    video.preload = 'auto';
+    video.muted = true;
+    video.load();
+    preloadedVideoRef.current = video;
+    
+    video.oncanplaythrough = () => {
+      setVideoPreloaded(true);
+    };
+    
+    return () => {
+      video.src = '';
+      preloadedVideoRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setPhase('flying'), 1500);
