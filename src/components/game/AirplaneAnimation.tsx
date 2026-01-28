@@ -62,12 +62,13 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
         <div className="flex-1 w-full flex items-center justify-center p-4 max-h-[60vh]">
           <video
             ref={videoRef}
-            src="/music/leaked-video.mp4"
+            src="/music/kpfall.mp4"
             controls
             autoPlay
             loop
             playsInline
             preload="auto"
+            muted
             className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50"
             style={{ maxHeight: '50vh' }}
           />
