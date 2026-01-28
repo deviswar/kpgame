@@ -60,7 +60,15 @@ const WelcomeScreen = ({
 
         {/* Header with title and KP */}
         <div className="flex items-center gap-2 -mt-48">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-wider bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-500 bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] animate-pulse-glow">
+          <h1 
+            className="text-5xl md:text-7xl tracking-wide"
+            style={{ 
+              fontFamily: '"Bungee Shade", cursive',
+              color: '#FFF8DC',
+              textShadow: '3px 3px 0px #8B4513, 6px 6px 0px rgba(0,0,0,0.3)',
+              WebkitTextStroke: '1px #CD853F'
+            }}
+          >
             KP Game
           </h1>
           <div className="scale-75 origin-center -my-8">
@@ -70,8 +78,16 @@ const WelcomeScreen = ({
 
         {/* Fun Facts Section */}
         <div className="flex flex-col items-center max-w-sm">
-          <h2 className="text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-            ✨ Fun Facts about me ✨
+          <h2 
+            className="text-2xl md:text-3xl mb-3"
+            style={{ 
+              fontFamily: '"Bangers", cursive',
+              color: '#FFFACD',
+              textShadow: '2px 2px 0px #A0522D, 4px 4px 0px rgba(0,0,0,0.2)',
+              letterSpacing: '0.1em'
+            }}
+          >
+            🎮 Fun Facts about me 🎮
           </h2>
           
           <div className="space-y-1.5 text-center">
