@@ -1,140 +1,172 @@
 
-# Fix Music System - Complete Rewrite
+## What you said (confirmed requirements)
 
-## Problem Summary
-The music system has multiple audio refs creating conflicts:
-- `MilkHospitalScreen` creates its own mourning audio (causes duplicate)
-- Music 1 stops too early (at showMilkHospital instead of at mourning phase)
-- Music 2 doesn't persist because the ref is lost when screens change
+There are exactly **3** music tracks:
 
-## Solution: Single Audio Controller in FeedKPGame
+1) **Music 1** = rizz scene only  
+- Plays only during the “rizz scene”
+- Must stop when user taps **“Tap to start the game”**
 
-The parent component `FeedKPGame.tsx` should be the ONLY place managing audio. Child components should NOT create their own audio instances.
+2) **Music 2** = full gameplay background  
+- Starts when user taps **“Tap to start the game”**
+- Plays through **Feeding → Cow Fight → Milk Hospital crash scene**
+- **Stops immediately** when user taps **“Touch to take puppy to hospital”** (the moment mourning begins)
 
----
+3) **Music 3** = mourning + everything after  
+- Starts when user taps **“Touch to take puppy to hospital”**
+- Continues through **mourning scene → end screen → leaked video scene**
+- Stops only when user taps **“Go to Home”** on the leaked video screen
 
-## Changes Required
-
-### File 1: `src/components/game/FeedKPGame.tsx`
-
-**Remove the problematic effect that stops Music 1 too early (lines 46-59)**
-
-Currently it stops Music 1 when `showMilkHospital` is true, but Music 1 should keep playing during the crash scene until mourning starts.
-
-**Update the keep-audio-playing effect:**
-- Music 1 should play during: game start, cow fight, and milk hospital UNTIL mourning starts
-- Add a new state `mourningStarted` to track when mourning actually begins
-- Only stop Music 1 when mourning phase actually starts (via callback)
-
-**Update `handleStartMourningMusic` callback:**
-- This is already correct - it stops Music 1 and starts Music 2
-- The `mourningAudioRef.current` is stored in FeedKPGame and persists across screen changes
-
-**The key insight**: Since `FeedKPGame` renders `MilkHospitalScreen` and `AirplaneAnimation` as children (not separate routes), the `mourningAudioRef` in `FeedKPGame` persists through all screens. The audio should continue playing.
-
-### File 2: `src/components/game/MilkHospitalScreen.tsx`
-
-**Remove the local mourning audio creation (lines 48-60)**
-
-This component should NOT create its own audio. Remove:
-- Lines 48-60: Remove the mourning audio preload
-- Lines 34, 56-59: Remove `mourningAudioRef` local ref
-
-**Update `handleTakePuppyToHospital` (lines 64-81):**
-
-Simply call `onStartMourningMusic?.()` - don't try to play local audio.
-
-```tsx
-const handleTakePuppyToHospital = () => {
-  // Call parent to handle mourning music (stops Music 1, starts Music 2)
-  onStartMourningMusic?.();
-  
-  // Go to mourning phase
-  setPhase('mourning');
-  setWaitingForUserTap(false);
-  
-  // ... rest of flash effects
-};
-```
-
-### File 3: `src/components/game/AirplaneAnimation.tsx`
-
-**The mourning music should already be playing from the parent**
-
-No changes needed for music - the `mourningAudioRef` in `FeedKPGame` persists.
-
-**For the video**: Since user wants video audio allowed, keep the video unmuted. The mourning music will continue playing underneath (or we can pause it during video).
+Critical: **Music 2 and Music 3 must never overlap**. When Music 3 starts, Music 2 must already be stopped.
 
 ---
 
-## Technical Implementation
+## What’s actually wrong in the current code (root causes)
 
-### FeedKPGame.tsx Changes:
+### A) Overlap bug in the main “/” flow (FeedKPGame)
+In `src/components/game/FeedKPGame.tsx`:
+- Music 2 = `audioRef` (`/music/background.mp3`)
+- Music 3 = `mourningAudioRef` (`/music/mourning.mp3`)
 
-```tsx
-// Line 46-59: CHANGE the keep-audio effect
-// Only stop the interval when mourningAudioRef exists (mourning started)
-useEffect(() => {
-  // Keep Music 1 playing UNTIL mourning music starts
-  if (gameStarted && audioRef.current && !mourningAudioRef.current) {
-    const checkAudio = setInterval(() => {
-      if (audioRef.current && audioRef.current.paused && !mourningAudioRef.current) {
-        audioRef.current.play().catch(() => {});
-      }
-    }, 1000);
+You *do* pause Music 2 when starting Music 3, but:
+- There’s a “keep playing” interval that keeps trying to resume Music 2 until `mourningAudioRef.current` is set.
+- `mourningAudioRef.current` is only set **after** `mourningAudio.play()` resolves (async).
+- So there is a real window where:
+  - Music 2 is paused,
+  - but the interval resumes it,
+  - while Music 3 starts → overlap.
 
-    return () => clearInterval(checkAudio);
-  }
-}, [gameStarted]);
+### B) Music 3 not continuing on end screen / leaked video when using route pages
+The app has two flows:
+- Main sequential flow: `/` uses `FeedKPGame` (audio refs live as long as it stays mounted)
+- Admin/route flow: `/milk-hospital` → `/airplane` uses page components
 
-// Line 61-72: REMOVE the showAirplane effect (unnecessary)
-// Music 1 is already stopped by handleStartMourningMusic
+In the route flow:
+- `src/pages/MilkHospitalPage.tsx` creates its own `mourningAudioRef`
+- When navigating to `/airplane`, `MilkHospitalPage` unmounts → its audio ref gets cleaned up → Music 3 stops
+- `src/pages/AirplanePage.tsx` doesn’t start or keep Music 3 at all
 
-// handleStartMourningMusic (lines 118-151): Keep as-is
-// It correctly stops Music 1 and starts Music 2
-```
-
-### MilkHospitalScreen.tsx Changes:
-
-```tsx
-// REMOVE lines 34, 48-60 (local mourningAudioRef)
-// Keep only image preloading
-
-// SIMPLIFY handleTakePuppyToHospital:
-const handleTakePuppyToHospital = () => {
-  // Parent handles all audio (stops Music 1, starts Music 2)
-  onStartMourningMusic?.();
-  
-  setPhase('mourning');
-  setWaitingForUserTap(false);
-  
-  // Flash effects...
-  setShowMourningFlash(true);
-  // ... rest unchanged
-};
-
-// REMOVE cleanup in useEffect (lines 55-60)
-```
+So depending on how you test (main flow vs admin routes), you can get “no music on end screen”.
 
 ---
 
-## Summary of Files to Modify
+## Implementation approach (make it impossible to overlap, and make Music 3 persist everywhere)
 
-| File | Action |
-|------|--------|
-| `src/components/game/FeedKPGame.tsx` | Fix keep-audio effect to check `mourningAudioRef` instead of `showMilkHospital`; Remove redundant showAirplane effect |
-| `src/components/game/MilkHospitalScreen.tsx` | Remove local mourning audio; Simplify button handler to just call parent callback |
+### Key design decision
+Create **one single, shared audio controller** used by both:
+- Main flow (`FeedKPGame`)
+- Route pages (`WelcomePage`, `MilkHospitalPage`, `AirplanePage`)
+
+This controller will:
+- Own **exactly 3 audio elements** (Music 1/2/3)
+- Provide safe functions:
+  - `playRizz()`, `stopRizz()`
+  - `playGameMusic()`, `stopGameMusic()`
+  - `playMourningMusic()`, `stopMourningMusic()`
+  - `stopAll()`
+- Enforce rules:
+  - When starting Music 3 → it **immediately** stops Music 2 before any async play.
+  - Uses a **synchronous “mourningStarting” flag** to prevent any “keep playing” logic from restarting Music 2.
+
+This will permanently fix:
+- Overlap in mourning phase
+- Missing music on end/video screens in route navigation
 
 ---
 
-## Expected Behavior After Fix
+## Step-by-step changes
 
-1. **Tap to start** → Music 1 starts playing
-2. **Feed KP** → Music 1 continues
-3. **Cow Fight** → Music 1 continues
-4. **Milk Hospital crash** → Music 1 continues
-5. **Tap "Take puppy to hospital"** → Music 1 STOPS, Music 2 STARTS
-6. **Mourning scene** → Music 2 playing
-7. **End screen (Airplane)** → Music 2 continues
-8. **Watch leaked video** → Music 2 continues + Video audio plays
-9. **Go to Home** → Music 2 stops, game resets
+### 1) Add a shared audio manager (new file)
+Create something like:
+- `src/lib/audioManager.ts`
+
+It will:
+- Store module-level singletons (persist across route navigations)
+- Expose functions to start/stop each track
+- Track state flags:
+  - `mourningStartingOrPlaying` (true immediately when user taps hospital button)
+  - `gameMusicPlaying`
+  - etc.
+- Ensure idempotency:
+  - If mourning is already started, calling `playMourningMusic()` again does nothing (prevents duplicates)
+
+Important behavior:
+- `playMourningMusic()` will:
+  1) Set `mourningStartingOrPlaying = true` immediately (sync)
+  2) Stop/pause/reset Music 2 immediately
+  3) Start Music 3 and loop it
+  4) Store the ref immediately (not only after promise), and handle play retry
+
+### 2) Update WelcomeScreen (Music 1 only)
+File: `src/components/game/WelcomeScreen.tsx`
+- Replace local `rizzAudioRef` with calls to the shared audio manager:
+  - When entering rizz scene: `playRizz()`
+  - When tapping “Tap to start the game”: `stopRizz()` then call `onStart()` (which starts Music 2)
+
+This ensures Music 1 never leaks into gameplay.
+
+### 3) Update FeedKPGame (Music 2 + Music 3)
+File: `src/components/game/FeedKPGame.tsx`
+- Remove local audio element creation logic (`audioRef`, `mourningAudioRef`, `audioInitialized`)
+- Replace with audio manager calls:
+  - `handleStartGame` → `playGameMusic()`
+  - `handleStartMourningMusic` → `playMourningMusic()` (this will stop Music 2 instantly and start Music 3)
+  - `handleGoHome` → `stopAll()` then reset UI state
+
+Also remove the “interval keep-alive” logic entirely, or rewrite it to consult the audio manager’s `mourningStartingOrPlaying` flag.
+- Best: remove it; it’s currently the source of the overlap problem.
+- If you keep it, it must never run once mourning is starting (not “once mourningAudioRef is set”, but immediately on click).
+
+### 4) Ensure MilkHospitalScreen ONLY triggers the transition (no audio ownership)
+File: `src/components/game/MilkHospitalScreen.tsx`
+- Keep as already adjusted: it should only call `onStartMourningMusic?.()` on the button tap.
+- No local audio creation.
+
+### 5) Fix route pages so Music 3 persists to /airplane and video
+Files:
+- `src/pages/MilkHospitalPage.tsx`
+  - Remove its local mourning audio code entirely
+  - On hospital button, call audio manager `playMourningMusic()`
+- `src/pages/AirplanePage.tsx`
+  - Do not create audio
+  - Just render `AirplaneAnimation`
+  - When user goes home, call audio manager `stopAll()` (or rely on the home handler)
+
+This ensures that even when using admin routes, Music 3 continues across pages.
+
+### 6) Video behavior (already mostly correct)
+File: `src/components/game/AirplaneAnimation.tsx`
+- Video already has `loop`, `preload="auto"`, `autoPlay`, `playsInline`
+- Since you want **video audio allowed**, we keep it unmuted.
+- Mourning music will also continue underneath unless we explicitly pause it when video opens.
+  - Your requirement: Music 3 should keep playing on leaked video scene.
+  - So we will NOT stop Music 3 when video starts.
+
+---
+
+## Acceptance tests (what you should verify after implementation)
+
+### Main flow (/)
+1) Go to `/`
+2) Tap “Click here to see my rizz” → **ONLY Music 1 plays**
+3) Tap “Tap to start the game” → Music 1 stops, **Music 2 starts**
+4) Finish Feeding + Cow Fight + go to Milk Hospital crash scene → **Music 2 still playing**
+5) Tap “Touch to take puppy to hospital” → **Music 2 stops immediately**, **Music 3 starts immediately**, no overlap
+6) Wait through mourning → go to end screen → **Music 3 still playing**
+7) Tap “Watch my leaked video” → video plays with sound, **Music 3 still playing**
+8) Tap “Go to Home” on video screen → **Music 3 stops**
+
+### Admin route flow (/admin)
+1) Go to `/admin` then open `/milk-hospital`
+2) At crash, tap hospital button → Music 3 starts
+3) Auto-navigate to `/airplane` → **Music 3 must still be playing**
+4) Open leaked video → **Music 3 still playing**
+5) Go home → all music stops
+
+---
+
+## Notes / guardrails (to prevent future regressions)
+- No component should ever do `new Audio(...)` except the shared audio manager.
+- Never use “set ref only after play() succeeds” for gating; set a synchronous flag immediately on user tap so Music 2 cannot restart.
+- Route transitions must not own audio lifecycles; only the audio manager owns them.
+
