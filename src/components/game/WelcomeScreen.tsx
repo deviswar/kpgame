@@ -78,59 +78,6 @@ const WelcomeScreen = ({
             }}
           >
             KP Game
-            {/* Drip effects */}
-            <span 
-              className="absolute text-2xl md:text-4xl"
-              style={{
-                bottom: '-0.4em',
-                left: '0.1em',
-                color: '#FFD93D',
-                textShadow: '0 2px 0 #E8A800, 0 4px 0 #D4950A',
-                WebkitTextStroke: '2px #FFFFFF',
-                paintOrder: 'stroke fill',
-              }}
-            >
-              ◣
-            </span>
-            <span 
-              className="absolute text-lg md:text-2xl"
-              style={{
-                bottom: '-0.6em',
-                left: '1.8em',
-                color: '#FFD93D',
-                textShadow: '0 2px 0 #E8A800',
-                WebkitTextStroke: '1.5px #FFFFFF',
-                paintOrder: 'stroke fill',
-              }}
-            >
-              ◣
-            </span>
-            <span 
-              className="absolute text-xl md:text-3xl"
-              style={{
-                bottom: '-0.5em',
-                right: '1.5em',
-                color: '#FFD93D',
-                textShadow: '0 2px 0 #E8A800, 0 4px 0 #D4950A',
-                WebkitTextStroke: '2px #FFFFFF',
-                paintOrder: 'stroke fill',
-              }}
-            >
-              ◣
-            </span>
-            <span 
-              className="absolute text-lg md:text-2xl"
-              style={{
-                bottom: '-0.55em',
-                right: '0.2em',
-                color: '#FFD93D',
-                textShadow: '0 2px 0 #E8A800',
-                WebkitTextStroke: '1.5px #FFFFFF',
-                paintOrder: 'stroke fill',
-              }}
-            >
-              ◣
-            </span>
           </h1>
           <div className="scale-75 origin-center -my-8">
             <KPCharacter scale={0.8} isHappy={false} happiness={50} />

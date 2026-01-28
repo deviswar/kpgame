@@ -65,6 +65,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
             src="/music/leaked-video.mp4"
             controls
             autoPlay
+            loop
             playsInline
             preload="auto"
             className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50"
