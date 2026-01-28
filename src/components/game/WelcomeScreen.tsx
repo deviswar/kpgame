@@ -12,8 +12,14 @@ const WelcomeScreen = ({
   const [showRizzScene, setShowRizzScene] = useState(false);
   const rizzAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Cleanup audio on unmount
+  // Preload rizz audio on mount to prevent delay
   useEffect(() => {
+    const audio = new Audio('/music/rizz.mp4');
+    audio.volume = 0.5;
+    audio.loop = true;
+    audio.preload = 'auto';
+    rizzAudioRef.current = audio;
+    
     return () => {
       if (rizzAudioRef.current) {
         rizzAudioRef.current.pause();
@@ -25,12 +31,11 @@ const WelcomeScreen = ({
   const handleShowRizz = () => {
     setShowRizzScene(true);
     
-    // Start rizz audio
-    const audio = new Audio('/music/rizz.mp4');
-    audio.volume = 0.5;
-    audio.loop = true;
-    audio.play().catch(e => console.error('Rizz audio failed:', e));
-    rizzAudioRef.current = audio;
+    // Play preloaded audio immediately
+    if (rizzAudioRef.current) {
+      rizzAudioRef.current.currentTime = 0;
+      rizzAudioRef.current.play().catch(e => console.error('Rizz audio failed:', e));
+    }
   };
 
   const handleStartGame = () => {
@@ -97,9 +102,9 @@ const WelcomeScreen = ({
           <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
             Powered by <span className="text-yellow-400 font-bold">Rapido</span>
           </p>
-          <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
-            🔊 Turn up your volume for the best experience
-          </p>
+        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce animate-text-shine">
+          🔊 Turn up your volume for the best experience
+        </p>
         </div>
       </div>;
   }
@@ -179,7 +184,7 @@ const WelcomeScreen = ({
         <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
           Powered by <span className="text-yellow-400 font-bold">Rapido</span>
         </p>
-        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
+        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-text-shine">
           🔊 Turn up your volume for the best experience
         </p>
       </div>
