@@ -133,7 +133,7 @@ const WelcomeScreen = memo(({
           <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
             Powered by <span className="text-yellow-400 font-bold">Rapido</span>
           </p>
-        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium animate-blink-bounce">
+        <p className="text-primary-foreground/70 text-sm md:text-base font-medium animate-blink-bounce">
           🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
         </div>
