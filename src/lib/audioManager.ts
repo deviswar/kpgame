@@ -100,12 +100,20 @@ export const playRizz = () => {
   if (rizzPlaying) return;
   
   try {
-    // Ensure audio is created if not preloaded
+    // CRITICAL: Create audio element SYNCHRONOUSLY in user gesture context
+    // This ensures mobile browsers recognize the user interaction
     if (!rizzAudio) {
       rizzAudio = new Audio('/music/rizz.mp4');
       rizzAudio.volume = 0.5;
       rizzAudio.loop = true;
       rizzAudio.preload = 'auto';
+    } else {
+      // Even if preloaded, reset the source to ensure fresh context
+      // This helps on some mobile browsers after page refresh
+      const currentSrc = rizzAudio.src;
+      if (!currentSrc.includes('rizz.mp4')) {
+        rizzAudio.src = '/music/rizz.mp4';
+      }
     }
     
     rizzAudio.currentTime = 0;
@@ -113,9 +121,26 @@ export const playRizz = () => {
     
     const playPromise = rizzAudio.play();
     if (playPromise !== undefined) {
-      playPromise.catch((e) => {
-        console.error('Rizz audio failed:', e);
+      playPromise.then(() => {
+        console.log('Rizz audio playing successfully');
+      }).catch((e) => {
+        console.error('Rizz audio failed, retrying:', e);
         rizzPlaying = false;
+        
+        // Retry with a fresh audio element (fallback for stubborn browsers)
+        setTimeout(() => {
+          if (!rizzPlaying) {
+            rizzAudio = new Audio('/music/rizz.mp4');
+            rizzAudio.volume = 0.5;
+            rizzAudio.loop = true;
+            rizzAudio.currentTime = 0;
+            rizzPlaying = true;
+            rizzAudio.play().catch(() => {
+              console.error('Rizz audio retry also failed');
+              rizzPlaying = false;
+            });
+          }
+        }, 100);
       });
     }
   } catch (e) {
