@@ -104,20 +104,20 @@ const WelcomeScreen = memo(({
             Fun Facts about me
           </h2>
           
-          <div className="space-y-1.5 text-center">
-            <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+          <div className="space-y-2 text-center">
+            <p className="text-primary-foreground/90 text-sm md:text-base bg-foreground/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-primary-foreground/20">
               I take money to buy an Airavat bus ticket and go in an APSRTC bus 😂
             </p>
-            <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            <p className="text-primary-foreground/90 text-sm md:text-base bg-foreground/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-primary-foreground/20">
               i dont have ==D but i want  ({'{}'})
             </p>
-            <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            <p className="text-primary-foreground/90 text-sm md:text-base bg-foreground/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-primary-foreground/20">
               i do vaddi vyaparam, but no one pays my money back :( 
             </p>
-            <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            <p className="text-primary-foreground/90 text-sm md:text-base bg-foreground/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-primary-foreground/20">
               (.) (.) i like milk :) 🥛
             </p>
-            <p className="text-primary-foreground/90 text-xs md:text-sm bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-primary-foreground/20">
+            <p className="text-primary-foreground/90 text-sm md:text-base bg-foreground/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-primary-foreground/20">
               btw north indian girls like krishna name {'<3'}
             </p>
           </div>
