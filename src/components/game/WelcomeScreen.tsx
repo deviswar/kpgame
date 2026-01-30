@@ -1,16 +1,26 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio, primeRizzAudio } from '@/lib/audioManager';
 
-// Preload images for later screens
-import hondaAmazeImg from '@/assets/honda-amaze.jpg';
-import cementBagsImg from '@/assets/cement-bags.jpg';
-import hondaAmaze from '@/assets/honda-amaze-car.jpg';
-import pugDog from '@/assets/pug-dog.webp';
-import pugMemorial from '@/assets/pug-memorial.jpg';
-import pugGrave from '@/assets/pug-grave.jpg';
+// Preload images for later screens (defer to avoid blocking initial render)
+const preloadImages = () => {
+  // Use dynamic imports for deferred loading
+  Promise.all([
+    import('@/assets/honda-amaze.jpg'),
+    import('@/assets/cement-bags.jpg'),
+    import('@/assets/honda-amaze-car.jpg'),
+    import('@/assets/pug-dog.webp'),
+    import('@/assets/pug-memorial.jpg'),
+    import('@/assets/pug-grave.jpg'),
+  ]).then((modules) => {
+    modules.forEach(mod => {
+      const img = new Image();
+      img.src = mod.default;
+    });
+  });
+};
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -20,22 +30,16 @@ const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
+  const [hasPrimedAudio, setHasPrimedAudio] = useState(false);
 
-  // Preload all audio AND images on mount for instant loading
+  // Preload audio on mount, defer image preloading
   useEffect(() => {
     preloadAllAudio();
     
-    // Preload all game images in background
-    const images = [
-      hondaAmazeImg, cementBagsImg, hondaAmaze, 
-      pugDog, pugMemorial, pugGrave, qtGirlImage
-    ];
-    images.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
+    // Defer image preloading to not block initial paint
+    requestIdleCallback ? requestIdleCallback(preloadImages) : setTimeout(preloadImages, 100);
     
-    // Preload video
+    // Preload video in background
     const video = document.createElement('video');
     video.src = '/music/kpfall.mp4';
     video.preload = 'auto';
@@ -43,10 +47,26 @@ const WelcomeScreen = memo(({
     video.load();
   }, []);
 
+  // Prime audio on first user interaction (anywhere on screen)
+  const handleFirstInteraction = useCallback(() => {
+    if (!hasPrimedAudio) {
+      primeRizzAudio();
+      setHasPrimedAudio(true);
+    }
+  }, [hasPrimedAudio]);
+
   const handleShowRizz = () => {
+    // Prime audio if not already done
+    if (!hasPrimedAudio) {
+      primeRizzAudio();
+      setHasPrimedAudio(true);
+    }
+    
     setShowRizzScene(true);
-    // Play Music 1 via audio manager (now preloaded)
-    playRizz();
+    // Small delay to ensure priming completes, then play
+    setTimeout(() => {
+      playRizz();
+    }, 50);
   };
 
   const handleStartGame = () => {
@@ -58,7 +78,10 @@ const WelcomeScreen = memo(({
 
   // Phase 1: Initial Welcome Screen
   if (!showRizzScene) {
-    return <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3">
+    return <div 
+      onTouchStart={handleFirstInteraction}
+      onClick={handleFirstInteraction}
+      className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3">
         {/* Version number - bottom left */}
         <div className="absolute bottom-24 left-4">
           <span className="text-white text-xs font-medium">version - 1.69.69</span>

@@ -8,13 +8,15 @@
     <meta name="author" content="KP Game" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- Prefetch audio and video files (browser will load them early) -->
-    <link rel="prefetch" href="/music/rizz.mp4" as="fetch" />
-    <link rel="prefetch" href="/music/background.mp3" as="fetch" />
+    <!-- CRITICAL: Preload audio for instant playback (not prefetch - preload is higher priority) -->
+    <link rel="preload" href="/music/rizz.mp4" as="fetch" crossorigin />
+    <link rel="preload" href="/music/background.mp3" as="fetch" crossorigin />
+    
+    <!-- Prefetch lower priority assets (mourning, videos) -->
     <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
     <link rel="prefetch" href="/music/kpfall.mp4" as="fetch" />
 
-    <!-- DNS prefetch for fonts -->
+    <!-- DNS prefetch and preconnect for fonts (fast font loading) -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,13 +30,17 @@
     <meta name="twitter:site" content="@KPGame" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
-    <!-- Prevent flash of unstyled content -->
+    <!-- Prevent flash of unstyled content + critical CSS inline -->
     <style>
       html, body, #root {
         margin: 0;
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
+      }
+      /* Critical gradient for instant first paint */
+      .game-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
       }
     </style>
   </head>
