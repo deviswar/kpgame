@@ -430,7 +430,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
               style={{ 
                 width: width * 0.09,
                 background: '#4a4a4a',
-                transform: `translateX(25%) ${punchPhase === 'strike' ? 'rotate(-18deg)' : isPunching ? 'rotate(-15deg)' : 'rotate(-12deg)'}`,
+                transform: `translateX(10%) ${punchPhase === 'strike' ? 'rotate(-18deg)' : isPunching ? 'rotate(-15deg)' : 'rotate(-12deg)'}`,
                 transformOrigin: 'left center',
               }}
             />
@@ -501,30 +501,49 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
         />
       </div>
 
-      {/* Tail - hangs down naturally */}
+      {/* Tail - naturally attached to body with curved shape */}
       <div 
-        className={`absolute ${punchPhase === 'idle' ? 'animate-wiggle' : ''}`}
+        className="absolute"
         style={{
-          width: width * 0.035,
-          height: height * 0.18,
-          bottom: height * 0.35,
-          right: width * 0.05,
-          background: 'linear-gradient(to bottom, #f0f0e8, #ddd)',
-          borderRadius: '40%',
+          bottom: height * 0.42,
+          right: width * 0.08,
           transformOrigin: 'top center',
           transform: punchPhase === 'rushing' ? 'rotate(15deg)' : punchPhase === 'strike' ? 'rotate(25deg)' : 'rotate(0deg)',
           transition: 'transform 150ms ease-out',
         }}
       >
-        {/* Tail tuft */}
+        {/* Tail base - connects to body */}
         <div 
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
           style={{
-            width: width * 0.05,
-            height: width * 0.05,
-            background: '#2a2a2a',
+            width: width * 0.06,
+            height: width * 0.04,
+            background: 'linear-gradient(to right, #e8e8e0, #f0f0e8)',
+            borderRadius: '50%',
           }}
         />
+        {/* Tail body - curved rope shape */}
+        <div 
+          className={`${punchPhase === 'idle' ? 'animate-wiggle' : ''}`}
+          style={{
+            width: width * 0.03,
+            height: height * 0.15,
+            marginLeft: width * 0.015,
+            marginTop: -2,
+            background: 'linear-gradient(180deg, #e8e8e0 0%, #d8d8d0 50%, #ccc 100%)',
+            borderRadius: '50% 50% 40% 40%',
+            transformOrigin: 'top center',
+          }}
+        >
+          {/* Tail tuft at the end */}
+          <div 
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
+            style={{
+              width: width * 0.045,
+              height: width * 0.045,
+              background: '#2a2a2a',
+            }}
+          />
+        </div>
       </div>
 
       {/* Effort effect when punching - enhanced for strike */}
