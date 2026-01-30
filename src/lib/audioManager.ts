@@ -95,6 +95,34 @@ export const preloadMourningMusic = () => {
   }
 };
 
+// ============ PRIME RIZZ AUDIO ============
+// Call this on initial user interaction (e.g., first tap on welcome screen)
+// This "unlocks" audio on mobile browsers
+export const primeRizzAudio = () => {
+  if (!rizzAudio) {
+    rizzAudio = new Audio('/music/rizz.mp4');
+    rizzAudio.volume = 0;
+    rizzAudio.loop = true;
+    rizzAudio.preload = 'auto';
+  }
+  
+  // Prime by playing silently then immediately pausing
+  const primePromise = rizzAudio.play();
+  if (primePromise !== undefined) {
+    primePromise.then(() => {
+      rizzAudio!.pause();
+      rizzAudio!.currentTime = 0;
+      rizzAudio!.volume = 0.5;
+      rizzPreloaded = true;
+      console.log('Rizz audio primed and ready');
+    }).catch(() => {
+      // Priming failed, but load() will still help
+      rizzAudio!.load();
+      console.log('Rizz audio loaded (prime blocked)');
+    });
+  }
+};
+
 // ============ MUSIC 1: RIZZ ============
 export const playRizz = () => {
   if (rizzPlaying) return;
@@ -106,16 +134,9 @@ export const playRizz = () => {
       rizzAudio = new Audio('/music/rizz.mp4');
       rizzAudio.volume = 0.5;
       rizzAudio.preload = 'auto';
-    } else {
-      // Even if preloaded, reset the source to ensure fresh context
-      // This helps on some mobile browsers after page refresh
-      const currentSrc = rizzAudio.src;
-      if (!currentSrc.includes('rizz.mp4')) {
-        rizzAudio.src = '/music/rizz.mp4';
-      }
     }
     
-    // CRITICAL: Set loop property right before playing
+    // CRITICAL: Set loop and reset before playing
     rizzAudio.loop = true;
     rizzAudio.currentTime = 0;
     rizzPlaying = true;
@@ -128,34 +149,51 @@ export const playRizz = () => {
       }
     };
     
+    // Add error handler
+    rizzAudio.onerror = (e) => {
+      console.error('Rizz audio element error:', e);
+      rizzPlaying = false;
+    };
+    
     const playPromise = rizzAudio.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
         console.log('Rizz audio playing successfully');
       }).catch((e) => {
-        console.error('Rizz audio failed, retrying:', e);
+        console.error('Rizz audio failed, retrying with fresh audio:', e);
         rizzPlaying = false;
         
-        // Retry with a fresh audio element (fallback for stubborn browsers)
+        // Retry with a completely fresh audio element
         setTimeout(() => {
           if (!rizzPlaying) {
+            // Destroy old element
+            if (rizzAudio) {
+              rizzAudio.src = '';
+              rizzAudio = null;
+            }
+            
+            // Create fresh element
             rizzAudio = new Audio('/music/rizz.mp4');
             rizzAudio.volume = 0.5;
             rizzAudio.loop = true;
             rizzAudio.currentTime = 0;
             rizzPlaying = true;
+            
             rizzAudio.onended = () => {
               if (rizzPlaying && rizzAudio) {
                 rizzAudio.currentTime = 0;
                 rizzAudio.play().catch(() => {});
               }
             };
-            rizzAudio.play().catch(() => {
-              console.error('Rizz audio retry also failed');
+            
+            rizzAudio.play().then(() => {
+              console.log('Rizz audio retry successful');
+            }).catch((retryError) => {
+              console.error('Rizz audio retry also failed:', retryError);
               rizzPlaying = false;
             });
           }
-        }, 100);
+        }, 50);
       });
     }
   } catch (e) {
