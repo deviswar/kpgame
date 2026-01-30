@@ -11,6 +11,7 @@ import FeedPage from "./pages/FeedPage";
 import CowFightPage from "./pages/CowFightPage";
 import MilkHospitalPage from "./pages/MilkHospitalPage";
 import AirplanePage from "./pages/AirplanePage";
+import AboutPage from "./pages/AboutPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/cow-fight" element={<CowFightPage />} />
           <Route path="/milk-hospital" element={<MilkHospitalPage />} />
           <Route path="/airplane" element={<AirplanePage />} />
+          <Route path="/about" element={<AboutPage />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
