@@ -184,7 +184,7 @@ const WelcomeScreen = memo(({
       }}>
           {/* Name Badge */}
           <div className="bg-pink-500 px-4 py-1.5 rounded-lg mb-3 shadow-lg">
-            <span className="text-white font-bold text-sm md:text-base" style={{ fontFamily: '"Bangers", cursive' }}>QT</span>
+            <span className="text-white font-bold text-sm md:text-base">QT</span>
           </div>
           
           {/* QT Character - Image */}
