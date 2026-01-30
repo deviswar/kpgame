@@ -1,38 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://kpgame.vercel.app/</loc>
+    <lastmod>2026-01-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://kpgame.vercel.app/welcome</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kpgame.vercel.app/feed</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kpgame.vercel.app/cow-fight</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kpgame.vercel.app/milk-hospital</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kpgame.vercel.app/airplane</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kpgame.vercel.app/about</loc>
+    <lastmod>2026-01-30</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
 </urlset>
