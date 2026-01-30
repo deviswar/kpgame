@@ -201,10 +201,10 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
         className="transition-transform"
         style={{
           position: 'absolute',
-          width: width * 0.08,
-          height: height * 0.28,
-          bottom: height * 0.02,
-          left: width * 0.12,
+          width: width * 0.09,
+          height: height * 0.22,
+          bottom: height * 0.15,
+          left: width * 0.15,
           transformOrigin: 'top center',
           zIndex: 10,
           transform: getArmTransform(),
@@ -214,34 +214,24 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
             : 'ease-out',
         }}
       >
-        {/* Upper leg */}
+        {/* Leg segment */}
         <div 
           className="absolute top-0 w-full rounded-lg"
           style={{
-            height: '40%',
+            height: '65%',
             background: 'linear-gradient(135deg, #f0f0e8, #e8e8e0)',
             border: '1px solid #ccc',
           }}
         />
-        {/* Lower leg */}
+        {/* Boxing Glove */}
         <div 
-          className="absolute w-full rounded-lg"
-          style={{
-            top: '35%',
-            height: '35%',
-            background: 'linear-gradient(135deg, #e8e8e0, #d8d8d0)',
-            border: '1px solid #bbb',
-          }}
-        />
-        {/* Boxing Glove - Larger and more prominent */}
-        <div 
-          className={`absolute transition-transform ${punchPhase === 'strike' ? 'scale-125' : 'scale-100'}`}
+          className={`absolute transition-transform ${punchPhase === 'strike' ? 'scale-110' : 'scale-100'}`}
           style={{
             bottom: 0,
             left: '50%',
             transform: 'translateX(-50%)',
-            width: width * 0.18,
-            height: width * 0.15,
+            width: width * 0.16,
+            height: width * 0.13,
             background: 'linear-gradient(135deg, #ef4444, #dc2626, #b91c1c)',
             borderRadius: '45%',
             border: '3px solid #991b1b',
@@ -264,10 +254,10 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
           <div 
             className="absolute"
             style={{
-              top: '12%',
-              right: '-20%',
-              width: '42%',
-              height: '48%',
+              top: '15%',
+              right: '-18%',
+              width: '38%',
+              height: '45%',
               background: 'linear-gradient(135deg, #ef4444, #dc2626)',
               borderRadius: '50%',
               border: '2px solid #991b1b',
@@ -277,64 +267,53 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
           <div 
             className="absolute rounded-full bg-white/50"
             style={{
-              top: '10%',
-              left: '15%',
-              width: '32%',
-              height: '28%',
-            }}
-          />
-          {/* Glove lacing detail */}
-          <div 
-            className="absolute bg-white/80"
-            style={{
-              bottom: '12%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '55%',
-              height: '10%',
-              borderRadius: '3px',
+              top: '12%',
+              left: '18%',
+              width: '28%',
+              height: '24%',
             }}
           />
         </div>
       </div>
       
-      {/* Second front leg */}
+      {/* Second front leg - SAME SIZE as first leg */}
       <div 
         className="absolute transition-transform duration-100"
         style={{
+          width: width * 0.09,
+          height: height * 0.22,
           bottom: height * 0.15,
-          left: width * 0.22,
-          transform: punchPhase === 'rushing' || punchPhase === 'strike' ? 'translateX(-5px)' : 'translateX(0)',
+          left: width * 0.28,
+          transform: punchPhase === 'rushing' || punchPhase === 'strike' ? 'translateX(-3px)' : 'translateX(0)',
         }}
       >
+        {/* Leg segment */}
         <div 
-          className="rounded-lg"
+          className="w-full rounded-lg"
           style={{
-            width: width * 0.1,
-            height: height * 0.18,
+            height: '65%',
             background: 'linear-gradient(145deg, #e8e8e0, #d5d5d0)',
+            border: '1px solid #bbb',
           }}
         />
+        {/* Boxing Glove */}
         <div 
-          className="absolute -bottom-1 -left-2 rounded-full"
+          className="absolute rounded-full"
           style={{
-            width: width * 0.2,
-            height: height * 0.12,
+            bottom: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: width * 0.16,
+            height: width * 0.13,
             background: 'linear-gradient(145deg, #e53935, #b71c1c)',
             boxShadow: '0 4px 10px rgba(229, 57, 53, 0.4)',
+            borderRadius: '45%',
+            border: '2px solid #991b1b',
           }}
         >
           <div 
             className="absolute top-1 left-2 rounded-full bg-white/30"
-            style={{ width: width * 0.06, height: height * 0.03 }}
-          />
-          <div 
-            className="absolute -top-1 left-1/2 -translate-x-1/2 rounded"
-            style={{
-              width: width * 0.12,
-              height: height * 0.03,
-              background: '#fff',
-            }}
+            style={{ width: width * 0.04, height: width * 0.025 }}
           />
         </div>
       </div>
@@ -349,28 +328,16 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
           left: width * 0.05,
         }}
       >
-        {/* Main head shape */}
+        {/* Main head shape - clean, no spots on face */}
         <div 
-          className="absolute rounded-[45%] overflow-hidden"
+          className="absolute rounded-[45%]"
           style={{
             width: '100%',
             height: '100%',
             background: 'linear-gradient(145deg, #f5f5f0, #e0e0d8)',
             boxShadow: '0 5px 15px rgba(0,0,0,0.15)',
           }}
-        >
-          {/* Head spot */}
-          <div 
-            className="absolute rounded-full"
-            style={{
-              width: width * 0.15,
-              height: height * 0.1,
-              top: '10%',
-              right: '15%',
-              background: '#2a2a2a',
-            }}
-          />
-        </div>
+        />
 
         {/* Horns */}
         <div 
@@ -422,47 +389,67 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
           />
         </div>
 
-        {/* Angry eyes - more intense during strike */}
-        <div className="absolute top-[30%] left-1/2 -translate-x-1/2 flex gap-2">
+        {/* Angry eyes - symmetrical and properly aligned */}
+        <div className="absolute top-[32%] left-1/2 -translate-x-1/2 flex gap-3">
+          {/* Left eye */}
           <div className="relative">
-            {/* Left angry eyebrow */}
+            {/* Left eyebrow - angled inward for angry look */}
             <div 
-              className="absolute -top-2 left-0 h-1 rounded-full bg-gray-800 transition-transform duration-100"
+              className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-1 rounded-full transition-transform duration-100"
               style={{ 
-                width: width * 0.1, 
-                transform: punchPhase === 'strike' ? 'rotate(25deg)' : isPunching ? 'rotate(20deg)' : 'rotate(15deg)',
+                width: width * 0.09,
+                background: '#4a4a4a',
+                transform: `translateX(-25%) ${punchPhase === 'strike' ? 'rotate(18deg)' : isPunching ? 'rotate(15deg)' : 'rotate(12deg)'}`,
+                transformOrigin: 'right center',
               }}
             />
             <div 
-              className="rounded-full bg-white border-2 border-gray-300 flex items-center justify-center"
-              style={{ width: width * 0.1, height: height * 0.06 }}
+              className="rounded-full bg-white flex items-center justify-center"
+              style={{ 
+                width: width * 0.09, 
+                height: width * 0.09,
+                border: '2px solid #d0d0d0',
+              }}
             >
               <div 
                 className="rounded-full bg-gray-900"
-                style={{ width: width * 0.05, height: width * 0.05 }}
+                style={{ width: width * 0.045, height: width * 0.045 }}
               >
-                <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-white" />
+                <div 
+                  className="absolute rounded-full bg-white"
+                  style={{ width: '3px', height: '3px', top: '2px', right: '2px' }}
+                />
               </div>
             </div>
           </div>
+          {/* Right eye */}
           <div className="relative">
-            {/* Right angry eyebrow */}
+            {/* Right eyebrow - angled inward for angry look (mirror of left) */}
             <div 
-              className="absolute -top-2 right-0 h-1 rounded-full bg-gray-800 transition-transform duration-100"
+              className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-1 rounded-full transition-transform duration-100"
               style={{ 
-                width: width * 0.1, 
-                transform: punchPhase === 'strike' ? 'rotate(-25deg)' : isPunching ? 'rotate(-20deg)' : 'rotate(-15deg)',
+                width: width * 0.09,
+                background: '#4a4a4a',
+                transform: `translateX(25%) ${punchPhase === 'strike' ? 'rotate(-18deg)' : isPunching ? 'rotate(-15deg)' : 'rotate(-12deg)'}`,
+                transformOrigin: 'left center',
               }}
             />
             <div 
-              className="rounded-full bg-white border-2 border-gray-300 flex items-center justify-center"
-              style={{ width: width * 0.1, height: height * 0.06 }}
+              className="rounded-full bg-white flex items-center justify-center"
+              style={{ 
+                width: width * 0.09, 
+                height: width * 0.09,
+                border: '2px solid #d0d0d0',
+              }}
             >
               <div 
                 className="rounded-full bg-gray-900"
-                style={{ width: width * 0.05, height: width * 0.05 }}
+                style={{ width: width * 0.045, height: width * 0.045 }}
               >
-                <div className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-white" />
+                <div 
+                  className="absolute rounded-full bg-white"
+                  style={{ width: '3px', height: '3px', top: '2px', right: '2px' }}
+                />
               </div>
             </div>
           </div>
@@ -514,27 +501,27 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: Bo
         />
       </div>
 
-      {/* Tail */}
+      {/* Tail - hangs down naturally */}
       <div 
         className={`absolute ${punchPhase === 'idle' ? 'animate-wiggle' : ''}`}
         style={{
-          width: width * 0.04,
-          height: height * 0.2,
-          bottom: height * 0.4,
-          right: width * 0.02,
+          width: width * 0.035,
+          height: height * 0.18,
+          bottom: height * 0.35,
+          right: width * 0.05,
           background: 'linear-gradient(to bottom, #f0f0e8, #ddd)',
-          borderRadius: '30%',
+          borderRadius: '40%',
           transformOrigin: 'top center',
-          transform: punchPhase === 'rushing' ? 'rotate(-20deg)' : punchPhase === 'strike' ? 'rotate(-30deg)' : 'rotate(0deg)',
+          transform: punchPhase === 'rushing' ? 'rotate(15deg)' : punchPhase === 'strike' ? 'rotate(25deg)' : 'rotate(0deg)',
           transition: 'transform 150ms ease-out',
         }}
       >
         {/* Tail tuft */}
         <div 
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full"
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full"
           style={{
-            width: width * 0.06,
-            height: width * 0.06,
+            width: width * 0.05,
+            height: width * 0.05,
             background: '#2a2a2a',
           }}
         />
