@@ -27,6 +27,14 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
   const [showImpactBurst, setShowImpactBurst] = useState(false);
   const [showDustTrail, setShowDustTrail] = useState(false);
   
+  // Responsive rush distance - less on mobile
+  const getRushDistance = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return 35; // Mobile: 35vw
+    }
+    return 55; // Desktop: 55vw
+  };
+  
   const healthRef = useRef(health);
   healthRef.current = health;
 
@@ -61,7 +69,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
     // ============ PHASE 2: RUSH FORWARD (150-450ms) ============
     setTimeout(() => {
       setPunchPhase('rushing');
-      setCowPosition(70); // Rush 70% toward KP
+      setCowPosition(getRushDistance()); // Responsive rush distance
       setShowDustTrail(true);
     }, 150);
     
