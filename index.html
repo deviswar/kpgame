@@ -75,19 +75,25 @@
       html, body {
         margin: 0;
         padding: 0;
-        min-height: 100%;
-        min-height: 100dvh;
-        overflow-x: hidden;
+        overflow: hidden;
       }
       #root {
-        margin: 0;
-        padding: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         padding-top: env(safe-area-inset-top);
-        min-height: 100%;
-        min-height: 100dvh;
-        width: 100%;
-        position: relative;
+        overflow-y: auto;
         background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%));
+      }
+      /* Hide SEO footer from users but keep for Google */
+      footer {
+        position: absolute;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
       }
       /* Hide Lovable dev overlay/tagger on mobile */
       @media (max-width: 768px) {
@@ -107,7 +113,7 @@
       }
       /* Instant background to prevent white flash */
       body {
-        background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%)) !important;
+        background: hsl(25 100% 70%) !important;
       }
     </style>
   </head>
