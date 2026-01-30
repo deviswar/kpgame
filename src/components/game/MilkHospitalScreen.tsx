@@ -58,7 +58,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     setPhase('mourning');
     setWaitingForUserTap(false);
     
-    // Trigger flashes
+    // Trigger flashes - 8 total flashes
     setShowMourningFlash(true);
     setTimeout(() => setShowMourningFlash(false), 150);
     setTimeout(() => setShowMourningFlash(true), 300);
@@ -69,6 +69,12 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     setTimeout(() => setShowMourningFlash(false), 1050);
     setTimeout(() => setShowMourningFlash(true), 1200);
     setTimeout(() => setShowMourningFlash(false), 1350);
+    setTimeout(() => setShowMourningFlash(true), 1500);
+    setTimeout(() => setShowMourningFlash(false), 1650);
+    setTimeout(() => setShowMourningFlash(true), 1800);
+    setTimeout(() => setShowMourningFlash(false), 1950);
+    setTimeout(() => setShowMourningFlash(true), 2100);
+    setTimeout(() => setShowMourningFlash(false), 2250);
     
     // Complete after mourning duration (extended by 1.3s: 10000 + 1300 = 11300)
     setTimeout(() => onComplete(), 11300);
