@@ -7,7 +7,6 @@ import WelcomeScreen from './WelcomeScreen';
 import CowFightScreen from './CowFightScreen';
 import MilkHospitalScreen from './MilkHospitalScreen';
 import { playGameMusic, playMourningMusic, stopAll } from '@/lib/audioManager';
-
 const FeedKPGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [happiness, setHappiness] = useState(0);
@@ -25,7 +24,6 @@ const FeedKPGame = () => {
     // Start Music 2 via audio manager
     playGameMusic();
   };
-
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness || showAirplane) return;
     const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
@@ -54,11 +52,10 @@ const FeedKPGame = () => {
     // Audio manager handles stopping Music 2 and starting Music 3 atomically
     playMourningMusic();
   }, []);
-
   const handleGoHome = () => {
     // Stop all music via audio manager
     stopAll();
-    
+
     // Reset all state and go back to welcome screen
     setHappiness(0);
     setFeedCount(0);
@@ -67,17 +64,14 @@ const FeedKPGame = () => {
     setShowAirplane(false);
     setGameStarted(false);
   };
-
   const handleCowFightComplete = () => {
     setShowCowFight(false);
     setShowMilkHospital(true);
   };
-
   const handleMilkHospitalComplete = () => {
     setShowMilkHospital(false);
     setShowAirplane(true);
   };
-
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
@@ -85,23 +79,18 @@ const FeedKPGame = () => {
     setShowMilkHospital(false);
     setShowAirplane(false);
   };
-
   if (!gameStarted) {
     return <WelcomeScreen onStart={handleStartGame} />;
   }
-
   if (showCowFight) {
     return <CowFightScreen onComplete={handleCowFightComplete} />;
   }
-
   if (showMilkHospital) {
     return <MilkHospitalScreen onComplete={handleMilkHospitalComplete} onStartMourningMusic={handleStartMourningMusic} />;
   }
-
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
   }
-
   return <div className="h-screen h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-2 flex items-center justify-between gap-2">
@@ -110,9 +99,7 @@ const FeedKPGame = () => {
           <span className="text-primary-foreground font-bold text-base ml-1">{feedCount}/5</span>
         </div>
         
-        <h1 className="text-xl md:text-2xl font-bold text-primary-foreground text-shadow-game tracking-wider text-center">
-          <span className="hidden sm:inline">🍚 </span>FEED KP<span className="hidden sm:inline"> 🍚</span>
-        </h1>
+        
         
         <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl px-3 py-1 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm">
           🔄 <span className="hidden sm:inline">Reset</span>
@@ -127,9 +114,7 @@ const FeedKPGame = () => {
           <div className="flex flex-col items-center order-1 md:order-1">
             {/* Name Badge */}
             <div className="mb-1 bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-1 rounded-xl border-4 border-blue-400/50 shadow-lg">
-              <h2 className="text-2xl md:text-3xl font-bold text-white text-shadow-game tracking-widest">
-                KP
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-white text-shadow-game tracking-widest">FEED KP</h2>
             </div>
             
             {/* Happiness Meter */}
