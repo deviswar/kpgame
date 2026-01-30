@@ -89,13 +89,29 @@ const FeedPage = () => {
             </div>
           </div>
 
-          {/* Arrow */}
-          <div className="hidden md:flex flex-col items-center gap-2 text-primary-foreground/60 order-2">
-            <span className="text-2xl">➡️</span>
+          {/* Speech Bubble with Arrow - Mobile: below KP, Desktop: between KP and Dengulu */}
+          <div className="flex flex-col items-center order-2 mt-2 md:mt-0">
+            {/* Speech bubble */}
+            <div className="relative bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border-2 border-amber-400/50 max-w-[140px] md:max-w-[160px]">
+              <p className="text-gray-800 text-xs md:text-sm font-medium text-center">
+                I love to eat this food! 😋
+              </p>
+              {/* Arrow pointing right on desktop */}
+              <div className="hidden md:block absolute top-1/2 -right-3 -translate-y-1/2 w-0 h-0 border-t-[8px] border-b-[8px] border-l-[12px] border-t-transparent border-b-transparent border-l-white/95" />
+              {/* Arrow pointing down on mobile */}
+              <div className="md:hidden absolute -bottom-3 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[12px] border-l-transparent border-r-transparent border-t-white/95" />
+            </div>
+            {/* Animated pointer arrow */}
+            <div className="hidden md:flex items-center gap-1 mt-1 text-amber-400 animate-bounce">
+              <span className="text-xl">➡️</span>
+            </div>
+            <div className="md:hidden flex items-center gap-1 mt-1 text-amber-400 animate-bounce">
+              <span className="text-xl">⬇️</span>
+            </div>
           </div>
 
           {/* Right Side - Dengulu */}
-          <div className="flex flex-col items-center justify-center order-3 mt-4 md:mt-0">
+          <div className="flex flex-col items-center justify-center order-3 mt-2 md:mt-0">
             <DenguluFood onFeed={handleFeed} disabled={happiness >= maxHappiness} />
           </div>
         </div>

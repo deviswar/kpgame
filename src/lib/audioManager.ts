@@ -105,7 +105,6 @@ export const playRizz = () => {
     if (!rizzAudio) {
       rizzAudio = new Audio('/music/rizz.mp4');
       rizzAudio.volume = 0.5;
-      rizzAudio.loop = true;
       rizzAudio.preload = 'auto';
     } else {
       // Even if preloaded, reset the source to ensure fresh context
@@ -116,8 +115,18 @@ export const playRizz = () => {
       }
     }
     
+    // CRITICAL: Set loop property right before playing
+    rizzAudio.loop = true;
     rizzAudio.currentTime = 0;
     rizzPlaying = true;
+    
+    // Also add onended handler as fallback for browsers that don't respect loop
+    rizzAudio.onended = () => {
+      if (rizzPlaying && rizzAudio) {
+        rizzAudio.currentTime = 0;
+        rizzAudio.play().catch(() => {});
+      }
+    };
     
     const playPromise = rizzAudio.play();
     if (playPromise !== undefined) {
@@ -135,6 +144,12 @@ export const playRizz = () => {
             rizzAudio.loop = true;
             rizzAudio.currentTime = 0;
             rizzPlaying = true;
+            rizzAudio.onended = () => {
+              if (rizzPlaying && rizzAudio) {
+                rizzAudio.currentTime = 0;
+                rizzAudio.play().catch(() => {});
+              }
+            };
             rizzAudio.play().catch(() => {
               console.error('Rizz audio retry also failed');
               rizzPlaying = false;
