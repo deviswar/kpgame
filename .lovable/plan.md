@@ -1,28 +1,28 @@
 
-# Fix: Pink Strip on All Screens + Performance Optimization
 
-## Problem Analysis
+# Fix: Pink Strip at Top of Screen (iOS Safe Area Issue)
 
-After examining the codebase, I found the root cause of the pink strip issue:
+## What's Happening
 
-1. **Conflicting body backgrounds**:
-   - `index.html` sets a pink/orange gradient on `body` (inline style): `background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%))`
-   - `src/index.css` also applies `@apply bg-background` to body, which is a different color
+On your iPhone, there's a "safe area" at the very top (status bar area). The game content starts BELOW this area, allowing the body's pink gradient background to peek through as a strip.
 
-2. **`#root` container doesn't fully cover the viewport**, allowing the body's pink gradient to show through on the right side as a thin strip
+## The Root Cause
 
-3. **No explicit sizing on `#root`** to ensure it fills 100% width and height
+- Body background: `linear-gradient(135deg, orange → pink)` - at 135°, the **top-left shows PINK**
+- Game screens use the same gradient but don't extend into the iOS safe area
+- Result: pink body background visible at the top
 
----
+## The Fix (3 changes)
 
-## Solution
+### 1. Add `viewport-fit=cover` to the viewport meta tag
+This tells iOS to extend the web content under the notch/status bar area.
 
-### 1. Fix the `#root` container to cover the full viewport
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+```
 
-In `index.html`, update the critical CSS to ensure `#root` has:
-- `width: 100%`
-- `position: relative` (to ensure proper stacking context)
-- Remove horizontal overflow on body/html
+### 2. Update body and #root styles to use safe-area-inset
+Add padding for safe areas so content still looks correct:
 
 ```css
 html, body {
@@ -30,59 +30,38 @@ html, body {
   padding: 0;
   min-height: 100%;
   min-height: 100dvh;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
 }
 #root {
+  margin: 0;
+  padding: 0;
+  padding-top: env(safe-area-inset-top);
   min-height: 100%;
   min-height: 100dvh;
   width: 100%;
   position: relative;
-}
-```
-
-### 2. Match the body background with the game gradient
-
-Change the body's inline background to match the game's `game-gradient` (so even if it shows, it blends seamlessly):
-
-```css
-body {
+  /* Apply the SAME game gradient to #root so it fills the safe area */
   background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%));
 }
 ```
 
-This is already correct, but the issue is that the Tailwind CSS `bg-background` class is overriding it. We need to ensure the gradient takes precedence.
+### 3. Keep body background as fallback but ensure #root covers it completely
 
-### 3. Add `!important` to the inline body background or use a different approach
-
-Since Tailwind's `bg-background` in `index.css` might be overriding the inline style, we should:
-- Either add `!important` to the inline style
-- Or remove the `@apply bg-background` from body in `index.css`
-
-The cleanest approach is to modify `index.css` to NOT apply `bg-background` to body (since the game screens have their own backgrounds), and keep the inline gradient as the fallback.
+The #root container will now have the same gradient AND extend into the safe area, so no body background will peek through.
 
 ---
 
-## Technical Changes
+## Files to Change
 
-### File 1: `index.html`
-Update the critical CSS block:
-- Add `overflow-x: hidden` to html and body
-- Add explicit `width: 100%` and `position: relative` to `#root`
-- Add `background` with `!important` to ensure it takes precedence
-
-### File 2: `src/index.css`
-- Remove `@apply bg-background` from the body rule since all game screens define their own backgrounds
-- Keep just the font-family setting
+| File | Change |
+|------|--------|
+| `index.html` | Add `viewport-fit=cover` to meta tag + update #root CSS |
 
 ---
 
-## Summary
+## Technical Details
 
-| Issue | Fix |
-|-------|-----|
-| Pink strip visible on right side | Add `overflow-x: hidden` to prevent horizontal overflow |
-| `#root` not covering full viewport | Add `width: 100%` to `#root` |
-| Body background being overridden by Tailwind | Remove `bg-background` from body in CSS, keep inline gradient |
-| Consistent background fallback | Match inline body gradient to game gradient |
+The key insight is that iOS requires `viewport-fit=cover` in the viewport meta tag to allow content to extend behind the status bar. Then we use `env(safe-area-inset-top)` to add padding so the actual interactive content isn't hidden behind the status bar, while the background color extends all the way up.
 
-This fix will ensure no pink strip appears on any screen, and the page will load with a consistent background that matches the game theme.
+By applying the game gradient directly to `#root`, the gradient will fill the entire screen including the safe area, eliminating the pink strip completely.
+
