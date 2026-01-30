@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 
+export type PunchPhase = 'idle' | 'windup' | 'rushing' | 'arm-raise' | 'strike' | 'recovery';
+
 interface BoxingCowProps {
   scale?: number;
   isPunching: boolean;
   isVictory: boolean;
+  punchPhase?: PunchPhase;
 }
 
-const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
+const BoxingCow = ({ scale = 1, isPunching, isVictory, punchPhase = 'idle' }: BoxingCowProps) => {
   const [showSweat, setShowSweat] = useState(false);
 
   useEffect(() => {
     if (isPunching) {
       setShowSweat(true);
-      const timer = setTimeout(() => setShowSweat(false), 500);
+      const timer = setTimeout(() => setShowSweat(false), 800);
       return () => clearTimeout(timer);
     }
   }, [isPunching]);
@@ -21,17 +24,90 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
   const height = baseHeight * scale;
   const width = height * 0.8;
 
+  // Get arm transform based on punch phase
+  const getArmTransform = () => {
+    switch (punchPhase) {
+      case 'windup':
+        return 'rotate(-25deg) translateX(-8px) translateY(-5px)';
+      case 'rushing':
+        return 'rotate(-40deg) translateX(-12px) translateY(-8px)';
+      case 'arm-raise':
+        return 'rotate(-75deg) translateX(-5px) translateY(-25px)';
+      case 'strike':
+        return 'rotate(55deg) translateX(45px) translateY(15px)';
+      case 'recovery':
+        return 'rotate(0deg) translateX(0) translateY(0)';
+      default:
+        return 'rotate(0deg) translateX(0) translateY(0)';
+    }
+  };
+
+  // Get body lean based on phase
+  const getBodyLean = () => {
+    switch (punchPhase) {
+      case 'windup':
+        return 'rotate(8deg) translateX(-5px)'; // Lean back
+      case 'rushing':
+        return 'rotate(-12deg) translateX(5px)'; // Lean forward aggressively
+      case 'arm-raise':
+        return 'rotate(-8deg) translateX(3px)';
+      case 'strike':
+        return 'rotate(-15deg) translateX(8px)'; // Full forward lean
+      case 'recovery':
+        return 'rotate(0deg) translateX(0)';
+      default:
+        return 'rotate(0deg) translateX(0)';
+    }
+  };
+
+  // Get animation class based on state
+  const getAnimationClass = () => {
+    if (punchPhase !== 'idle') return ''; // No default animation during punch phases
+    if (isVictory) return 'animate-cow-victory';
+    return 'animate-cow-idle';
+  };
+
+  // Motion blur during rush
+  const getMotionBlur = () => {
+    if (punchPhase === 'rushing') {
+      return 'blur-[1px]';
+    }
+    return '';
+  };
+
   return (
     <div style={{ transform: 'scaleX(-1)' }}> {/* Wrapper to flip cow to face right */}
       <div 
-        className={`relative transition-transform duration-200 ${
-          isPunching ? 'animate-cow-punch' : isVictory ? 'animate-cow-victory' : 'animate-cow-idle'
-        }`}
+        className={`relative transition-transform ${getAnimationClass()} ${getMotionBlur()}`}
         style={{ 
           width: width,
           height: height,
+          transform: getBodyLean(),
+          transitionDuration: punchPhase === 'strike' ? '100ms' : '150ms',
+          transitionTimingFunction: punchPhase === 'strike' ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'ease-out',
         }}
       >
+      {/* Speed lines during rush */}
+      {punchPhase === 'rushing' && (
+        <div className="absolute inset-0 pointer-events-none overflow-visible">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute bg-gradient-to-r from-yellow-300/60 to-transparent"
+              style={{
+                width: '60px',
+                height: '3px',
+                left: `-${40 + i * 15}px`,
+                top: `${30 + i * 25}%`,
+                transform: `rotate(-5deg)`,
+                animation: 'speed-line 0.3s ease-out infinite',
+                animationDelay: `${i * 0.05}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Body */}
       <div 
         className="absolute rounded-[60%] overflow-hidden"
@@ -122,14 +198,20 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
 
       {/* Front Left Leg with Boxing Glove - THE PUNCHING ARM */}
       <div 
-        className={`absolute transition-transform duration-100 ${isPunching ? 'translate-x-12' : ''}`}
+        className="transition-transform"
         style={{
+          position: 'absolute',
           width: width * 0.08,
           height: height * 0.28,
           bottom: height * 0.02,
           left: width * 0.12,
-          transformOrigin: 'bottom center',
+          transformOrigin: 'top center',
           zIndex: 10,
+          transform: getArmTransform(),
+          transitionDuration: punchPhase === 'strike' ? '80ms' : punchPhase === 'arm-raise' ? '100ms' : '120ms',
+          transitionTimingFunction: punchPhase === 'strike' 
+            ? 'cubic-bezier(0.22, 1, 0.36, 1)' 
+            : 'ease-out',
         }}
       >
         {/* Upper leg */}
@@ -153,7 +235,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
         />
         {/* Boxing Glove - Larger and more prominent */}
         <div 
-          className="absolute"
+          className={`absolute transition-transform ${punchPhase === 'strike' ? 'scale-125' : 'scale-100'}`}
           style={{
             bottom: 0,
             left: '50%',
@@ -163,11 +245,19 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
             background: 'linear-gradient(135deg, #ef4444, #dc2626, #b91c1c)',
             borderRadius: '45%',
             border: '3px solid #991b1b',
-            boxShadow: `
-              inset 3px 3px 6px rgba(255,255,255,0.4), 
-              inset -3px -3px 6px rgba(0,0,0,0.3),
-              0 4px 10px rgba(0,0,0,0.35)
-            `,
+            boxShadow: punchPhase === 'strike' 
+              ? `
+                inset 3px 3px 6px rgba(255,255,255,0.4), 
+                inset -3px -3px 6px rgba(0,0,0,0.3),
+                0 4px 10px rgba(0,0,0,0.35),
+                0 0 20px rgba(255,100,100,0.6)
+              `
+              : `
+                inset 3px 3px 6px rgba(255,255,255,0.4), 
+                inset -3px -3px 6px rgba(0,0,0,0.3),
+                0 4px 10px rgba(0,0,0,0.35)
+              `,
+            transitionDuration: '80ms',
           }}
         >
           {/* Glove thumb */}
@@ -210,10 +300,11 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
       
       {/* Second front leg */}
       <div 
-        className={`absolute transition-transform duration-100 ${isPunching ? '-translate-x-2' : ''}`}
+        className="absolute transition-transform duration-100"
         style={{
           bottom: height * 0.15,
           left: width * 0.22,
+          transform: punchPhase === 'rushing' || punchPhase === 'strike' ? 'translateX(-5px)' : 'translateX(0)',
         }}
       >
         <div 
@@ -331,15 +422,15 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           />
         </div>
 
-        {/* Angry eyes */}
+        {/* Angry eyes - more intense during strike */}
         <div className="absolute top-[30%] left-1/2 -translate-x-1/2 flex gap-2">
           <div className="relative">
             {/* Left angry eyebrow */}
             <div 
-              className="absolute -top-2 left-0 h-1 rounded-full bg-gray-800"
+              className="absolute -top-2 left-0 h-1 rounded-full bg-gray-800 transition-transform duration-100"
               style={{ 
                 width: width * 0.1, 
-                transform: isPunching ? 'rotate(20deg)' : 'rotate(15deg)',
+                transform: punchPhase === 'strike' ? 'rotate(25deg)' : isPunching ? 'rotate(20deg)' : 'rotate(15deg)',
               }}
             />
             <div 
@@ -357,10 +448,10 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           <div className="relative">
             {/* Right angry eyebrow */}
             <div 
-              className="absolute -top-2 right-0 h-1 rounded-full bg-gray-800"
+              className="absolute -top-2 right-0 h-1 rounded-full bg-gray-800 transition-transform duration-100"
               style={{ 
                 width: width * 0.1, 
-                transform: isPunching ? 'rotate(-20deg)' : 'rotate(-15deg)',
+                transform: punchPhase === 'strike' ? 'rotate(-25deg)' : isPunching ? 'rotate(-20deg)' : 'rotate(-15deg)',
               }}
             />
             <div 
@@ -386,19 +477,23 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
             background: 'linear-gradient(145deg, #ffb6c1, #ff9aa2)',
           }}
         >
-          {/* Nostrils - flared when angry */}
+          {/* Nostrils - flared when punching */}
           <div className="absolute top-1/2 left-1/4 -translate-y-1/2 flex gap-2">
             <div 
-              className={`rounded-full bg-gray-800 ${isPunching ? 'scale-125' : ''} transition-transform`}
+              className={`rounded-full bg-gray-800 transition-transform duration-100 ${
+                punchPhase === 'strike' ? 'scale-150' : isPunching ? 'scale-125' : ''
+              }`}
               style={{ width: width * 0.04, height: height * 0.03 }}
             />
             <div 
-              className={`rounded-full bg-gray-800 ${isPunching ? 'scale-125' : ''} transition-transform`}
+              className={`rounded-full bg-gray-800 transition-transform duration-100 ${
+                punchPhase === 'strike' ? 'scale-150' : isPunching ? 'scale-125' : ''
+              }`}
               style={{ width: width * 0.04, height: height * 0.03 }}
             />
           </div>
           {/* Steam from nostrils when punching */}
-          {isPunching && (
+          {(punchPhase === 'rushing' || punchPhase === 'strike') && (
             <>
               <div className="absolute -left-2 top-0 text-xs animate-ping">💨</div>
               <div className="absolute -right-2 top-0 text-xs animate-ping">💨</div>
@@ -406,21 +501,22 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           )}
         </div>
 
-        {/* Angry mouth */}
+        {/* Angry mouth - opens during strike */}
         <div 
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2"
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 transition-all duration-100"
           style={{
-            width: width * 0.12,
-            height: height * 0.02,
-            borderBottom: '2px solid #333',
+            width: punchPhase === 'strike' ? width * 0.15 : width * 0.12,
+            height: punchPhase === 'strike' ? height * 0.04 : height * 0.02,
+            borderBottom: punchPhase === 'strike' ? '3px solid #333' : '2px solid #333',
             borderRadius: '0 0 50% 50%',
+            background: punchPhase === 'strike' ? 'rgba(50,50,50,0.3)' : 'transparent',
           }}
         />
       </div>
 
       {/* Tail */}
       <div 
-        className="absolute animate-wiggle"
+        className={`absolute ${punchPhase === 'idle' ? 'animate-wiggle' : ''}`}
         style={{
           width: width * 0.04,
           height: height * 0.2,
@@ -429,6 +525,8 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
           background: 'linear-gradient(to bottom, #f0f0e8, #ddd)',
           borderRadius: '30%',
           transformOrigin: 'top center',
+          transform: punchPhase === 'rushing' ? 'rotate(-20deg)' : punchPhase === 'strike' ? 'rotate(-30deg)' : 'rotate(0deg)',
+          transition: 'transform 150ms ease-out',
         }}
       >
         {/* Tail tuft */}
@@ -442,7 +540,7 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
         />
       </div>
 
-      {/* Effort effect when punching - no tears/water drops */}
+      {/* Effort effect when punching - enhanced for strike */}
       {showSweat && (
         <>
           <div 
@@ -458,6 +556,34 @@ const BoxingCow = ({ scale = 1, isPunching, isVictory }: BoxingCowProps) => {
             💥
           </div>
         </>
+      )}
+
+      {/* Impact burst at glove during strike */}
+      {punchPhase === 'strike' && (
+        <div 
+          className="absolute pointer-events-none"
+          style={{
+            left: width * 0.3,
+            bottom: height * 0.15,
+            zIndex: 20,
+          }}
+        >
+          <div className="relative">
+            <span className="text-2xl animate-ping">💥</span>
+            <span 
+              className="absolute -top-2 -left-2 text-xl"
+              style={{ animation: 'impact-burst 0.3s ease-out forwards' }}
+            >
+              ✨
+            </span>
+            <span 
+              className="absolute -top-1 left-4 text-lg"
+              style={{ animation: 'impact-burst 0.3s ease-out 0.1s forwards' }}
+            >
+              ⚡
+            </span>
+          </div>
+        </div>
       )}
 
       {/* Victory pose - gloves raised */}
