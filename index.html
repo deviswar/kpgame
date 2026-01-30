@@ -27,10 +27,11 @@
     <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
     <link rel="prefetch" href="/music/kpfall.mp4" as="fetch" />
 
-    <!-- DNS prefetch for fonts -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <!-- Preconnect and load fonts with display=swap for fast rendering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&display=swap" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -69,13 +70,33 @@
     }
     </script>
     
-    <!-- Prevent flash of unstyled content -->
+    <!-- Critical CSS: Prevent flash & hide dev overlays on mobile -->
     <style>
       html, body, #root {
         margin: 0;
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
+      }
+      /* Hide Lovable dev overlay/tagger on mobile */
+      @media (max-width: 768px) {
+        [data-lovable-tagger],
+        [class*="lovable-tagger"],
+        #lovable-badge,
+        .lovable-badge,
+        [data-lov],
+        div[style*="position: fixed"][style*="z-index: 2147483647"],
+        div[style*="position: fixed"][style*="z-index: 999999"],
+        div[style*="position: fixed"][style*="bottom: 0"][style*="right: 0"]:not(#root *) {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+      }
+      /* Instant background to prevent white flash */
+      body {
+        background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%));
       }
     </style>
   </head>
