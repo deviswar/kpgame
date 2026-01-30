@@ -20,6 +20,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
   const [cowVictory, setCowVictory] = useState(false);
   const [showStars, setShowStars] = useState(false);
   const [brokenHearts, setBrokenHearts] = useState<number[]>([]);
+  const [isCowRushing, setIsCowRushing] = useState(false);
 
   // Stage timing
   useEffect(() => {
@@ -45,7 +46,8 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
     setGameState('fighting');
     setShowPopup(false);
     
-    // Start punch animation
+    // Cow rushes forward and starts punch animation
+    setIsCowRushing(true);
     setIsPunching(true);
     
     // Impact after 300ms (when punch lands)
@@ -92,8 +94,9 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
       }
     }, 300);
     
-    // End punch animation
+    // End punch animation and cow retreats
     setTimeout(() => {
+      setIsCowRushing(false);
       setIsPunching(false);
       if (health > 1) {
         setShowPopup(true);
@@ -223,11 +226,21 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
             transform: charactersEntered ? 'translateX(0) rotate(0)' : 'translateX(-100vw) rotate(-10deg)',
           }}
         >
-          <BoxingCow 
-            scale={1.1} 
-            isPunching={isPunching} 
-            isVictory={cowVictory} 
-          />
+          {/* Cow rush container */}
+          <div 
+            className="transition-transform duration-300 ease-out"
+            style={{
+              transform: isCowRushing 
+                ? 'translateX(calc(40vw - 80px))' 
+                : 'translateX(0)',
+            }}
+          >
+            <BoxingCow 
+              scale={1.1} 
+              isPunching={isPunching} 
+              isVictory={cowVictory} 
+            />
+          </div>
           <div className="text-center mt-2">
             <span 
               className="bg-red-600 text-white px-2 py-1 rounded-lg font-bold text-sm md:text-base"
