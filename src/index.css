@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap');
+/* Fonts loaded via index.html with preconnect for faster loading */
 
 @tailwind base;
 @tailwind components;
