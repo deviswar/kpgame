@@ -72,11 +72,20 @@
     
     <!-- Critical CSS: Prevent flash & hide dev overlays on mobile -->
     <style>
-      html, body, #root {
+      html, body {
         margin: 0;
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
+        overflow-x: hidden;
+      }
+      #root {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        width: 100%;
+        position: relative;
       }
       /* Hide Lovable dev overlay/tagger on mobile */
       @media (max-width: 768px) {
@@ -96,7 +105,7 @@
       }
       /* Instant background to prevent white flash */
       body {
-        background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%));
+        background: linear-gradient(135deg, hsl(25 100% 70%), hsl(340 70% 65%)) !important;
       }
     </style>
   </head>
