@@ -73,8 +73,27 @@ const DenguluFood = ({ onFeed, disabled }: DenguluFoodProps) => {
           {/* Shine */}
           <div className="absolute top-1.5 md:top-2 left-3 md:left-4 w-4 md:w-6 h-4 md:h-6 bg-white/40 rounded-full blur-sm" />
           
-          {/* Dengulu representation - emoji */}
-          <span className="text-4xl md:text-5xl">😡🤬</span>
+          {/* Dengulu representation - bowl with emojis */}
+          <div className="relative scale-75 md:scale-100">
+            {/* Bowl */}
+            <div className="w-20 h-12 bg-gradient-to-b from-orange-300 to-orange-400 rounded-b-full border-2 border-orange-500/50 relative overflow-hidden">
+              {/* Emojis inside bowl */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-10 flex items-center justify-center">
+                <span className="text-lg">😡🤬</span>
+              </div>
+              {/* Bowl shine */}
+              <div className="absolute left-1 top-1 w-2 h-4 bg-white/30 rounded-full" />
+            </div>
+            
+            {/* Steam */}
+            {!disabled && (
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-1">
+                <div className="w-1 h-4 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
+                <div className="w-1 h-6 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <div className="w-1 h-4 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Touch indicator */}
