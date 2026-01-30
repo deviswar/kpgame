@@ -65,7 +65,7 @@ const WelcomeScreen = memo(({
         </div>
 
         {/* Header with title and KP */}
-        <div className="flex items-center gap-2 -mt-48">
+        <div className="flex items-center gap-2 -mt-24">
           <h1 
             className="text-5xl md:text-7xl tracking-wide relative"
             style={{ 
