@@ -8,7 +8,7 @@ const AirplanePage = () => {
   const handleComplete = () => {
     // Stop all music when going home
     stopAll();
-    navigate('/welcome');
+    navigate('/');
   };
 
   // Music 3 (mourning) continues playing from audio manager (module singleton)

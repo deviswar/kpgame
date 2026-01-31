@@ -135,12 +135,18 @@ export const primeRizzAudio = () => {
 
 // ============ MUSIC 1: RIZZ ============
 export const playRizz = () => {
-  if (rizzPlaying) return;
+  console.log('[RIZZ] playRizz called, rizzPlaying:', rizzPlaying);
+  
+  if (rizzPlaying) {
+    console.log('[RIZZ] Already playing, skipping');
+    return;
+  }
   
   try {
     // CRITICAL: Create audio element SYNCHRONOUSLY in user gesture context
     // This ensures mobile browsers recognize the user interaction
     if (!rizzAudio) {
+      console.log('[RIZZ] Creating new audio element');
       rizzAudio = new Audio('/music/rizz.mp4');
       rizzAudio.volume = 0.5;
       rizzAudio.preload = 'auto';
@@ -161,53 +167,55 @@ export const playRizz = () => {
     
     // Add error handler
     rizzAudio.onerror = (e) => {
-      console.error('Rizz audio element error:', e);
+      console.error('[RIZZ] Audio element error:', e);
       rizzPlaying = false;
     };
     
+    console.log('[RIZZ] Calling play() synchronously in gesture context');
     const playPromise = rizzAudio.play();
+    
     if (playPromise !== undefined) {
       playPromise.then(() => {
-        console.log('Rizz audio playing successfully');
+        console.log('[RIZZ] ✅ Audio playing successfully!');
       }).catch((e) => {
-        console.error('Rizz audio failed, retrying with fresh audio:', e);
+        console.error('[RIZZ] ❌ Play failed:', e.name, e.message);
         rizzPlaying = false;
         
-        // Retry with a completely fresh audio element
-        setTimeout(() => {
-          if (!rizzPlaying) {
-            // Destroy old element
-            if (rizzAudio) {
-              rizzAudio.src = '';
-              rizzAudio = null;
-            }
-            
-            // Create fresh element
-            rizzAudio = new Audio('/music/rizz.mp4');
-            rizzAudio.volume = 0.5;
-            rizzAudio.loop = true;
+        // On failure, try one more time with fresh element (still sync-ish)
+        // But do NOT use setTimeout - that's what was breaking iOS
+        console.log('[RIZZ] Creating fresh element for retry...');
+        
+        // Destroy old element
+        if (rizzAudio) {
+          rizzAudio.src = '';
+          rizzAudio = null;
+        }
+        
+        // Create fresh element and try immediately
+        rizzAudio = new Audio('/music/rizz.mp4');
+        rizzAudio.volume = 0.5;
+        rizzAudio.loop = true;
+        rizzAudio.currentTime = 0;
+        rizzPlaying = true;
+        
+        rizzAudio.onended = () => {
+          if (rizzPlaying && rizzAudio) {
             rizzAudio.currentTime = 0;
-            rizzPlaying = true;
-            
-            rizzAudio.onended = () => {
-              if (rizzPlaying && rizzAudio) {
-                rizzAudio.currentTime = 0;
-                rizzAudio.play().catch(() => {});
-              }
-            };
-            
-            rizzAudio.play().then(() => {
-              console.log('Rizz audio retry successful');
-            }).catch((retryError) => {
-              console.error('Rizz audio retry also failed:', retryError);
-              rizzPlaying = false;
-            });
+            rizzAudio.play().catch(() => {});
           }
-        }, 50);
+        };
+        
+        // Immediate retry (no setTimeout!)
+        rizzAudio.play().then(() => {
+          console.log('[RIZZ] ✅ Retry successful!');
+        }).catch((retryError) => {
+          console.error('[RIZZ] ❌ Retry also failed:', retryError.name, retryError.message);
+          rizzPlaying = false;
+        });
       });
     }
   } catch (e) {
-    console.error('Rizz audio error:', e);
+    console.error('[RIZZ] Exception:', e);
     rizzPlaying = false;
   }
 };

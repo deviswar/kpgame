@@ -1,4 +1,4 @@
-// Fresh deployment trigger - v1.0.3
+// Fresh deployment trigger - v1.0.4 - Rocket fast loading
 import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,13 +7,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-// Critical path - load immediately
-import Index from "./pages/Index";
+// CRITICAL: Only import WelcomePage eagerly for rocket-fast first paint
+// Everything else is lazy-loaded to minimize initial bundle
+import WelcomePage from "./pages/WelcomePage";
 
-// Lazy load non-critical routes for faster initial load
+// Lazy load ALL other routes for faster initial load
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const WelcomePage = lazy(() => import("./pages/WelcomePage"));
 const FeedPage = lazy(() => import("./pages/FeedPage"));
 const CowFightPage = lazy(() => import("./pages/CowFightPage"));
 const MilkHospitalPage = lazy(() => import("./pages/MilkHospitalPage"));
@@ -65,14 +65,11 @@ const App = () => (
           <BrowserRouter>
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
-                {/* Main game - sequential flow */}
-                <Route path="/" element={<Index />} />
+                {/* ROCKET FAST: Root shows only WelcomePage (tiny bundle) */}
+                <Route path="/" element={<WelcomePage />} />
                 
                 {/* Admin panel - direct access to all screens */}
                 <Route path="/admin" element={<AdminPanel />} />
-                
-                {/* Individual screens for direct navigation */}
-                <Route path="/welcome" element={<WelcomePage />} />
                 <Route path="/feed" element={<FeedPage />} />
                 <Route path="/cow-fight" element={<CowFightPage />} />
                 <Route path="/milk-hospital" element={<MilkHospitalPage />} />
