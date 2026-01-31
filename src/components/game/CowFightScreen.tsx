@@ -20,39 +20,56 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
   const [cowVictory, setCowVictory] = useState(false);
   const [showStars, setShowStars] = useState(false);
   const [brokenHearts, setBrokenHearts] = useState<number[]>([]);
+  const [imageError, setImageError] = useState<{[key: string]: boolean}>({});
   
   // Pro animation states
   const [punchPhase, setPunchPhase] = useState<PunchPhase>('idle');
-  const [cowPosition, setCowPosition] = useState(0); // 0 = start, percentage toward KP
+  const [cowPosition, setCowPosition] = useState(0);
   const [showImpactBurst, setShowImpactBurst] = useState(false);
   const [showDustTrail, setShowDustTrail] = useState(false);
   
-  // Responsive rush distance - less on mobile
-  const getRushDistance = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) {
-      return 35; // Mobile: 35vw
-    }
-    return 55; // Desktop: 55vw
-  };
-  
+  // Track all timers for cleanup
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
   const healthRef = useRef(health);
   healthRef.current = health;
+  
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(t => clearTimeout(t));
+    };
+  }, []);
+  
+  // Responsive rush distance
+  const getRushDistance = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return 35;
+    }
+    return 55;
+  };
+
+  // Handle image load errors
+  const handleImageError = (imageName: string) => {
+    setImageError(prev => ({ ...prev, [imageName]: true }));
+  };
 
   // Stage timing
   useEffect(() => {
-    // After 1 second, characters enter
     const entranceTimer = setTimeout(() => {
       setGameState('entrance');
       setCharactersEntered(true);
       
-      // After entrance animation (1s), show popup
-      setTimeout(() => {
+      const popupTimer = setTimeout(() => {
         setGameState('ready');
         setShowPopup(true);
       }, 1200);
+      timersRef.current.push(popupTimer);
     }, 1000);
+    timersRef.current.push(entranceTimer);
 
-    return () => clearTimeout(entranceTimer);
+    return () => {
+      timersRef.current.forEach(t => clearTimeout(t));
+    };
   }, []);
 
   const handlePunch = useCallback(() => {
@@ -63,79 +80,83 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
     setShowPopup(false);
     setIsPunching(true);
     
-    // ============ PHASE 1: WIND-UP (0-150ms) ============
+    // PHASE 1: WIND-UP
     setPunchPhase('windup');
     
-    // ============ PHASE 2: RUSH FORWARD (150-450ms) ============
-    setTimeout(() => {
+    // PHASE 2: RUSH FORWARD
+    const rushTimer = setTimeout(() => {
       setPunchPhase('rushing');
-      setCowPosition(getRushDistance()); // Responsive rush distance
+      setCowPosition(getRushDistance());
       setShowDustTrail(true);
     }, 150);
+    timersRef.current.push(rushTimer);
     
-    // ============ PHASE 3: ARM RAISES (450-550ms) ============
-    setTimeout(() => {
+    // PHASE 3: ARM RAISES
+    const armTimer = setTimeout(() => {
       setPunchPhase('arm-raise');
       setShowDustTrail(false);
     }, 450);
+    timersRef.current.push(armTimer);
     
-    // ============ PHASE 4: STRIKE! (550-700ms) ============
-    setTimeout(() => {
+    // PHASE 4: STRIKE!
+    const strikeTimer = setTimeout(() => {
       setPunchPhase('strike');
       setShowImpactBurst(true);
       
-      // Trigger all impact effects
       setIsKPHit(true);
       setScreenShake(true);
       setHitFlash(true);
       setShowStars(true);
       
-      // Reduce health
       const newHealth = healthRef.current - 1;
       setHealth(newHealth);
       setBrokenHearts(prev => [...prev, 3 - newHealth]);
       
       // Clear impact effects
-      setTimeout(() => {
+      const clearImpactTimer = setTimeout(() => {
         setScreenShake(false);
         setHitFlash(false);
         setShowImpactBurst(false);
       }, 200);
+      timersRef.current.push(clearImpactTimer);
       
       // Only clear hit effects if NOT a KO
       if (newHealth > 0) {
-        setTimeout(() => {
+        const clearHitTimer = setTimeout(() => {
           setIsKPHit(false);
           setShowStars(false);
         }, 500);
+        timersRef.current.push(clearHitTimer);
       }
       
       // Check for KO
       if (newHealth <= 0) {
-        // Keep KP crying and cow angry for 3 seconds
         setIsKPHit(true);
         setShowStars(true);
         
-        setTimeout(() => {
+        const koTimer = setTimeout(() => {
           setGameState('ko');
           setCowVictory(true);
           
-          // Show cow victory + KP crying for 3 seconds before end screen
-          setTimeout(() => {
+          const completeTimer = setTimeout(() => {
             onComplete();
           }, 3000);
+          timersRef.current.push(completeTimer);
         }, 500);
+        timersRef.current.push(koTimer);
       }
     }, 550);
+    timersRef.current.push(strikeTimer);
     
-    // ============ PHASE 5: RECOVERY (700-1200ms) ============
-    setTimeout(() => {
+    // PHASE 5: RECOVERY
+    const recoveryTimer = setTimeout(() => {
       setPunchPhase('recovery');
-      setCowPosition(0); // Retreat back
+      setCowPosition(0);
     }, 700);
+    timersRef.current.push(recoveryTimer);
     
     // Reset to idle
-    setTimeout(() => {
+    const resetTimer = setTimeout(() => {
       setPunchPhase('idle');
       setIsPunching(false);
       
@@ -144,6 +165,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         setGameState('ready');
       }
     }, 1200);
+    timersRef.current.push(resetTimer);
   }, [gameState, isPunching, onComplete]);
 
   // Physics-based transition timing
@@ -151,13 +173,13 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
     if (punchPhase === 'rushing') {
       return {
         transitionDuration: '300ms',
-        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)', // Overshoot for aggressive rush
+        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       };
     }
     if (punchPhase === 'recovery') {
       return {
         transitionDuration: '500ms',
-        transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', // Smooth ease-out for retreat
+        transitionTimingFunction: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
       };
     }
     return {
@@ -195,29 +217,47 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         />
       </div>
 
-      {/* Background images - positioned at top */}
+      {/* Background images - positioned at top with error handling */}
       <div className="absolute top-20 left-0 right-0 flex justify-between px-4 z-10">
         {/* Cement bags on the left */}
-        <div 
-          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
-          style={{
-            backgroundImage: `url(${cementBagsImg})`,
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        />
+        {!imageError['cement'] && (
+          <div 
+            className="w-32 h-32 md:w-48 md:h-48 opacity-70"
+            style={{
+              backgroundImage: `url(${cementBagsImg})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            <img 
+              src={cementBagsImg} 
+              alt="" 
+              className="hidden" 
+              onError={() => handleImageError('cement')} 
+            />
+          </div>
+        )}
         
         {/* Honda Amaze on the right */}
-        <div 
-          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
-          style={{
-            backgroundImage: `url(${hondaAmazeImg})`,
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        />
+        {!imageError['honda'] && (
+          <div 
+            className="w-32 h-32 md:w-48 md:h-48 opacity-70"
+            style={{
+              backgroundImage: `url(${hondaAmazeImg})`,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
+            <img 
+              src={hondaAmazeImg} 
+              alt="" 
+              className="hidden" 
+              onError={() => handleImageError('honda')} 
+            />
+          </div>
+        )}
       </div>
 
       {/* Arena floor */}
@@ -256,7 +296,7 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         </div>
       )}
 
-      {/* Touch popup - positioned on left side */}
+      {/* Touch popup */}
       {showPopup && (
         <div className="absolute top-1/2 left-[15%] -translate-y-1/2 z-30 animate-bounce">
           <div 

@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HappinessMeter from '@/components/game/HappinessMeter';
 import KPCharacter from '@/components/game/KPCharacter';
 import DenguluFood from '@/components/game/DenguluFood';
+
 const FeedPage = () => {
   const navigate = useNavigate();
   const [happiness, setHappiness] = useState(0);
@@ -11,32 +12,64 @@ const FeedPage = () => {
   const [showPlusOne, setShowPlusOne] = useState(false);
   const maxHappiness = 100;
   const happinessPerFeed = 20;
+  
+  // Track timers for cleanup
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+  
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(t => clearTimeout(t));
+    };
+  }, []);
+
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness) return;
-    const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
-    setHappiness(newHappiness);
-    setIsHappy(true);
-    setTimeout(() => setIsHappy(false), 100);
-    setShowPlusOne(true);
-    setTimeout(() => setShowPlusOne(false), 500);
-    setFeedCount(prev => prev + 1);
-    if (newHappiness >= maxHappiness) {
-      setTimeout(() => navigate('/cow-fight'), 800);
+    
+    try {
+      const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
+      setHappiness(newHappiness);
+      setIsHappy(true);
+      
+      const happyTimer = setTimeout(() => setIsHappy(false), 100);
+      timersRef.current.push(happyTimer);
+      
+      setShowPlusOne(true);
+      const plusOneTimer = setTimeout(() => setShowPlusOne(false), 500);
+      timersRef.current.push(plusOneTimer);
+      
+      setFeedCount(prev => prev + 1);
+      
+      if (newHappiness >= maxHappiness) {
+        const navTimer = setTimeout(() => {
+          try {
+            navigate('/cow-fight');
+          } catch (e) {
+            console.error('Navigation failed:', e);
+            // Fallback - hard reload to home
+            window.location.href = '/';
+          }
+        }, 800);
+        timersRef.current.push(navTimer);
+      }
+    } catch (e) {
+      console.error('Feed error:', e);
     }
   }, [happiness, navigate]);
+
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
   };
-  return <div className="h-screen h-[100dvh] game-gradient flex flex-col overflow-hidden">
+
+  return (
+    <div className="h-screen h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-2 flex items-center justify-between gap-2">
         <div className="bg-foreground/10 backdrop-blur-sm rounded-xl px-3 py-1 border border-primary-foreground/20">
           <span className="text-primary-foreground/70 text-xs">Feeds:</span>
           <span className="text-primary-foreground font-bold text-base ml-1">{feedCount}/5</span>
         </div>
-        
-        
         
         <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl px-3 py-1 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm">
           🔄 <span className="hidden sm:inline">Reset</span>
@@ -60,17 +93,19 @@ const FeedPage = () => {
             <div className="mb-1 relative w-full max-w-[150px] md:max-w-[180px]">
               <HappinessMeter value={happiness} maxValue={maxHappiness} />
               
-              {showPlusOne && <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-happiness text-lg md:text-xl font-bold animate-fade-in whitespace-nowrap">
+              {showPlusOne && (
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-happiness text-lg md:text-xl font-bold animate-fade-in whitespace-nowrap">
                   +20% 😊
-                </div>}
+                </div>
+              )}
             </div>
             
             {/* Character Platform */}
             <div className="relative">
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-foreground/20 rounded-[50%] blur-sm" style={{
-              width: 60,
-              height: 10
-            }} />
+                width: 60,
+                height: 10
+              }} />
               <KPCharacter scale={0.9} isHappy={isHappy} happiness={happiness} />
             </div>
           </div>
@@ -102,6 +137,8 @@ const FeedPage = () => {
           </div>
         </div>
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default FeedPage;
