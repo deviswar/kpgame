@@ -8,17 +8,16 @@
     <meta name="author" content="KP Game" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- CRITICAL: Preload audio/video with correct types for mobile -->
-    <link rel="preload" href="/music/rizz.mp4" as="video" type="video/mp4" crossorigin />
-    <link rel="preload" href="/music/background.mp3" as="audio" type="audio/mpeg" crossorigin />
-    
-    <!-- Prefetch lower priority assets (mourning only - video is deferred to user interaction) -->
-    <link rel="prefetch" href="/music/mourning.mp3" as="audio" type="audio/mpeg" />
+    <!-- Prefetch audio and video files (browser will load them early) -->
+    <link rel="prefetch" href="/music/rizz.mp4" as="fetch" />
+    <link rel="prefetch" href="/music/background.mp3" as="fetch" />
+    <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
+    <link rel="prefetch" href="/music/kpfall.mp4" as="fetch" />
 
-    <!-- Fonts: preconnect + non-blocking stylesheet (moved from CSS @import) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <!-- DNS prefetch for fonts -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap" rel="stylesheet" />
 
     <meta property="og:title" content="KP Game" />
     <meta property="og:description" content="Feed KP and make her happy!" />
@@ -29,17 +28,13 @@
     <meta name="twitter:site" content="@KPGame" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
-    <!-- Prevent flash of unstyled content + critical CSS inline -->
+    <!-- Prevent flash of unstyled content -->
     <style>
       html, body, #root {
         margin: 0;
         padding: 0;
         min-height: 100%;
         min-height: 100dvh;
-      }
-      /* Critical gradient for instant first paint */
-      .game-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
       }
     </style>
   </head>

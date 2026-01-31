@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HappinessMeter from '@/components/game/HappinessMeter';
 import KPCharacter from '@/components/game/KPCharacter';
@@ -10,50 +10,25 @@ const FeedPage = () => {
   const [isHappy, setIsHappy] = useState(false);
   const [feedCount, setFeedCount] = useState(0);
   const [showPlusOne, setShowPlusOne] = useState(false);
+  
   const maxHappiness = 100;
   const happinessPerFeed = 20;
-  
-  // Track timers for cleanup
-  const timersRef = useRef<NodeJS.Timeout[]>([]);
-  
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      timersRef.current.forEach(t => clearTimeout(t));
-    };
-  }, []);
 
   const handleFeed = useCallback(() => {
     if (happiness >= maxHappiness) return;
-    
-    try {
-      const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
-      setHappiness(newHappiness);
-      setIsHappy(true);
-      
-      const happyTimer = setTimeout(() => setIsHappy(false), 100);
-      timersRef.current.push(happyTimer);
-      
-      setShowPlusOne(true);
-      const plusOneTimer = setTimeout(() => setShowPlusOne(false), 500);
-      timersRef.current.push(plusOneTimer);
-      
-      setFeedCount(prev => prev + 1);
-      
-      if (newHappiness >= maxHappiness) {
-        const navTimer = setTimeout(() => {
-          try {
-            navigate('/cow-fight');
-          } catch (e) {
-            console.error('Navigation failed:', e);
-            // Fallback - hard reload to home
-            window.location.href = '/';
-          }
-        }, 800);
-        timersRef.current.push(navTimer);
-      }
-    } catch (e) {
-      console.error('Feed error:', e);
+    const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
+    setHappiness(newHappiness);
+
+    setIsHappy(true);
+    setTimeout(() => setIsHappy(false), 100);
+
+    setShowPlusOne(true);
+    setTimeout(() => setShowPlusOne(false), 500);
+
+    setFeedCount(prev => prev + 1);
+
+    if (newHappiness >= maxHappiness) {
+      setTimeout(() => navigate('/cow-fight'), 800);
     }
   }, [happiness, navigate]);
 
@@ -71,6 +46,10 @@ const FeedPage = () => {
           <span className="text-primary-foreground font-bold text-base ml-1">{feedCount}/5</span>
         </div>
         
+        <h1 className="text-xl md:text-2xl font-bold text-primary-foreground text-shadow-game tracking-wider text-center">
+          <span className="hidden sm:inline">🍚 </span>FEED KP<span className="hidden sm:inline"> 🍚</span>
+        </h1>
+        
         <button onClick={handleReset} className="bg-foreground/10 backdrop-blur-sm rounded-xl px-3 py-1 border border-primary-foreground/20 text-primary-foreground hover:bg-foreground/20 transition-colors text-sm">
           🔄 <span className="hidden sm:inline">Reset</span>
         </button>
@@ -85,7 +64,7 @@ const FeedPage = () => {
             {/* Name Badge */}
             <div className="mb-1 bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-1 rounded-xl border-4 border-blue-400/50 shadow-lg">
               <h2 className="text-2xl md:text-3xl font-bold text-white text-shadow-game tracking-widest">
-                FEED KP
+                KP
               </h2>
             </div>
             

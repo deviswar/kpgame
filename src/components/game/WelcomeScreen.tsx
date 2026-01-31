@@ -1,73 +1,54 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz, preloadAllAudio, primeRizzAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
 
-// Preload images for later screens (defer to avoid blocking initial render)
-const preloadImages = () => {
-  // Use dynamic imports for deferred loading
-  Promise.all([import('@/assets/honda-amaze.jpg'), import('@/assets/cement-bags.jpg'), import('@/assets/honda-amaze-car.jpg'), import('@/assets/pug-dog.webp'), import('@/assets/pug-memorial.jpg'), import('@/assets/pug-grave.jpg')]).then(modules => {
-    modules.forEach(mod => {
-      const img = new Image();
-      img.src = mod.default;
-    });
-  });
-};
+// Preload images for later screens
+import hondaAmazeImg from '@/assets/honda-amaze.jpg';
+import cementBagsImg from '@/assets/cement-bags.jpg';
+import hondaAmaze from '@/assets/honda-amaze-car.jpg';
+import pugDog from '@/assets/pug-dog.webp';
+import pugMemorial from '@/assets/pug-memorial.jpg';
+import pugGrave from '@/assets/pug-grave.jpg';
 
-// Deferred video preload - only after user interaction to not compete with critical load
-const preloadVideo = () => {
-  const video = document.createElement('video');
-  video.src = '/music/kpfall.mp4';
-  video.preload = 'auto';
-  video.muted = true;
-  video.load();
-};
 interface WelcomeScreenProps {
   onStart: () => void;
 }
+
 const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
-  const [hasPrimedAudio, setHasPrimedAudio] = useState(false);
 
-  // Preload audio on mount, defer image preloading
-  // CRITICAL: Do NOT preload video on mount - it competes with critical resources
+  // Preload all audio AND images on mount for instant loading
   useEffect(() => {
     preloadAllAudio();
-
-    // Defer image preloading - use proper feature detection for Safari/iOS compatibility
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      window.requestIdleCallback(preloadImages);
-    } else {
-      setTimeout(preloadImages, 100);
-    }
-    // Video preload is now deferred until first user interaction
+    
+    // Preload all game images in background
+    const images = [
+      hondaAmazeImg, cementBagsImg, hondaAmaze, 
+      pugDog, pugMemorial, pugGrave, qtGirlImage
+    ];
+    images.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+    
+    // Preload video
+    const video = document.createElement('video');
+    video.src = '/music/kpfall.mp4';
+    video.preload = 'auto';
+    video.muted = true;
+    video.load();
   }, []);
 
-  // Prime audio on first user interaction (anywhere on screen)
-  const handleFirstInteraction = useCallback(() => {
-    if (!hasPrimedAudio) {
-      primeRizzAudio();
-      // Also preload video now that user has interacted
-      preloadVideo();
-      setHasPrimedAudio(true);
-    }
-  }, [hasPrimedAudio]);
   const handleShowRizz = () => {
-    // Prime audio if not already done
-    if (!hasPrimedAudio) {
-      primeRizzAudio();
-      preloadVideo();
-      setHasPrimedAudio(true);
-    }
     setShowRizzScene(true);
-    // CRITICAL FIX: Call playRizz SYNCHRONOUSLY in the click handler
-    // NO setTimeout - that breaks the user gesture context on iOS Safari!
-    console.log('[RIZZ] Button clicked - calling playRizz synchronously');
+    // Play Music 1 via audio manager (now preloaded)
     playRizz();
   };
+
   const handleStartGame = () => {
     // Stop Music 1 via audio manager
     stopRizz();
@@ -77,28 +58,31 @@ const WelcomeScreen = memo(({
 
   // Phase 1: Initial Welcome Screen
   if (!showRizzScene) {
-    return <div onTouchStart={handleFirstInteraction} onClick={handleFirstInteraction} className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3">
+    return <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3">
         {/* Version number - bottom left */}
         <div className="absolute bottom-24 left-4">
-          <span className="text-white text-xs font-medium">version - 8008.69</span>
+          <span className="text-white text-xs font-medium">version - 1.69.69</span>
         </div>
 
         {/* Header with title and KP */}
         <div className="flex items-center gap-2 -mt-24">
-          <h1 className="text-5xl md:text-7xl tracking-wide relative" style={{
-          fontFamily: '"Bangers", cursive',
-          color: '#FFD93D',
-          textShadow: `
+          <h1 
+            className="text-5xl md:text-7xl tracking-wide relative"
+            style={{ 
+              fontFamily: '"Bangers", cursive',
+              color: '#FFD93D',
+              textShadow: `
                 0 3px 0 #E8A800,
                 0 6px 0 #D4950A,
                 0 9px 0 #B87A00,
                 0 12px 4px rgba(0,0,0,0.3),
                 0 14px 8px rgba(0,0,0,0.2)
               `,
-          WebkitTextStroke: '3px #FFFFFF',
-          paintOrder: 'stroke fill',
-          letterSpacing: '0.05em'
-        }}>
+              WebkitTextStroke: '3px #FFFFFF',
+              paintOrder: 'stroke fill',
+              letterSpacing: '0.05em',
+            }}
+          >
             KP Game
           </h1>
           <div className="scale-75 origin-center -my-8">
@@ -108,12 +92,15 @@ const WelcomeScreen = memo(({
 
         {/* Fun Facts Section */}
         <div className="flex flex-col items-center max-w-sm">
-          <h2 className="text-2xl md:text-3xl mb-3" style={{
-          fontFamily: '"Bangers", cursive',
-          color: '#FFFACD',
-          textShadow: '2px 2px 0px #A0522D, 4px 4px 0px rgba(0,0,0,0.2)',
-          letterSpacing: '0.1em'
-        }}>
+          <h2 
+            className="text-2xl md:text-3xl mb-3"
+            style={{ 
+              fontFamily: '"Bangers", cursive',
+              color: '#FFFACD',
+              textShadow: '2px 2px 0px #A0522D, 4px 4px 0px rgba(0,0,0,0.2)',
+              letterSpacing: '0.1em'
+            }}
+          >
             Fun Facts about me
           </h2>
           
@@ -157,7 +144,7 @@ const WelcomeScreen = memo(({
   return <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden">
       {/* Version number - bottom left */}
       <div className="absolute bottom-24 left-4">
-        <span className="text-white text-xs font-medium">version - 8008.69</span>
+        <span className="text-white text-xs font-medium">version - 1.69.69</span>
       </div>
 
       {/* Title */}
@@ -234,5 +221,7 @@ const WelcomeScreen = memo(({
       </div>
     </div>;
 });
+
 WelcomeScreen.displayName = 'WelcomeScreen';
+
 export default WelcomeScreen;
