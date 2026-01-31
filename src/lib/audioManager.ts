@@ -9,6 +9,8 @@ let audioContext: AudioContext | null = null;
 let rizzAudioBuffer: AudioBuffer | null = null;
 let rizzBufferSource: AudioBufferSourceNode | null = null;
 let rizzGainNode: GainNode | null = null;
+// Fallback for devices/browsers where WebAudio starts but remains silent
+let rizzHtmlAudio: HTMLAudioElement | null = null;
 
 // Module-level singletons for other audio (persist across route navigations)
 let gameMusicAudio: HTMLAudioElement | null = null;
@@ -53,6 +55,16 @@ export const precacheRizzAudio = async () => {
     rizzAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
     rizzPreloaded = true;
     console.log('✅ Rizz audio decoded into AudioBuffer - ready for INSTANT playback');
+
+    // Also warm up HTMLAudioElement as a fallback (no autoplay; just cache)
+    if (!rizzHtmlAudio) {
+      rizzHtmlAudio = new Audio('/music/rizz.mp3');
+      rizzHtmlAudio.volume = 0.5;
+      rizzHtmlAudio.loop = true;
+      rizzHtmlAudio.preload = 'auto';
+    }
+    // Ensure the browser starts caching it
+    rizzHtmlAudio.load();
   } catch (e) {
     console.error('❌ Failed to pre-cache rizz audio:', e);
   }
@@ -65,51 +77,75 @@ export const playRizz = () => {
     return;
   }
   
-  const ctx = getAudioContext();
-  
-  // CRITICAL: Resume context FIRST - Safari requires this in user gesture
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-    console.log('AudioContext resumed');
+  // Ensure fallback exists (still only PLAYED within this user gesture)
+  if (!rizzHtmlAudio) {
+    rizzHtmlAudio = new Audio('/music/rizz.mp3');
+    rizzHtmlAudio.volume = 0.5;
+    rizzHtmlAudio.loop = true;
+    rizzHtmlAudio.preload = 'auto';
   }
-  
-  // Stop any existing source
-  if (rizzBufferSource) {
-    try { rizzBufferSource.stop(); } catch {}
-    rizzBufferSource.disconnect();
-    rizzBufferSource = null;
-  }
-  
-  if (!rizzAudioBuffer) {
-    console.error('❌ Rizz audio not preloaded! Attempting emergency load...');
-    // Emergency fallback - try to load now (will have delay but better than nothing)
-    precacheRizzAudio().then(() => {
-      if (rizzAudioBuffer) {
-        playRizz();
+
+  let webAudioStarted = false;
+
+  try {
+    const ctx = getAudioContext();
+
+    // CRITICAL: Resume context FIRST - Safari requires this in user gesture
+    if (ctx.state === 'suspended') {
+      // Do NOT await (would break gesture); kick it off synchronously
+      void ctx.resume();
+      console.log('AudioContext resume requested');
+    }
+
+    // Stop any existing source
+    if (rizzBufferSource) {
+      try { rizzBufferSource.stop(); } catch {}
+      rizzBufferSource.disconnect();
+      rizzBufferSource = null;
+    }
+
+    if (rizzAudioBuffer) {
+      // Create new buffer source (MUST create fresh each time - can't reuse)
+      rizzBufferSource = ctx.createBufferSource();
+      rizzBufferSource.buffer = rizzAudioBuffer;
+      rizzBufferSource.loop = true;
+
+      // Create gain node for volume control (reuse if exists)
+      if (!rizzGainNode) {
+        rizzGainNode = ctx.createGain();
+        rizzGainNode.gain.value = 0.5;
+        rizzGainNode.connect(ctx.destination);
       }
-    });
-    return;
+
+      rizzBufferSource.connect(rizzGainNode);
+
+      // START IMMEDIATELY - synchronous
+      rizzBufferSource.start(0);
+      webAudioStarted = true;
+      console.log('🎵 Rizz audio started via Web Audio API');
+    } else {
+      console.warn('Rizz AudioBuffer missing; will rely on HTMLAudio fallback');
+      // Best-effort: start loading (won't play automatically)
+      void precacheRizzAudio();
+    }
+  } catch (e) {
+    console.error('❌ WebAudio rizz start failed, falling back to HTMLAudio:', e);
   }
-  
-  // Create new buffer source (MUST create fresh each time - can't reuse)
-  rizzBufferSource = ctx.createBufferSource();
-  rizzBufferSource.buffer = rizzAudioBuffer;
-  rizzBufferSource.loop = true;
-  
-  // Create gain node for volume control (reuse if exists)
-  if (!rizzGainNode) {
-    rizzGainNode = ctx.createGain();
-    rizzGainNode.gain.value = 0.5;
-    rizzGainNode.connect(ctx.destination);
+
+  // Fallback (still within the same click): if WebAudio didn't start, try HTMLAudio.
+  // This keeps old behavior working on browsers where WebAudio is unreliable.
+  if (!webAudioStarted && rizzHtmlAudio) {
+    try {
+      rizzHtmlAudio.currentTime = 0;
+      const p = rizzHtmlAudio.play();
+      if (p) p.catch((e) => console.error('❌ HTMLAudio rizz play failed:', e));
+      console.log('🎵 Rizz audio started via HTMLAudio fallback');
+    } catch (e) {
+      console.error('❌ HTMLAudio fallback threw:', e);
+    }
   }
-  
-  rizzBufferSource.connect(rizzGainNode);
-  
-  // START IMMEDIATELY - this is synchronous and instant!
-  rizzBufferSource.start(0);
+
   rizzPlaying = true;
-  
-  console.log('🎵 Rizz audio playing INSTANTLY via Web Audio API');
 };
 
 export const stopRizz = () => {
@@ -122,6 +158,10 @@ export const stopRizz = () => {
     }
     rizzBufferSource.disconnect();
     rizzBufferSource = null;
+  }
+  if (rizzHtmlAudio) {
+    rizzHtmlAudio.pause();
+    rizzHtmlAudio.currentTime = 0;
   }
   console.log('Rizz audio stopped');
 };
