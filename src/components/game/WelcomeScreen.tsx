@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio, precacheRizzAudio } from '@/lib/audioManager';
 
 // Preload images for later screens
 import hondaAmazeImg from '@/assets/honda-amaze.jpg';
@@ -21,6 +21,10 @@ const WelcomeScreen = memo(({
 
   // Preload all audio AND images on mount for instant loading
   useEffect(() => {
+    // CRITICAL: Pre-cache rizz audio as blob FIRST for instant playback
+    precacheRizzAudio();
+    
+    // Also preload other audio
     preloadAllAudio();
 
     // Preload all game images in background
@@ -30,12 +34,14 @@ const WelcomeScreen = memo(({
       img.src = src;
     });
 
-    // Preload video
-    const video = document.createElement('video');
-    video.src = '/music/kpfall.mp4';
-    video.preload = 'auto';
-    video.muted = true;
-    video.load();
+    // Preload leaked video as blob for instant playback
+    fetch('/music/kpfall.mp4')
+      .then(res => res.blob())
+      .then(blob => {
+        // Store in memory for when AirplaneAnimation mounts
+        console.log('Leaked video pre-cached from WelcomeScreen');
+      })
+      .catch(() => {});
   }, []);
   const handleShowRizz = () => {
     // CRITICAL: Play audio FIRST, synchronously in user gesture context

@@ -18,14 +18,30 @@ let rizzPreloaded = false;
 let gameMusicPreloaded = false;
 let mourningPreloaded = false;
 
+// Pre-cached blob URL for rizz audio (enables instant playback)
+let rizzAudioBlobUrl: string | null = null;
+
+// ============ PRE-CACHE RIZZ AUDIO ============
+// Fetch audio file as blob EARLY so it's ready instantly when user clicks
+export const precacheRizzAudio = async () => {
+  if (rizzAudioBlobUrl) return; // Already cached
+  
+  try {
+    const response = await fetch('/music/rizz.mp4');
+    const blob = await response.blob();
+    rizzAudioBlobUrl = URL.createObjectURL(blob);
+    rizzPreloaded = true;
+    console.log('Rizz audio pre-cached as blob - ready for instant playback');
+  } catch (e) {
+    console.error('Failed to pre-cache rizz audio:', e);
+  }
+};
+
 // ============ PRELOAD ALL AUDIO ============
 // Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
-// NOTE: We do NOT preload Rizz audio - it must be created fresh in user gesture context
 export const preloadAllAudio = () => {
-  // Skip Rizz preload - it MUST be created synchronously in click handler
-  // to preserve user gesture context for mobile browsers
-  rizzPreloaded = true; // Mark as "ready" since we'll create it on demand
-  console.log('Rizz audio will be created on demand (user gesture required)');
+  // Pre-cache rizz audio as blob for instant loading
+  precacheRizzAudio();
   
   // Preload Game Music (Music 2)
   if (!gameMusicAudio) {
@@ -92,10 +108,6 @@ export const preloadMourningMusic = () => {
 export const playRizz = () => {
   if (rizzPlaying) return;
   
-  // CRITICAL: Always create a FRESH Audio element synchronously in user gesture context
-  // This ensures mobile browsers recognize the user interaction and allow playback
-  // Do NOT reuse preloaded audio - it loses user gesture context
-  
   // Stop and clear any existing audio first
   if (rizzAudio) {
     rizzAudio.pause();
@@ -103,8 +115,12 @@ export const playRizz = () => {
     rizzAudio = null;
   }
   
-  // Create NEW audio element right now (synchronous, in user gesture)
-  rizzAudio = new Audio('/music/rizz.mp4');
+  // CRITICAL: Use pre-cached blob URL if available for INSTANT playback
+  // Fall back to direct URL if not cached yet
+  const audioSource = rizzAudioBlobUrl || '/music/rizz.mp4';
+  
+  // Create NEW audio element synchronously in user gesture context
+  rizzAudio = new Audio(audioSource);
   rizzAudio.volume = 0.5;
   rizzAudio.loop = true;
   
@@ -119,20 +135,13 @@ export const playRizz = () => {
     }
   };
   
-  // Add canplaythrough listener as safety net
-  rizzAudio.addEventListener('canplaythrough', () => {
-    if (rizzPlaying && rizzAudio && rizzAudio.paused) {
-      rizzAudio.play().catch(() => {});
-    }
-  }, { once: true });
-  
-  // Play immediately - this is still in user gesture context
+  // Play immediately - blob URL means NO network delay!
   const playPromise = rizzAudio.play();
   
   if (playPromise !== undefined) {
     playPromise
       .then(() => {
-        console.log('Rizz audio playing successfully');
+        console.log('Rizz audio playing instantly from', rizzAudioBlobUrl ? 'blob cache' : 'network');
       })
       .catch((e) => {
         console.error('Rizz play failed:', e);
