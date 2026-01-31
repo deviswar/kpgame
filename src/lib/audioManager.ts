@@ -20,19 +20,12 @@ let mourningPreloaded = false;
 
 // ============ PRELOAD ALL AUDIO ============
 // Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
+// NOTE: We do NOT preload Rizz audio - it must be created fresh in user gesture context
 export const preloadAllAudio = () => {
-  // Preload Rizz (Music 1)
-  if (!rizzAudio) {
-    rizzAudio = new Audio('/music/rizz.mp4');
-    rizzAudio.volume = 0.5;
-    rizzAudio.loop = true;
-    rizzAudio.preload = 'auto';
-    rizzAudio.load();
-    rizzAudio.oncanplaythrough = () => {
-      rizzPreloaded = true;
-      console.log('Rizz audio preloaded');
-    };
-  }
+  // Skip Rizz preload - it MUST be created synchronously in click handler
+  // to preserve user gesture context for mobile browsers
+  rizzPreloaded = true; // Mark as "ready" since we'll create it on demand
+  console.log('Rizz audio will be created on demand (user gesture required)');
   
   // Preload Game Music (Music 2)
   if (!gameMusicAudio) {
@@ -99,68 +92,52 @@ export const preloadMourningMusic = () => {
 export const playRizz = () => {
   if (rizzPlaying) return;
   
-  try {
-    // CRITICAL: Create audio element SYNCHRONOUSLY in user gesture context
-    // This ensures mobile browsers recognize the user interaction
-    if (!rizzAudio) {
-      rizzAudio = new Audio('/music/rizz.mp4');
-      rizzAudio.volume = 0.5;
-      rizzAudio.preload = 'auto';
-    } else {
-      // Even if preloaded, reset the source to ensure fresh context
-      // This helps on some mobile browsers after page refresh
-      const currentSrc = rizzAudio.src;
-      if (!currentSrc.includes('rizz.mp4')) {
-        rizzAudio.src = '/music/rizz.mp4';
-      }
+  // CRITICAL: Always create a FRESH Audio element synchronously in user gesture context
+  // This ensures mobile browsers recognize the user interaction and allow playback
+  // Do NOT reuse preloaded audio - it loses user gesture context
+  
+  // Stop and clear any existing audio first
+  if (rizzAudio) {
+    rizzAudio.pause();
+    rizzAudio.src = '';
+    rizzAudio = null;
+  }
+  
+  // Create NEW audio element right now (synchronous, in user gesture)
+  rizzAudio = new Audio('/music/rizz.mp4');
+  rizzAudio.volume = 0.5;
+  rizzAudio.loop = true;
+  
+  // Set flag before play attempt
+  rizzPlaying = true;
+  
+  // Add onended handler as fallback for browsers that don't respect loop
+  rizzAudio.onended = () => {
+    if (rizzPlaying && rizzAudio) {
+      rizzAudio.currentTime = 0;
+      rizzAudio.play().catch(() => {});
     }
-    
-    // CRITICAL: Set loop property right before playing
-    rizzAudio.loop = true;
-    rizzAudio.currentTime = 0;
-    rizzPlaying = true;
-    
-    // Also add onended handler as fallback for browsers that don't respect loop
-    rizzAudio.onended = () => {
-      if (rizzPlaying && rizzAudio) {
-        rizzAudio.currentTime = 0;
-        rizzAudio.play().catch(() => {});
-      }
-    };
-    
-    const playPromise = rizzAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
+  };
+  
+  // Add canplaythrough listener as safety net
+  rizzAudio.addEventListener('canplaythrough', () => {
+    if (rizzPlaying && rizzAudio && rizzAudio.paused) {
+      rizzAudio.play().catch(() => {});
+    }
+  }, { once: true });
+  
+  // Play immediately - this is still in user gesture context
+  const playPromise = rizzAudio.play();
+  
+  if (playPromise !== undefined) {
+    playPromise
+      .then(() => {
         console.log('Rizz audio playing successfully');
-      }).catch((e) => {
-        console.error('Rizz audio failed, retrying:', e);
+      })
+      .catch((e) => {
+        console.error('Rizz play failed:', e);
         rizzPlaying = false;
-        
-        // Retry with a fresh audio element (fallback for stubborn browsers)
-        setTimeout(() => {
-          if (!rizzPlaying) {
-            rizzAudio = new Audio('/music/rizz.mp4');
-            rizzAudio.volume = 0.5;
-            rizzAudio.loop = true;
-            rizzAudio.currentTime = 0;
-            rizzPlaying = true;
-            rizzAudio.onended = () => {
-              if (rizzPlaying && rizzAudio) {
-                rizzAudio.currentTime = 0;
-                rizzAudio.play().catch(() => {});
-              }
-            };
-            rizzAudio.play().catch(() => {
-              console.error('Rizz audio retry also failed');
-              rizzPlaying = false;
-            });
-          }
-        }, 100);
       });
-    }
-  } catch (e) {
-    console.error('Rizz audio error:', e);
-    rizzPlaying = false;
   }
 };
 
