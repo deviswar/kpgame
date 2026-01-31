@@ -1,200 +1,263 @@
 
-# Pro-Level Cow Fight Punch Animation
+# Fix Blank White Screen on Mobile + Audio Issues
 
-## Current Problem
-The cow just slides across the screen with a small glove translate - it looks cheap and fake. There's no proper punch wind-up, no arm motion, and no realistic physics.
+## Problem Analysis
 
-## Solution: Multi-Phase Cinematic Punch System
+After deep investigation, I've identified **5 critical issues** causing the blank white screen on mobile devices when visiting kpgame.vercel.app:
 
-Create a professional 5-phase animation sequence with proper anticipation, approach, wind-up, strike, and recovery - like a real fighting game.
+### Critical Issues Found:
+
+1. **Missing `vercel.json` Configuration**
+   - The project is deployed to Vercel but lacks a `vercel.json` file for SPA routing
+   - When users directly access routes like `/feed` or refresh the page, Vercel returns a 404 instead of serving `index.html`
+   - This can cause blank screens on direct URL access
+
+2. **No Error Boundary**
+   - The app has no React Error Boundary, meaning any JavaScript error crashes the entire app to a blank white screen
+   - Audio errors, network failures, or asset loading issues will show nothing to users
+
+3. **`requestIdleCallback` Not Polyfilled for Safari/iOS**
+   - `requestIdleCallback` is used in `WelcomeScreen.tsx` but is NOT supported in Safari/iOS browsers
+   - This causes a JavaScript error that crashes the app on iPhone Safari
+   - The current fallback (`requestIdleCallback ? ... : setTimeout(...)`) may fail due to how the ternary evaluates
+
+4. **Unhandled Promise Rejections**
+   - Audio operations in `audioManager.ts` can throw unhandled rejections on mobile
+   - The retry logic with `setTimeout` can cause race conditions
+   - No global error handler catches these rejections
+
+5. **Font Loading May Block Render**
+   - External font import from Google Fonts (`@import url(...)` in CSS) can block initial render
+   - On slow mobile connections, this can cause extended white screen periods
 
 ---
 
-## Animation Phases (Total: ~1200ms)
+## Solution Overview
 
 ```text
-Phase 1: ANTICIPATION (0-150ms)
-├── Cow leans back slightly (wind-up stance)
-├── Punching arm pulls back
-└── Body coils for power
-
-Phase 2: RUSH FORWARD (150-450ms)  
-├── Cow dashes toward KP with acceleration
-├── Body tilts forward aggressively
-└── Dust particles trail behind
-
-Phase 3: ARM WIND-UP (450-550ms)
-├── Arm raises high above head
-├── Glove pulls back behind shoulder
-└── Brief pause for dramatic tension
-
-Phase 4: STRIKE (550-700ms)
-├── Arm swings down in arc motion
-├── Glove impacts KP's face area
-├── Screen shake + flash at impact point
-└── Impact particles burst
-
-Phase 5: RECOVERY (700-1200ms)
-├── Cow recoils slightly from impact
-├── Arm returns to neutral
-└── Cow retreats back to starting position
++-------------------+     +-------------------+     +-------------------+
+|  1. vercel.json   | --> |  2. ErrorBoundary | --> |  3. Polyfills     |
+|  (SPA Routing)    |     |  (Catch crashes)  |     |  (iOS Support)    |
++-------------------+     +-------------------+     +-------------------+
+         |                         |                         |
+         v                         v                         v
++-------------------+     +-------------------+     +-------------------+
+| 4. Global Error   | --> | 5. Font Loading   | --> |  6. Audio Fixes   |
+|    Handler        |     |    Optimization   |     |  (Mobile Safari)  |
++-------------------+     +-------------------+     +-------------------+
 ```
 
 ---
 
-## Technical Implementation
+## Implementation Steps
 
-### File: `src/components/game/BoxingCow.tsx`
+### Step 1: Create `vercel.json` for SPA Routing
+Create a new file `vercel.json` in the project root:
 
-**New Props:**
-```tsx
-interface BoxingCowProps {
-  scale?: number;
-  isPunching: boolean;
-  isVictory: boolean;
-  punchPhase: 'idle' | 'windup' | 'rushing' | 'arm-raise' | 'strike' | 'recovery';
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
 ```
 
-**Arm Animation Based on Phase:**
-- `idle`: Arm at rest position
-- `windup`: Arm pulls back behind body (rotate -45deg)
-- `rushing`: Arm stays back, ready to swing
-- `arm-raise`: Arm raises up (rotate -90deg, translateY negative)
-- `strike`: Arm swings forward and down (rotate 30deg, translateX forward)
-- `recovery`: Arm returns to neutral with easing
+This ensures all routes are handled by React Router instead of returning 404s.
 
-**CSS Transform for Punching Arm:**
+---
+
+### Step 2: Add React Error Boundary
+Create `src/components/ErrorBoundary.tsx`:
+
 ```tsx
-const getArmTransform = () => {
-  switch (punchPhase) {
-    case 'windup':
-      return 'rotate(-30deg) translateX(-10px)';
-    case 'rushing':
-      return 'rotate(-45deg) translateX(-15px)';
-    case 'arm-raise':
-      return 'rotate(-90deg) translateY(-20px)';
-    case 'strike':
-      return 'rotate(45deg) translateX(40px) translateY(10px)';
-    case 'recovery':
-      return 'rotate(0deg) translateX(0)';
-    default:
-      return 'rotate(0deg)';
+import { Component, ReactNode } from 'react';
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App crashed:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen game-gradient flex flex-col items-center justify-center p-4">
+          <h1 className="text-3xl font-bold text-white mb-4">Oops! Something went wrong</h1>
+          <p className="text-white/80 mb-6">The game had an issue loading.</p>
+          <button
+            onClick={this.handleRetry}
+            className="bg-white text-purple-600 px-6 py-3 rounded-xl font-bold"
+          >
+            Reload Game
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+```
+
+---
+
+### Step 3: Fix `requestIdleCallback` for Safari/iOS
+Update `src/components/game/WelcomeScreen.tsx`:
+
+Replace the problematic line:
+```tsx
+// OLD (causes error on iOS Safari)
+requestIdleCallback ? requestIdleCallback(preloadImages) : setTimeout(preloadImages, 100);
+```
+
+With a safer check:
+```tsx
+// NEW (works on all browsers)
+if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+  window.requestIdleCallback(preloadImages);
+} else {
+  setTimeout(preloadImages, 100);
+}
+```
+
+---
+
+### Step 4: Add Global Unhandled Rejection Handler
+Update `src/App.tsx` to catch unhandled promise rejections:
+
+```tsx
+import { useEffect } from "react";
+import { toast } from "sonner";
+
+// Inside App component, add:
+useEffect(() => {
+  const handleRejection = (event: PromiseRejectionEvent) => {
+    console.error("Unhandled rejection:", event.reason);
+    event.preventDefault(); // Prevent crash
+  };
+
+  window.addEventListener("unhandledrejection", handleRejection);
+  return () => window.removeEventListener("unhandledrejection", handleRejection);
+}, []);
+```
+
+Also wrap the app with the ErrorBoundary.
+
+---
+
+### Step 5: Optimize Font Loading
+Update `src/index.css` to use `font-display: swap`:
+
+Replace:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap');
+```
+
+With a preload approach in `index.html`:
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap" rel="stylesheet">
+```
+
+And update CSS:
+```css
+/* Remove @import, add fallback font-family */
+body {
+  font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+```
+
+---
+
+### Step 6: Make Audio Manager More Resilient
+Update `src/lib/audioManager.ts` to wrap all audio operations in try-catch:
+
+```tsx
+export const primeRizzAudio = () => {
+  try {
+    if (!rizzAudio) {
+      rizzAudio = new Audio('/music/rizz.mp4');
+      rizzAudio.volume = 0;
+      rizzAudio.loop = true;
+      rizzAudio.preload = 'auto';
+    }
+    
+    const primePromise = rizzAudio.play();
+    if (primePromise !== undefined) {
+      primePromise.then(() => {
+        rizzAudio?.pause();
+        if (rizzAudio) {
+          rizzAudio.currentTime = 0;
+          rizzAudio.volume = 0.5;
+        }
+        rizzPreloaded = true;
+      }).catch(() => {
+        // Silently handle - audio will work on next user interaction
+        rizzAudio?.load();
+      });
+    }
+  } catch (e) {
+    console.warn('Audio priming failed (will retry on interaction):', e);
   }
 };
 ```
 
-### File: `src/components/game/CowFightScreen.tsx`
+---
 
-**New State:**
-```tsx
-const [punchPhase, setPunchPhase] = useState<
-  'idle' | 'windup' | 'rushing' | 'arm-raise' | 'strike' | 'recovery'
->('idle');
-const [cowPosition, setCowPosition] = useState(0); // 0 = start, 100 = near KP
-```
+## Files to Create/Modify
 
-**Punch Sequence Orchestration:**
-```tsx
-const handlePunch = () => {
-  // Phase 1: Wind-up (0-150ms)
-  setPunchPhase('windup');
-  
-  setTimeout(() => {
-    // Phase 2: Rush forward (150-450ms)
-    setPunchPhase('rushing');
-    setCowPosition(80); // Move cow 80% toward KP
-  }, 150);
-  
-  setTimeout(() => {
-    // Phase 3: Arm raises (450-550ms)  
-    setPunchPhase('arm-raise');
-  }, 450);
-  
-  setTimeout(() => {
-    // Phase 4: Strike! (550-700ms)
-    setPunchPhase('strike');
-    // Trigger all impact effects here
-    setIsKPHit(true);
-    setScreenShake(true);
-    setHitFlash(true);
-  }, 550);
-  
-  setTimeout(() => {
-    // Phase 5: Recovery (700-1200ms)
-    setPunchPhase('recovery');
-    setCowPosition(0); // Retreat back
-  }, 700);
-  
-  setTimeout(() => {
-    // Reset to idle
-    setPunchPhase('idle');
-  }, 1200);
-};
-```
-
-**Cow Container with Physics-Based Movement:**
-```tsx
-<div 
-  className="transition-all ease-out"
-  style={{
-    transform: `translateX(${cowPosition}%)`,
-    transitionDuration: punchPhase === 'rushing' ? '300ms' : '500ms',
-    transitionTimingFunction: punchPhase === 'rushing' 
-      ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' // Overshoot for aggressive rush
-      : 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', // Smooth ease-out for retreat
-  }}
->
-```
-
-### File: `src/index.css`
-
-**New Keyframe Animations:**
-
-```css
-/* Professional arm swing animation */
-@keyframes arm-windup {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(-45deg) translateX(-15px); }
-}
-
-@keyframes arm-raise {
-  0% { transform: rotate(-45deg) translateX(-15px); }
-  100% { transform: rotate(-90deg) translateY(-25px); }
-}
-
-@keyframes arm-strike {
-  0% { transform: rotate(-90deg) translateY(-25px); }
-  30% { transform: rotate(60deg) translateX(50px) translateY(15px); }
-  100% { transform: rotate(30deg) translateX(35px) translateY(10px); }
-}
-
-/* Impact burst effect */
-@keyframes impact-burst {
-  0% { transform: scale(0); opacity: 1; }
-  50% { transform: scale(2); opacity: 0.8; }
-  100% { transform: scale(3); opacity: 0; }
-}
-```
+| File | Action |
+|------|--------|
+| `vercel.json` | **Create** - SPA routing config |
+| `src/components/ErrorBoundary.tsx` | **Create** - Error boundary component |
+| `src/App.tsx` | **Modify** - Add error handler + wrap with ErrorBoundary |
+| `src/components/game/WelcomeScreen.tsx` | **Modify** - Fix requestIdleCallback polyfill |
+| `src/lib/audioManager.ts` | **Modify** - Add try-catch safety wrappers |
+| `src/index.css` | **Modify** - Remove blocking @import |
+| `index.html` | **Modify** - Add font preload links |
 
 ---
 
-## Visual Enhancements
+## Technical Details
 
-1. **Motion Blur Effect**: Add blur to cow during rush phase
-2. **Speed Lines**: Show diagonal lines behind cow when rushing
-3. **Impact Burst**: Star/explosion graphic at point of contact
-4. **Dust Trail**: Particles behind cow feet during movement
-5. **Camera Follow**: Slight viewport shift to follow action
+### Why These Fixes Work:
 
----
+1. **vercel.json**: Tells Vercel to always serve index.html for any route, letting React Router handle navigation
+2. **ErrorBoundary**: Catches React rendering errors and shows a friendly "retry" screen instead of blank white
+3. **requestIdleCallback check**: Uses proper feature detection instead of relying on ternary evaluation order
+4. **Global handler**: Prevents unhandled promise rejections from crashing the app
+5. **Font optimization**: Uses `font-display: swap` so text renders immediately with fallback fonts
+6. **Audio safety**: Wraps all audio in try-catch so failures are silent, not crashes
 
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/game/BoxingCow.tsx` | Add `punchPhase` prop, dynamic arm transforms |
-| `src/components/game/CowFightScreen.tsx` | Multi-phase timing system, position state, enhanced effects |
-| `src/index.css` | New keyframes for arm animations, impact effects |
-
-This will create a professional, physics-based punch animation that feels like a $10M budget fighting game!
+### Expected Outcome:
+- Game loads instantly on mobile
+- No more blank white screens
+- Audio plays reliably on mobile (after first tap)
+- Errors show a friendly retry screen instead of crashing
