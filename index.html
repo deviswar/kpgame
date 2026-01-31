@@ -8,13 +8,12 @@
     <meta name="author" content="KP Game" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- CRITICAL: Preload audio for instant playback (not prefetch - preload is higher priority) -->
-    <link rel="preload" href="/music/rizz.mp4" as="fetch" crossorigin />
-    <link rel="preload" href="/music/background.mp3" as="fetch" crossorigin />
+    <!-- CRITICAL: Preload audio/video with correct types for mobile -->
+    <link rel="preload" href="/music/rizz.mp4" as="video" type="video/mp4" crossorigin />
+    <link rel="preload" href="/music/background.mp3" as="audio" type="audio/mpeg" crossorigin />
     
-    <!-- Prefetch lower priority assets (mourning, videos) -->
-    <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
-    <link rel="prefetch" href="/music/kpfall.mp4" as="fetch" />
+    <!-- Prefetch lower priority assets (mourning only - video is deferred to user interaction) -->
+    <link rel="prefetch" href="/music/mourning.mp3" as="audio" type="audio/mpeg" />
 
     <!-- Fonts: preconnect + non-blocking stylesheet (moved from CSS @import) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

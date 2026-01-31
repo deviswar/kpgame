@@ -22,6 +22,15 @@ const preloadImages = () => {
   });
 };
 
+// Deferred video preload - only after user interaction to not compete with critical load
+const preloadVideo = () => {
+  const video = document.createElement('video');
+  video.src = '/music/kpfall.mp4';
+  video.preload = 'auto';
+  video.muted = true;
+  video.load();
+};
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
@@ -33,6 +42,7 @@ const WelcomeScreen = memo(({
   const [hasPrimedAudio, setHasPrimedAudio] = useState(false);
 
   // Preload audio on mount, defer image preloading
+  // CRITICAL: Do NOT preload video on mount - it competes with critical resources
   useEffect(() => {
     preloadAllAudio();
     
@@ -42,19 +52,15 @@ const WelcomeScreen = memo(({
     } else {
       setTimeout(preloadImages, 100);
     }
-    
-    // Preload video in background
-    const video = document.createElement('video');
-    video.src = '/music/kpfall.mp4';
-    video.preload = 'auto';
-    video.muted = true;
-    video.load();
+    // Video preload is now deferred until first user interaction
   }, []);
 
   // Prime audio on first user interaction (anywhere on screen)
   const handleFirstInteraction = useCallback(() => {
     if (!hasPrimedAudio) {
       primeRizzAudio();
+      // Also preload video now that user has interacted
+      preloadVideo();
       setHasPrimedAudio(true);
     }
   }, [hasPrimedAudio]);
@@ -63,14 +69,15 @@ const WelcomeScreen = memo(({
     // Prime audio if not already done
     if (!hasPrimedAudio) {
       primeRizzAudio();
+      preloadVideo();
       setHasPrimedAudio(true);
     }
     
     setShowRizzScene(true);
-    // Small delay to ensure priming completes, then play
-    setTimeout(() => {
-      playRizz();
-    }, 50);
+    // CRITICAL FIX: Call playRizz SYNCHRONOUSLY in the click handler
+    // NO setTimeout - that breaks the user gesture context on iOS Safari!
+    console.log('[RIZZ] Button clicked - calling playRizz synchronously');
+    playRizz();
   };
 
   const handleStartGame = () => {
