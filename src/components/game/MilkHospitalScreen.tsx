@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import KPCharacter from './KPCharacter';
 import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
@@ -32,14 +32,28 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
   const [showMourningFlash, setShowMourningFlash] = useState(false);
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
+  
+  // Track all timers for cleanup
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+  
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(t => clearTimeout(t));
+    };
+  }, []);
 
-  // Preload mourning music AND images on mount so they're ready for instant playback
+  // Handle image errors
+  const handleImageError = (imageName: string) => {
+    setImageErrors(prev => ({ ...prev, [imageName]: true }));
+  };
+
+  // Preload mourning music AND images on mount
   useEffect(() => {
     const loadAssets = async () => {
-      // Preload mourning audio immediately (primes it for instant playback)
       preloadMourningMusic();
       
-      // Preload mourning images
       await Promise.all([
         preloadImage(pugMemorial),
         preloadImage(pugGrave)
@@ -49,75 +63,67 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     loadAssets();
   }, []);
 
-  // Handler for the hospital button - user tap triggers mourning music (works on mobile!)
+  // Handler for the hospital button
   const handleTakePuppyToHospital = () => {
-    // Parent handles all audio (stops Music 1, starts Music 2)
     onStartMourningMusic?.();
     
-    // Go to mourning phase
     setPhase('mourning');
     setWaitingForUserTap(false);
     
-    // Trigger flashes - 8 total flashes
-    setShowMourningFlash(true);
-    setTimeout(() => setShowMourningFlash(false), 150);
-    setTimeout(() => setShowMourningFlash(true), 300);
-    setTimeout(() => setShowMourningFlash(false), 450);
-    setTimeout(() => setShowMourningFlash(true), 600);
-    setTimeout(() => setShowMourningFlash(false), 750);
-    setTimeout(() => setShowMourningFlash(true), 900);
-    setTimeout(() => setShowMourningFlash(false), 1050);
-    setTimeout(() => setShowMourningFlash(true), 1200);
-    setTimeout(() => setShowMourningFlash(false), 1350);
-    setTimeout(() => setShowMourningFlash(true), 1500);
-    setTimeout(() => setShowMourningFlash(false), 1650);
-    setTimeout(() => setShowMourningFlash(true), 1800);
-    setTimeout(() => setShowMourningFlash(false), 1950);
-    setTimeout(() => setShowMourningFlash(true), 2100);
-    setTimeout(() => setShowMourningFlash(false), 2250);
+    // Trigger flashes
+    const flashTimings = [0, 300, 600, 900, 1200, 1500, 1800, 2100];
+    flashTimings.forEach((delay, i) => {
+      const onTimer = setTimeout(() => setShowMourningFlash(true), delay);
+      const offTimer = setTimeout(() => setShowMourningFlash(false), delay + 150);
+      timersRef.current.push(onTimer, offTimer);
+    });
     
-    // Complete after mourning duration (extended by 1.3s: 10000 + 1300 = 11300)
-    setTimeout(() => onComplete(), 11300);
+    // Complete after mourning duration
+    const completeTimer = setTimeout(() => onComplete(), 11300);
+    timersRef.current.push(completeTimer);
   };
 
   useEffect(() => {
-    // Phase timing
-    const timers: NodeJS.Timeout[] = [];
-
     // Phase 1: Building fades in
-    timers.push(setTimeout(() => setShowBuilding(true), 100));
+    const t1 = setTimeout(() => setShowBuilding(true), 100);
+    timersRef.current.push(t1);
     
-    // Phase 2: KP exits hospital (walks to left side)
-    timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
+    // Phase 2: KP exits hospital
+    const t2 = setTimeout(() => setPhase('kp-exit'), 2000);
+    timersRef.current.push(t2);
     
-    // Phase 3: Energy popup (on right side while KP is on left) - extended by 1 more second
-    timers.push(setTimeout(() => setPhase('popup'), 4500));
+    // Phase 3: Energy popup
+    const t3 = setTimeout(() => setPhase('popup'), 4500);
+    timersRef.current.push(t3);
     
-    // Phase 4: EXTRA WAIT (2s) before KP goes to car (keeps hospital + banners visible longer)
-    timers.push(setTimeout(() => setPhase('enter-car'), 8500));
+    // Phase 4: KP goes to car
+    const t4 = setTimeout(() => setPhase('enter-car'), 8500);
+    timersRef.current.push(t4);
     
-    // Phase 5: Driving - car starts moving - longer drive time
-    timers.push(setTimeout(() => setPhase('driving'), 10500));
+    // Phase 5: Driving
+    const t5 = setTimeout(() => setPhase('driving'), 10500);
+    timersRef.current.push(t5);
     
-    // Phase 6: Dog appears - give more time to see both moving
-    timers.push(setTimeout(() => setPhase('dog-appears'), 14000));
+    // Phase 6: Dog appears
+    const t6 = setTimeout(() => setPhase('dog-appears'), 14000);
+    timersRef.current.push(t6);
     
-    // Phase 7: Crash - dramatic pause before impact
-    timers.push(setTimeout(() => {
+    // Phase 7: Crash
+    const t7 = setTimeout(() => {
       setPhase('crash');
       setShowCrashText(true);
-    }, 18000));
+    }, 18000);
+    timersRef.current.push(t7);
     
-    // Phase 8: Aftermath - show button and WAIT for user tap (no auto transition)
-    timers.push(setTimeout(() => {
+    // Phase 8: Aftermath
+    const t8 = setTimeout(() => {
       setPhase('aftermath');
       setWaitingForUserTap(true);
-    }, 20000));
-    
-    // NO automatic mourning phase - user must tap the button!
+    }, 20000);
+    timersRef.current.push(t8);
 
     return () => {
-      timers.forEach(t => clearTimeout(t));
+      timersRef.current.forEach(t => clearTimeout(t));
     };
   }, [onComplete, onStartMourningMusic]);
 
@@ -148,15 +154,14 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           {/* Ground */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gray-800 to-gray-700" />
 
-          {/* Hospital Building - positioned higher */}
+          {/* Hospital Building */}
           <div 
             className={`absolute top-1/4 md:top-1/5 left-1/2 -translate-x-1/2 transition-all duration-1000 ${
               showBuilding ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            {/* Main Building - smaller */}
             <div className="relative">
-              {/* Roof - smaller */}
+              {/* Roof */}
               <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-40 h-6 bg-gradient-to-b from-red-700 to-red-800 rounded-t-xl shadow-lg" />
               
               {/* MILK HOSPITAL Sign */}
@@ -164,7 +169,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                 <span className="text-white font-bold text-xs md:text-base tracking-wide whitespace-nowrap">🏥 MILK HOSPITAL 🥛</span>
               </div>
 
-              {/* Building Body - smaller */}
+              {/* Building Body */}
               <div className="w-36 h-32 bg-gradient-to-b from-white to-gray-100 rounded-t-lg shadow-2xl border-4 border-gray-300">
                 {/* Red Cross */}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2">
@@ -186,27 +191,33 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                 </div>
               </div>
 
-              {/* Left Banner - Rose Milk (real image) - BIGGER, same size */}
-              <div className="absolute -left-32 md:-left-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform -rotate-3 overflow-hidden border-2 border-white">
-                <img 
-                  src={roseMilkBanner} 
-                  alt="Gomatha Village Rose Milk"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {/* Left Banner - Rose Milk */}
+              {!imageErrors['roseMilk'] && (
+                <div className="absolute -left-32 md:-left-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform -rotate-3 overflow-hidden border-2 border-white">
+                  <img 
+                    src={roseMilkBanner} 
+                    alt="Gomatha Village Rose Milk"
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError('roseMilk')}
+                  />
+                </div>
+              )}
 
-              {/* Right Banner - Village Milk (real image) - BIGGER, same size */}
-              <div className="absolute -right-32 md:-right-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform rotate-3 overflow-hidden border-2 border-white">
-                <img 
-                  src={villageMilkBanner} 
-                  alt="గోమాత పల్లె పాలు Village Raw Milk"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {/* Right Banner - Village Milk */}
+              {!imageErrors['villageMilk'] && (
+                <div className="absolute -right-32 md:-right-44 top-0 w-28 h-40 md:w-36 md:h-52 rounded-lg shadow-lg transform rotate-3 overflow-hidden border-2 border-white">
+                  <img 
+                    src={villageMilkBanner} 
+                    alt="గోమాత పల్లె పాలు Village Raw Milk"
+                    className="w-full h-full object-cover"
+                    onError={() => handleImageError('villageMilk')}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* KP Character exiting from door - moves to LEFT side */}
+          {/* KP Character exiting from door */}
           {(phase === 'kp-exit' || phase === 'popup' || phase === 'enter-car') && (
             <div 
               className={`absolute transition-all duration-1000 ease-out ${
@@ -219,7 +230,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             </div>
           )}
 
-          {/* Energy Popup - positioned on RIGHT side */}
+          {/* Energy Popup */}
           {phase === 'popup' && (
             <div className="absolute top-[50%] right-[15%] animate-energy-popup z-10">
               <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-3 py-2 rounded-xl shadow-lg border-2 border-green-300">
@@ -233,12 +244,13 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           )}
 
           {/* Honda Amaze Car */}
-          {phase === 'enter-car' && (
+          {phase === 'enter-car' && !imageErrors['hondaCar'] && (
             <div className="absolute bottom-20 right-8 w-32 md:w-40">
               <img 
                 src={hondaAmaze} 
                 alt="Honda Amaze"
                 className="w-full h-auto drop-shadow-2xl animate-bounce-soft"
+                onError={() => handleImageError('hondaCar')}
               />
             </div>
           )}
@@ -274,23 +286,26 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
           </div>
 
           {/* Honda Amaze Car Driving */}
-          <div 
-            className={`absolute bottom-16 w-32 md:w-40 ${
-              phase === 'driving' ? 'animate-car-drive-continuous' :
-              phase === 'dog-appears' ? 'animate-car-drive-to-crash-smooth' :
-              phase === 'crash' ? 'left-[42%] animate-car-crash-smooth' :
-              'left-[42%]'
-            }`}
-          >
-            <img 
-              src={hondaAmaze} 
-              alt="Honda Amaze"
-              className="w-full h-auto drop-shadow-xl"
-            />
-          </div>
+          {!imageErrors['hondaDriving'] && (
+            <div 
+              className={`absolute bottom-16 w-32 md:w-40 ${
+                phase === 'driving' ? 'animate-car-drive-continuous' :
+                phase === 'dog-appears' ? 'animate-car-drive-to-crash-smooth' :
+                phase === 'crash' ? 'left-[42%] animate-car-crash-smooth' :
+                'left-[42%]'
+              }`}
+            >
+              <img 
+                src={hondaAmaze} 
+                alt="Honda Amaze"
+                className="w-full h-auto drop-shadow-xl"
+                onError={() => handleImageError('hondaDriving')}
+              />
+            </div>
+          )}
 
-          {/* Pug Dog - bigger size matching car */}
-          {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && (
+          {/* Pug Dog */}
+          {(phase === 'dog-appears' || phase === 'crash' || phase === 'aftermath') && !imageErrors['pugDog'] && (
             <div 
               className={`absolute bottom-16 w-28 md:w-36 ${
                 phase === 'dog-appears' ? 'animate-dog-walk-to-crash-smooth' :
@@ -302,16 +317,17 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                 src={pugDog} 
                 alt="Pug Dog"
                 className="w-full h-auto drop-shadow-xl transform -scale-x-100"
+                onError={() => handleImageError('pugDog')}
               />
             </div>
           )}
 
-          {/* Crash Effects - Impact Flash only during crash */}
+          {/* Crash Effects */}
           {phase === 'crash' && (
             <div className="absolute inset-0 bg-white animate-hit-flash pointer-events-none" />
           )}
 
-          {/* BONK and Oops Text - stays visible after crash */}
+          {/* BONK and Oops Text */}
           {showCrashText && (
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 text-center z-50">
               <div className="animate-energy-popup">
@@ -341,7 +357,7 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
                 ))}
               </div>
 
-              {/* Hospital Button - requires user tap to proceed (fixes mobile audio!) */}
+              {/* Hospital Button */}
               {phase === 'aftermath' && waitingForUserTap && (
                 <button
                   onClick={handleTakePuppyToHospital}
@@ -364,15 +380,21 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
       {/* Mourning Scene */}
       {isMourningScene && (
         <div className="absolute inset-0 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-600 flex flex-col items-center justify-center gap-4 py-4 animate-fade-in">
-          {/* 3x Flash Overlay */}
+          {/* Flash Overlay */}
           {showMourningFlash && (
             <div className="absolute inset-0 bg-white/70 z-50 pointer-events-none" />
           )}
           
-          {/* Top - Pug Memorial Photo - BIGGER */}
-          {imagesLoaded && (
+          {/* Top - Pug Memorial Photo */}
+          {imagesLoaded && !imageErrors['pugMemorial'] && (
             <div className="w-56 md:w-72 rounded-xl overflow-hidden shadow-2xl border-4 border-amber-600 animate-scale-in">
-              <img src={pugMemorial} alt="Pug Memorial" className="w-full h-auto" loading="eager" />
+              <img 
+                src={pugMemorial} 
+                alt="Pug Memorial" 
+                className="w-full h-auto" 
+                loading="eager"
+                onError={() => handleImageError('pugMemorial')} 
+              />
             </div>
           )}
           
@@ -382,10 +404,16 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             <p className="text-white text-xl font-bold mt-2">Sorry... 😢</p>
           </div>
           
-          {/* Bottom - Pug Grave - BIGGER */}
-          {imagesLoaded && (
+          {/* Bottom - Pug Grave */}
+          {imagesLoaded && !imageErrors['pugGrave'] && (
             <div className="w-64 md:w-80 rounded-xl overflow-hidden shadow-2xl animate-scale-in">
-              <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" loading="eager" />
+              <img 
+                src={pugGrave} 
+                alt="Pug Grave" 
+                className="w-full h-auto" 
+                loading="eager"
+                onError={() => handleImageError('pugGrave')} 
+              />
             </div>
           )}
         </div>
