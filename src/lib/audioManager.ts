@@ -29,7 +29,44 @@ let rizzPreloaded = false;
 // iOS unlock flag - only need to unlock once per session
 let iosAudioUnlocked = false;
 
-// ============ WEB AUDIO CONTEXT HELPER ============
+// ============ iOS SILENT MODE BYPASS ============
+// Playing a silent HTMLAudioElement alongside WebAudio forces iOS to treat
+// the audio session as "media" rather than "ringer", bypassing silent mode
+let silentAudioUnlocker: HTMLAudioElement | null = null;
+
+// Silent MP3 data URL (0.1 second of silence, ~1KB)
+const SILENT_MP3 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBr0AAAAAAAAAAAAAAAAAAAA//tQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tQZB4P8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+
+const startSilentUnlocker = (): void => {
+  if (silentAudioUnlocker) return;
+  
+  try {
+    silentAudioUnlocker = new Audio(SILENT_MP3);
+    silentAudioUnlocker.loop = true;
+    silentAudioUnlocker.volume = 0.01; // Nearly silent but not zero
+    // iOS attributes
+    (silentAudioUnlocker as any).playsInline = true;
+    silentAudioUnlocker.setAttribute('playsinline', '');
+    silentAudioUnlocker.setAttribute('webkit-playsinline', '');
+    
+    const playPromise = silentAudioUnlocker.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => console.log('✅ Silent unlocker started - iOS silent mode bypassed'))
+        .catch(() => console.log('Silent unlocker failed (ok if not iOS)'));
+    }
+  } catch (e) {
+    console.log('Silent unlocker error:', e);
+  }
+};
+
+const stopSilentUnlocker = (): void => {
+  if (silentAudioUnlocker) {
+    silentAudioUnlocker.pause();
+    silentAudioUnlocker = null;
+  }
+};
+
 const getAudioContext = (): AudioContext => {
   if (!audioContext) {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -114,6 +151,10 @@ export const playRizz = () => {
     console.log('Rizz already playing, skipping');
     return;
   }
+  
+  // CRITICAL: Start silent unlocker FIRST to bypass iOS silent mode
+  // This must happen before WebAudio to force iOS into "media" mode
+  startSilentUnlocker();
   
   // Ensure fallback exists (still only PLAYED within this user gesture)
   if (!rizzHtmlAudio) {
@@ -217,6 +258,10 @@ export const playRizz = () => {
 
 export const stopRizz = () => {
   rizzPlaying = false;
+  
+  // Stop silent unlocker (iOS silent mode bypass)
+  stopSilentUnlocker();
+  
   if (rizzBufferSource) {
     try { 
       rizzBufferSource.stop(); 
@@ -417,6 +462,9 @@ export const stopAll = () => {
   rizzPlaying = false;
   gameMusicPlaying = false;
   mourningStartingOrPlaying = false;
+  
+  // Stop silent unlocker (iOS silent mode bypass)
+  stopSilentUnlocker();
   
   // Stop rizz (Web Audio API)
   if (rizzBufferSource) {
