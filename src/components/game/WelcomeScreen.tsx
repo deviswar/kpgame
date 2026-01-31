@@ -131,7 +131,7 @@ const WelcomeScreen = memo(({
   return <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden">
       {/* Version number - bottom left */}
       <div className="absolute bottom-24 left-4">
-        <span className="text-white text-xs font-medium">version - 1.69.69</span>
+        <span className="text-white text-xs font-medium">version - 8008.69</span>
       </div>
 
       {/* Title */}
