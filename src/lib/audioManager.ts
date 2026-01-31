@@ -1,10 +1,16 @@
 // Centralized Audio Manager - handles all 3 music tracks
-// Music 1: Rizz scene only (rizz.mp4)
+// Music 1: Rizz scene only (rizz.mp4) - USES WEB AUDIO API for Safari compatibility
 // Music 2: Gameplay - from "Tap to start" until hospital button (background.mp3)
 // Music 3: Mourning - from hospital button through end screen + leaked video (mourning.mp3)
 
-// Module-level singletons (persist across route navigations)
-let rizzAudio: HTMLAudioElement | null = null;
+// ============ WEB AUDIO API FOR RIZZ (Safari-compatible) ============
+// This is the ONLY way to get instant audio playback on iPhone Safari
+let audioContext: AudioContext | null = null;
+let rizzAudioBuffer: AudioBuffer | null = null;
+let rizzBufferSource: AudioBufferSourceNode | null = null;
+let rizzGainNode: GainNode | null = null;
+
+// Module-level singletons for other audio (persist across route navigations)
 let gameMusicAudio: HTMLAudioElement | null = null;
 let mourningAudio: HTMLAudioElement | null = null;
 
@@ -14,33 +20,114 @@ let gameMusicPlaying = false;
 let rizzPlaying = false;
 
 // Preload flags
-let rizzPreloaded = false;
 let gameMusicPreloaded = false;
 let mourningPreloaded = false;
+let rizzPreloaded = false;
 
-// Pre-cached blob URL for rizz audio (enables instant playback)
-let rizzAudioBlobUrl: string | null = null;
+// ============ WEB AUDIO CONTEXT HELPER ============
+const getAudioContext = (): AudioContext => {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    audioContext = new AudioContextClass();
+  }
+  return audioContext;
+};
 
-// ============ PRE-CACHE RIZZ AUDIO ============
-// Fetch audio file as blob EARLY so it's ready instantly when user clicks
+// ============ PRE-CACHE RIZZ AUDIO (Web Audio API) ============
+// Fetch and decode audio EARLY so it's ready for instant playback
 export const precacheRizzAudio = async () => {
-  if (rizzAudioBlobUrl) return; // Already cached
+  if (rizzAudioBuffer) {
+    console.log('Rizz audio already cached in AudioBuffer');
+    return;
+  }
   
   try {
+    console.log('Starting rizz audio pre-cache with Web Audio API...');
+    const ctx = getAudioContext();
     const response = await fetch('/music/rizz.mp4');
-    const blob = await response.blob();
-    rizzAudioBlobUrl = URL.createObjectURL(blob);
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Decode audio data into AudioBuffer - this is the key step
+    rizzAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
     rizzPreloaded = true;
-    console.log('Rizz audio pre-cached as blob - ready for instant playback');
+    console.log('✅ Rizz audio decoded into AudioBuffer - ready for INSTANT playback');
   } catch (e) {
-    console.error('Failed to pre-cache rizz audio:', e);
+    console.error('❌ Failed to pre-cache rizz audio:', e);
   }
+};
+
+// ============ MUSIC 1: RIZZ (Web Audio API) ============
+export const playRizz = () => {
+  if (rizzPlaying) {
+    console.log('Rizz already playing, skipping');
+    return;
+  }
+  
+  const ctx = getAudioContext();
+  
+  // CRITICAL: Resume context FIRST - Safari requires this in user gesture
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+    console.log('AudioContext resumed');
+  }
+  
+  // Stop any existing source
+  if (rizzBufferSource) {
+    try { rizzBufferSource.stop(); } catch {}
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
+  }
+  
+  if (!rizzAudioBuffer) {
+    console.error('❌ Rizz audio not preloaded! Attempting emergency load...');
+    // Emergency fallback - try to load now (will have delay but better than nothing)
+    precacheRizzAudio().then(() => {
+      if (rizzAudioBuffer) {
+        playRizz();
+      }
+    });
+    return;
+  }
+  
+  // Create new buffer source (MUST create fresh each time - can't reuse)
+  rizzBufferSource = ctx.createBufferSource();
+  rizzBufferSource.buffer = rizzAudioBuffer;
+  rizzBufferSource.loop = true;
+  
+  // Create gain node for volume control (reuse if exists)
+  if (!rizzGainNode) {
+    rizzGainNode = ctx.createGain();
+    rizzGainNode.gain.value = 0.5;
+    rizzGainNode.connect(ctx.destination);
+  }
+  
+  rizzBufferSource.connect(rizzGainNode);
+  
+  // START IMMEDIATELY - this is synchronous and instant!
+  rizzBufferSource.start(0);
+  rizzPlaying = true;
+  
+  console.log('🎵 Rizz audio playing INSTANTLY via Web Audio API');
+};
+
+export const stopRizz = () => {
+  rizzPlaying = false;
+  if (rizzBufferSource) {
+    try { 
+      rizzBufferSource.stop(); 
+    } catch (e) {
+      // Ignore - might already be stopped
+    }
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
+  }
+  console.log('Rizz audio stopped');
 };
 
 // ============ PRELOAD ALL AUDIO ============
 // Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
 export const preloadAllAudio = () => {
-  // Pre-cache rizz audio as blob for instant loading
+  // Pre-cache rizz audio using Web Audio API
   precacheRizzAudio();
   
   // Preload Game Music (Music 2)
@@ -101,60 +188,6 @@ export const preloadMourningMusic = () => {
       mourningAudio!.volume = originalVolume;
       console.log('Mourning audio loaded (prime failed, but ready)');
     });
-  }
-};
-
-// ============ MUSIC 1: RIZZ ============
-export const playRizz = () => {
-  if (rizzPlaying) return;
-  
-  // Stop and clear any existing audio first
-  if (rizzAudio) {
-    rizzAudio.pause();
-    rizzAudio.src = '';
-    rizzAudio = null;
-  }
-  
-  // CRITICAL: Use pre-cached blob URL if available for INSTANT playback
-  // Fall back to direct URL if not cached yet
-  const audioSource = rizzAudioBlobUrl || '/music/rizz.mp4';
-  
-  // Create NEW audio element synchronously in user gesture context
-  rizzAudio = new Audio(audioSource);
-  rizzAudio.volume = 0.5;
-  rizzAudio.loop = true;
-  
-  // Set flag before play attempt
-  rizzPlaying = true;
-  
-  // Add onended handler as fallback for browsers that don't respect loop
-  rizzAudio.onended = () => {
-    if (rizzPlaying && rizzAudio) {
-      rizzAudio.currentTime = 0;
-      rizzAudio.play().catch(() => {});
-    }
-  };
-  
-  // Play immediately - blob URL means NO network delay!
-  const playPromise = rizzAudio.play();
-  
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => {
-        console.log('Rizz audio playing instantly from', rizzAudioBlobUrl ? 'blob cache' : 'network');
-      })
-      .catch((e) => {
-        console.error('Rizz play failed:', e);
-        rizzPlaying = false;
-      });
-  }
-};
-
-export const stopRizz = () => {
-  rizzPlaying = false;
-  if (rizzAudio) {
-    rizzAudio.pause();
-    rizzAudio.currentTime = 0;
   }
 };
 
@@ -276,12 +309,14 @@ export const stopAll = () => {
   gameMusicPlaying = false;
   mourningStartingOrPlaying = false;
   
-  // Stop all audio
-  if (rizzAudio) {
-    rizzAudio.pause();
-    rizzAudio.currentTime = 0;
+  // Stop rizz (Web Audio API)
+  if (rizzBufferSource) {
+    try { rizzBufferSource.stop(); } catch {}
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
   }
   
+  // Stop other audio
   if (gameMusicAudio) {
     gameMusicAudio.pause();
     gameMusicAudio.currentTime = 0;
@@ -298,10 +333,12 @@ export const stopAll = () => {
 export const destroyAll = () => {
   stopAll();
   
-  if (rizzAudio) {
-    rizzAudio.src = '';
-    rizzAudio = null;
+  // Clean up Web Audio API resources
+  if (rizzGainNode) {
+    rizzGainNode.disconnect();
+    rizzGainNode = null;
   }
+  rizzAudioBuffer = null;
   
   if (gameMusicAudio) {
     gameMusicAudio.src = '';
@@ -311,5 +348,11 @@ export const destroyAll = () => {
   if (mourningAudio) {
     mourningAudio.src = '';
     mourningAudio = null;
+  }
+  
+  // Close AudioContext
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
   }
 };
