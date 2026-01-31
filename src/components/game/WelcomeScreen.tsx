@@ -19,26 +19,24 @@ const WelcomeScreen = memo(({
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
 
-  // Preload all audio AND images on mount for instant loading
+  // Preload audio on mount - images deferred for faster initial load
   useEffect(() => {
-    // Preload all audio (includes rizz pre-caching)
+    // Preload all audio (critical for instant playback)
     preloadAllAudio();
 
-    // Preload all game images in background
-    const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave, qtGirlImage];
-    images.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
+    // Delay image preloading by 500ms to prioritize audio loading
+    const imageTimer = setTimeout(() => {
+      const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave, qtGirlImage];
+      images.forEach(src => {
+        const img = new Image();
+        img.src = src;
+      });
+    }, 500);
 
-    // Preload leaked video as blob for instant playback
-    fetch('/music/kpfall.mp4')
-      .then(res => res.blob())
-      .then(blob => {
-        // Store in memory for when AirplaneAnimation mounts
-        console.log('Leaked video pre-cached from WelcomeScreen');
-      })
-      .catch(() => {});
+    // kpfall.mp4 removed from eager loading - will lazy load when needed
+    // This significantly speeds up initial page load on mobile Safari
+
+    return () => clearTimeout(imageTimer);
   }, []);
   const handleShowRizz = () => {
     // CRITICAL: Play audio FIRST, synchronously in user gesture context
