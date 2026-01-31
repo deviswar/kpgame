@@ -1,117 +1,145 @@
 
-# Fix Rizz Scene Music Not Playing / Playing Late
+# Fix Rizz Music Delay & Leaked Video Issues
 
-## Problem Identified
+## Problem 1: Rizz Music Plays with Delay
 
-The music doesn't play or plays very late when clicking "Click here to see my rizz" because:
+**Root Cause:** The audio file `/music/rizz.mp4` is fetched AFTER the user clicks. Even though we create the Audio element synchronously, the browser still needs to download the file first.
 
-1. **Browser autoplay policies** require audio to be initiated synchronously within user gesture context
-2. Current code preloads audio in `useEffect` (async, outside user gesture)
-3. When `playRizz()` is called, the audio element is "stale" and loses the user gesture context
-4. After page refresh, the problem is worse as the audio element is recreated in async context
-
-## Solution: Immediate Audio Creation in Click Handler
-
-Create a **fresh Audio element synchronously** inside the click handler, ensuring the browser recognizes it as user-initiated.
+**Solution:** Pre-fetch the audio file data into browser cache on page load, so when user clicks, the Audio element loads from cache instantly.
 
 ---
 
-## Technical Changes
+## Problem 2: Leaked Video Has Delay + Shows Controls
+
+**Root Cause:** 
+- Video has `controls` attribute showing pause/fullscreen options
+- Video is preloaded into a hidden element but the displayed video is a NEW element loading fresh
+
+**Solution:**
+- Remove `controls` attribute
+- Add CSS to hide any native controls: `pointer-events: none` and `-webkit-media-controls: none`
+- Transfer the preloaded video blob data to the displayed video for instant playback
+
+---
+
+## Technical Implementation
 
 ### File: `src/lib/audioManager.ts`
 
-**Rewrite `playRizz()` function to:**
-1. Always create a fresh Audio element synchronously when called
-2. Store reference to allow stopping later
-3. Start playback immediately in the same sync context
+Add a new function to pre-cache the rizz audio file:
 
 ```typescript
+// Pre-cache rizz audio data using fetch API
+let rizzAudioBlobUrl: string | null = null;
+
+export const precacheRizzAudio = async () => {
+  try {
+    const response = await fetch('/music/rizz.mp4');
+    const blob = await response.blob();
+    rizzAudioBlobUrl = URL.createObjectURL(blob);
+    console.log('Rizz audio pre-cached as blob');
+  } catch (e) {
+    console.error('Failed to pre-cache rizz audio:', e);
+  }
+};
+
 export const playRizz = () => {
-  if (rizzPlaying) return;
-  
-  // CRITICAL: Always create fresh audio element synchronously
-  // This ensures mobile browsers recognize user gesture context
-  
-  // Stop and clear any existing audio first
-  if (rizzAudio) {
-    rizzAudio.pause();
-    rizzAudio.src = '';
-  }
-  
-  // Create NEW audio element right now (synchronous, in user gesture)
-  rizzAudio = new Audio('/music/rizz.mp4');
-  rizzAudio.volume = 0.5;
-  rizzAudio.loop = true;
-  
-  // Set flag before play attempt
-  rizzPlaying = true;
-  
-  // Play immediately - this is still in user gesture context
-  const playPromise = rizzAudio.play();
-  
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => console.log('Rizz audio playing'))
-      .catch((e) => {
-        console.error('Rizz play failed:', e);
-        rizzPlaying = false;
-      });
-  }
+  // Use cached blob URL if available, otherwise fall back to direct URL
+  const audioSource = rizzAudioBlobUrl || '/music/rizz.mp4';
+  rizzAudio = new Audio(audioSource);
+  // ... rest of play logic
 };
 ```
 
 ### File: `src/components/game/WelcomeScreen.tsx`
 
-**Simplify `handleShowRizz` to ensure synchronous execution:**
-1. Remove any async operations before `playRizz()`
-2. Call `playRizz()` as the first action in handler
+Call pre-cache function on mount:
 
 ```typescript
-const handleShowRizz = () => {
-  // CRITICAL: Play audio FIRST, synchronously in user gesture
-  playRizz();
+import { precacheRizzAudio, playRizz, ... } from '@/lib/audioManager';
+
+useEffect(() => {
+  // Pre-cache rizz audio for instant playback
+  precacheRizzAudio();
   
-  // Then update state (React batches this anyway)
-  setShowRizzScene(true);
-};
+  // ... rest of preload logic
+}, []);
 ```
 
-**Also update preload to NOT create rizz audio:**
-- Remove rizz from `preloadAllAudio()` to avoid stale element issues
-- Or mark it differently so `playRizz()` knows to recreate
+### File: `src/components/game/AirplaneAnimation.tsx`
 
----
-
-## Why This Fixes The Issue
-
-| Before | After |
-|--------|-------|
-| Audio created in `useEffect` (async) | Audio created in click handler (sync) |
-| `playRizz()` reuses stale element | `playRizz()` creates fresh element |
-| User gesture context lost | User gesture context preserved |
-| Browser blocks autoplay | Browser allows playback |
-
----
-
-## Additional Safety: Keep-Alive Check
-
-Add a `canplay` event listener to ensure audio is ready before playing:
+Fix video to have no controls and instant playback:
 
 ```typescript
-rizzAudio.addEventListener('canplaythrough', () => {
-  if (rizzPlaying && rizzAudio.paused) {
-    rizzAudio.play().catch(() => {});
-  }
-}, { once: true });
+// Video screen - updated
+<video
+  ref={videoRef}
+  src="/music/kpfall.mp4"
+  autoPlay
+  loop
+  playsInline
+  preload="auto"
+  muted
+  className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50"
+  style={{ 
+    maxHeight: '50vh',
+    pointerEvents: 'none'  // Disable all touch interactions
+  }}
+  // Remove controls attribute entirely
+  // Add webkit-specific CSS to hide controls
+  onContextMenu={(e) => e.preventDefault()}  // Disable right-click menu
+/>
+```
+
+Add CSS class to hide controls completely:
+
+```css
+/* In index.css */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+```
+
+Also preload as blob for instant playback:
+
+```typescript
+// Enhanced preload with blob caching
+useEffect(() => {
+  const preloadVideo = async () => {
+    try {
+      const response = await fetch('/music/kpfall.mp4');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      preloadedVideoRef.current = blobUrl;
+      setVideoPreloaded(true);
+    } catch (e) {
+      // Fallback to regular preload
+    }
+  };
+  preloadVideo();
+}, []);
+
+// Use blob URL when showing video
+<video src={preloadedVideoRef.current || '/music/kpfall.mp4'} ... />
 ```
 
 ---
 
-## Files to Modify
+## Summary of Changes
 
 | File | Changes |
 |------|---------|
-| `src/lib/audioManager.ts` | Rewrite `playRizz()` to always create fresh Audio element synchronously |
-| `src/components/game/WelcomeScreen.tsx` | Call `playRizz()` first in click handler, before state update |
+| `src/lib/audioManager.ts` | Add `precacheRizzAudio()` function that fetches audio as blob for instant loading |
+| `src/components/game/WelcomeScreen.tsx` | Call `precacheRizzAudio()` on mount |
+| `src/components/game/AirplaneAnimation.tsx` | Remove `controls` attribute, add `pointerEvents: 'none'`, use blob URL for video |
+| `src/index.css` | Add CSS rules to hide webkit video controls |
 
-This ensures the music plays instantly every time, whether on first load or after page refresh!
+This will make both the rizz music and leaked video play instantly with zero delay!
