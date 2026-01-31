@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz, preloadAllAudio, precacheRizzAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
 
 // Preload images for later screens
 import hondaAmazeImg from '@/assets/honda-amaze.jpg';
@@ -21,10 +21,7 @@ const WelcomeScreen = memo(({
 
   // Preload all audio AND images on mount for instant loading
   useEffect(() => {
-    // CRITICAL: Pre-cache rizz audio as blob FIRST for instant playback
-    precacheRizzAudio();
-    
-    // Also preload other audio
+    // Preload all audio (includes rizz pre-caching)
     preloadAllAudio();
 
     // Preload all game images in background
