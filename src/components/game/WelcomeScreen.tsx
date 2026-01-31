@@ -36,8 +36,12 @@ const WelcomeScreen = memo(({
   useEffect(() => {
     preloadAllAudio();
     
-    // Defer image preloading to not block initial paint
-    requestIdleCallback ? requestIdleCallback(preloadImages) : setTimeout(preloadImages, 100);
+    // Defer image preloading - use proper feature detection for Safari/iOS compatibility
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      window.requestIdleCallback(preloadImages);
+    } else {
+      setTimeout(preloadImages, 100);
+    }
     
     // Preload video in background
     const video = document.createElement('video');

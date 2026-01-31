@@ -21,43 +21,47 @@ let mourningPreloaded = false;
 // ============ PRELOAD ALL AUDIO ============
 // Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
 export const preloadAllAudio = () => {
-  // Preload Rizz (Music 1)
-  if (!rizzAudio) {
-    rizzAudio = new Audio('/music/rizz.mp4');
-    rizzAudio.volume = 0.5;
-    rizzAudio.loop = true;
-    rizzAudio.preload = 'auto';
-    rizzAudio.load();
-    rizzAudio.oncanplaythrough = () => {
-      rizzPreloaded = true;
-      console.log('Rizz audio preloaded');
-    };
-  }
-  
-  // Preload Game Music (Music 2)
-  if (!gameMusicAudio) {
-    gameMusicAudio = new Audio('/music/background.mp3');
-    gameMusicAudio.volume = 0.5;
-    gameMusicAudio.loop = true;
-    gameMusicAudio.preload = 'auto';
-    gameMusicAudio.load();
-    gameMusicAudio.oncanplaythrough = () => {
-      gameMusicPreloaded = true;
-      console.log('Game music preloaded');
-    };
-  }
-  
-  // Preload Mourning (Music 3)
-  if (!mourningAudio) {
-    mourningAudio = new Audio('/music/mourning.mp3');
-    mourningAudio.volume = 0.5;
-    mourningAudio.loop = true;
-    mourningAudio.preload = 'auto';
-    mourningAudio.load();
-    mourningAudio.oncanplaythrough = () => {
-      mourningPreloaded = true;
-      console.log('Mourning audio preloaded');
-    };
+  try {
+    // Preload Rizz (Music 1)
+    if (!rizzAudio) {
+      rizzAudio = new Audio('/music/rizz.mp4');
+      rizzAudio.volume = 0.5;
+      rizzAudio.loop = true;
+      rizzAudio.preload = 'auto';
+      rizzAudio.load();
+      rizzAudio.oncanplaythrough = () => {
+        rizzPreloaded = true;
+        console.log('Rizz audio preloaded');
+      };
+    }
+    
+    // Preload Game Music (Music 2)
+    if (!gameMusicAudio) {
+      gameMusicAudio = new Audio('/music/background.mp3');
+      gameMusicAudio.volume = 0.5;
+      gameMusicAudio.loop = true;
+      gameMusicAudio.preload = 'auto';
+      gameMusicAudio.load();
+      gameMusicAudio.oncanplaythrough = () => {
+        gameMusicPreloaded = true;
+        console.log('Game music preloaded');
+      };
+    }
+    
+    // Preload Mourning (Music 3)
+    if (!mourningAudio) {
+      mourningAudio = new Audio('/music/mourning.mp3');
+      mourningAudio.volume = 0.5;
+      mourningAudio.loop = true;
+      mourningAudio.preload = 'auto';
+      mourningAudio.load();
+      mourningAudio.oncanplaythrough = () => {
+        mourningPreloaded = true;
+        console.log('Mourning audio preloaded');
+      };
+    }
+  } catch (e) {
+    console.warn('Audio preload failed (will retry on interaction):', e);
   }
 };
 
@@ -99,27 +103,33 @@ export const preloadMourningMusic = () => {
 // Call this on initial user interaction (e.g., first tap on welcome screen)
 // This "unlocks" audio on mobile browsers
 export const primeRizzAudio = () => {
-  if (!rizzAudio) {
-    rizzAudio = new Audio('/music/rizz.mp4');
-    rizzAudio.volume = 0;
-    rizzAudio.loop = true;
-    rizzAudio.preload = 'auto';
-  }
-  
-  // Prime by playing silently then immediately pausing
-  const primePromise = rizzAudio.play();
-  if (primePromise !== undefined) {
-    primePromise.then(() => {
-      rizzAudio!.pause();
-      rizzAudio!.currentTime = 0;
-      rizzAudio!.volume = 0.5;
-      rizzPreloaded = true;
-      console.log('Rizz audio primed and ready');
-    }).catch(() => {
-      // Priming failed, but load() will still help
-      rizzAudio!.load();
-      console.log('Rizz audio loaded (prime blocked)');
-    });
+  try {
+    if (!rizzAudio) {
+      rizzAudio = new Audio('/music/rizz.mp4');
+      rizzAudio.volume = 0;
+      rizzAudio.loop = true;
+      rizzAudio.preload = 'auto';
+    }
+    
+    // Prime by playing silently then immediately pausing
+    const primePromise = rizzAudio.play();
+    if (primePromise !== undefined) {
+      primePromise.then(() => {
+        if (rizzAudio) {
+          rizzAudio.pause();
+          rizzAudio.currentTime = 0;
+          rizzAudio.volume = 0.5;
+        }
+        rizzPreloaded = true;
+        console.log('Rizz audio primed and ready');
+      }).catch(() => {
+        // Priming failed, but load() will still help
+        if (rizzAudio) rizzAudio.load();
+        console.log('Rizz audio loaded (prime blocked)');
+      });
+    }
+  } catch (e) {
+    console.warn('Rizz audio priming failed (will retry on interaction):', e);
   }
 };
 
