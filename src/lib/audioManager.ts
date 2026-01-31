@@ -1,5 +1,5 @@
 // Centralized Audio Manager - handles all 3 music tracks
-// Music 1: Rizz scene only (rizz.mp4) - USES WEB AUDIO API for Safari compatibility
+// Music 1: Rizz scene only (rizz.mp3) - USES WEB AUDIO API for Safari compatibility
 // Music 2: Gameplay - from "Tap to start" until hospital button (background.mp3)
 // Music 3: Mourning - from hospital button through end screen + leaked video (mourning.mp3)
 
@@ -44,7 +44,9 @@ export const precacheRizzAudio = async () => {
   try {
     console.log('Starting rizz audio pre-cache with Web Audio API...');
     const ctx = getAudioContext();
-    const response = await fetch('/music/rizz.mp4');
+    // IMPORTANT: Use MP3 for iOS Safari reliability. Safari often fails `decodeAudioData`
+    // for MP4/AAC depending on encoding/container.
+    const response = await fetch('/music/rizz.mp3');
     const arrayBuffer = await response.arrayBuffer();
     
     // Decode audio data into AudioBuffer - this is the key step
