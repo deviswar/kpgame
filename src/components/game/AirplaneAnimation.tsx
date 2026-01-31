@@ -32,25 +32,33 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   const [phase, setPhase] = useState<'celebrating' | 'flying'>('celebrating');
   const [showVideo, setShowVideo] = useState(false);
   const [videoPreloaded, setVideoPreloaded] = useState(false);
+  const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const preloadedVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Preload video immediately on mount
+  // Preload video as blob for INSTANT playback with zero buffering
   useEffect(() => {
-    const video = document.createElement('video');
-    video.src = '/music/kpfall.mp4';
-    video.preload = 'auto';
-    video.muted = true;
-    video.load();
-    preloadedVideoRef.current = video;
-    
-    video.oncanplaythrough = () => {
-      setVideoPreloaded(true);
+    const preloadVideoAsBlob = async () => {
+      try {
+        const response = await fetch('/music/kpfall.mp4');
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setVideoBlobUrl(blobUrl);
+        setVideoPreloaded(true);
+        console.log('Video pre-cached as blob - ready for instant playback');
+      } catch (e) {
+        console.error('Failed to pre-cache video:', e);
+        // Fallback: still mark as preloaded so video can play from network
+        setVideoPreloaded(true);
+      }
     };
     
+    preloadVideoAsBlob();
+    
     return () => {
-      video.src = '';
-      preloadedVideoRef.current = null;
+      // Cleanup blob URL on unmount
+      if (videoBlobUrl) {
+        URL.revokeObjectURL(videoBlobUrl);
+      }
     };
   }, []);
 
@@ -83,15 +91,18 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
         <div className="flex-1 w-full flex items-center justify-center p-4 max-h-[60vh]">
           <video
             ref={videoRef}
-            src="/music/kpfall.mp4"
-            controls
+            src={videoBlobUrl || '/music/kpfall.mp4'}
             autoPlay
             loop
             playsInline
             preload="auto"
             muted
-            className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50"
-            style={{ maxHeight: '50vh' }}
+            className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
+            style={{ 
+              maxHeight: '50vh',
+              pointerEvents: 'none'  // Disable all touch interactions
+            }}
+            onContextMenu={(e) => e.preventDefault()}  // Disable right-click menu
           />
         </div>
 

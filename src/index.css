@@ -4,6 +4,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide all video controls - no pause, fullscreen, etc */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+.no-video-controls::-webkit-media-controls {
+  display: none !important;
+}
+
+.no-video-controls::-moz-media-controls {
+  display: none !important;
+}
+
 @layer base {
   :root {
     --background: 25 100% 95%;
