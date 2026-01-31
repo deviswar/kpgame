@@ -38,9 +38,12 @@ const WelcomeScreen = memo(({
     video.load();
   }, []);
   const handleShowRizz = () => {
-    setShowRizzScene(true);
-    // Play Music 1 via audio manager (now preloaded)
+    // CRITICAL: Play audio FIRST, synchronously in user gesture context
+    // This must happen before any state updates to preserve user gesture
     playRizz();
+    
+    // Then update state (React batches this anyway)
+    setShowRizzScene(true);
   };
   const handleStartGame = () => {
     // Stop Music 1 via audio manager
