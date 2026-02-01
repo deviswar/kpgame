@@ -90,29 +90,29 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
     // Phase 2: KP exits hospital (walks to left side)
     timers.push(setTimeout(() => setPhase('kp-exit'), 2000));
     
-    // Phase 3: Energy popup (on right side while KP is on left) - extended by 1 more second
+    // Phase 3: Energy popup (on right side while KP is on left) - extended by 2 more seconds
     timers.push(setTimeout(() => setPhase('popup'), 4500));
     
-    // Phase 4: EXTRA WAIT (2s) before KP goes to car (keeps hospital + banners visible longer)
-    timers.push(setTimeout(() => setPhase('enter-car'), 8500));
+    // Phase 4: EXTRA WAIT before KP goes to car (keeps hospital + banners visible longer)
+    timers.push(setTimeout(() => setPhase('enter-car'), 10500));
     
     // Phase 5: Driving - car starts moving - longer drive time
-    timers.push(setTimeout(() => setPhase('driving'), 10500));
+    timers.push(setTimeout(() => setPhase('driving'), 12500));
     
     // Phase 6: Dog appears - give more time to see both moving
-    timers.push(setTimeout(() => setPhase('dog-appears'), 14000));
+    timers.push(setTimeout(() => setPhase('dog-appears'), 16000));
     
     // Phase 7: Crash - dramatic pause before impact
     timers.push(setTimeout(() => {
       setPhase('crash');
       setShowCrashText(true);
-    }, 18000));
+    }, 20000));
     
     // Phase 8: Aftermath - show button and WAIT for user tap (no auto transition)
     timers.push(setTimeout(() => {
       setPhase('aftermath');
       setWaitingForUserTap(true);
-    }, 20000));
+    }, 22000));
     
     // NO automatic mourning phase - user must tap the button!
 
@@ -219,14 +219,14 @@ const MilkHospitalScreen = ({ onComplete, onStartMourningMusic }: MilkHospitalSc
             </div>
           )}
 
-          {/* Energy Popup - positioned on RIGHT side */}
+          {/* Energy Popup - positioned on RIGHT side - BIGGER */}
           {phase === 'popup' && (
-            <div className="absolute top-[50%] right-[15%] animate-energy-popup z-10">
-              <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-3 py-2 rounded-xl shadow-lg border-2 border-green-300">
+            <div className="absolute top-[45%] right-[10%] animate-energy-popup z-10">
+              <div className="bg-gradient-to-r from-green-400 to-emerald-500 px-5 py-4 rounded-2xl shadow-xl border-4 border-green-300">
                 <div className="text-center">
-                  <span className="text-xl">🥛</span>
-                  <p className="text-white font-bold text-sm">Drank milk!</p>
-                  <p className="text-yellow-200 font-bold text-xs">⚡ Energy Boosted! ⚡</p>
+                  <span className="text-4xl">🥛</span>
+                  <p className="text-white font-bold text-xl mt-1">Drank milk!</p>
+                  <p className="text-yellow-200 font-bold text-base mt-1">⚡ Energy Boosted! ⚡</p>
                 </div>
               </div>
             </div>
