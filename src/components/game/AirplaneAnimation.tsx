@@ -167,11 +167,14 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           🇳🇱 🥛
         </div>
         
-        {/* Yellow strip box with netherlands text */}
-        <div className="bg-amber-500 px-8 py-3 rounded-lg shadow-xl mb-6 border-4 border-amber-400">
-          <h2 className="text-2xl md:text-4xl font-bold text-white tracking-wider">
-            netherlands!
-          </h2>
+        {/* PornHub-style logo: white text + orange box with black text */}
+        <div className="bg-black px-4 py-3 rounded-lg shadow-xl mb-6 flex items-center gap-0">
+          <span className="text-xl md:text-3xl font-bold text-white tracking-tight">
+            Bye 👋 guys, im going to{' '}
+          </span>
+          <span className="bg-orange-500 text-black text-xl md:text-3xl font-bold px-2 py-1 rounded-md">
+            Netherlands!
+          </span>
         </div>
         
         {/* Watch my leaked video button */}
