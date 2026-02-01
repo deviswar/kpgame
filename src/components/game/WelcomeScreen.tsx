@@ -124,7 +124,7 @@ const WelcomeScreen = memo(({
           <div className="flex items-center gap-2">
             <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
             <div className="bg-yellow-400 px-3 py-1 rounded-md">
-              <span className="text-white text-sm md:text-base font-black tracking-wide" style={{ fontFamily: '"Bangers", cursive' }}>Rapido</span>
+              <span className="text-white text-sm md:text-base font-bold">Rapido</span>
             </div>
           </div>
         <p className="text-primary-foreground/70 text-sm md:text-base font-medium animate-blink-bounce">
@@ -209,7 +209,7 @@ const WelcomeScreen = memo(({
         <div className="flex items-center gap-2">
           <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
           <div className="bg-yellow-400 px-3 py-1 rounded-md">
-            <span className="text-white text-sm md:text-base font-black tracking-wide" style={{ fontFamily: '"Bangers", cursive' }}>Rapido</span>
+            <span className="text-white text-sm md:text-base font-bold">Rapido</span>
           </div>
         </div>
         <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
