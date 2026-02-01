@@ -16,6 +16,7 @@ const FeedKPGame = () => {
   const [showCowFight, setShowCowFight] = useState(false);
   const [showMilkHospital, setShowMilkHospital] = useState(false);
   const [showAirplane, setShowAirplane] = useState(false);
+  const [showFullState, setShowFullState] = useState(false);
   const maxHappiness = 100;
   const happinessPerFeed = 20; // 5 feeds = 100%
 
@@ -25,7 +26,7 @@ const FeedKPGame = () => {
     playGameMusic();
   };
   const handleFeed = useCallback(() => {
-    if (happiness >= maxHappiness || showAirplane) return;
+    if (happiness >= maxHappiness || showAirplane || showFullState) return;
     const newHappiness = Math.min(happiness + happinessPerFeed, maxHappiness);
     setHappiness(newHappiness);
 
@@ -40,11 +41,15 @@ const FeedKPGame = () => {
     // Increment feed count
     setFeedCount(prev => prev + 1);
 
-    // Check for 100% happiness - go to cow fight first
+    // Check for 100% happiness - show full state first
     if (newHappiness >= maxHappiness) {
-      setTimeout(() => setShowCowFight(true), 800);
+      setShowFullState(true);
+      setTimeout(() => {
+        setShowFullState(false);
+        setShowCowFight(true);
+      }, 2500);
     }
-  }, [happiness, showAirplane]);
+  }, [happiness, showAirplane, showFullState]);
 
   // Callback to start mourning music - passed to MilkHospitalScreen
   // This IMMEDIATELY stops Music 2 and starts Music 3
@@ -75,6 +80,7 @@ const FeedKPGame = () => {
   const handleReset = () => {
     setHappiness(0);
     setFeedCount(0);
+    setShowFullState(false);
     setShowCowFight(false);
     setShowMilkHospital(false);
     setShowAirplane(false);
@@ -91,6 +97,43 @@ const FeedKPGame = () => {
   if (showAirplane) {
     return <AirplaneAnimation onComplete={handleGoHome} />;
   }
+  // Full state - KP is 100% full
+  if (showFullState) {
+    return (
+      <div className="h-screen h-[100dvh] game-gradient flex flex-col items-center justify-center overflow-hidden px-4">
+        {/* KP Happy Face - Large */}
+        <div className="animate-scale-in mb-4">
+          <KPCharacter scale={1.3} isHappy={true} happiness={100} />
+        </div>
+        
+        {/* KP is Full - Big text */}
+        <h1 
+          className="text-4xl md:text-6xl font-bold text-center mb-6 animate-fade-in"
+          style={{
+            fontFamily: '"Bangers", cursive',
+            color: '#FFD93D',
+            textShadow: `
+              0 3px 0 #E8A800,
+              0 6px 0 #D4950A,
+              0 9px 4px rgba(0,0,0,0.3)
+            `,
+            WebkitTextStroke: '2px #FFFFFF',
+            paintOrder: 'stroke fill'
+          }}
+        >
+          KP is Full! 🎉
+        </h1>
+        
+        {/* Popup message */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-xl border-4 border-amber-400/50 animate-fade-in max-w-[280px]">
+          <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
+            "I ate enough dengulu for today" 😋
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return <div className="h-screen h-[100dvh] game-gradient flex flex-col overflow-hidden">
       {/* Header */}
       <header className="p-2 flex items-center justify-between gap-2">
