@@ -127,7 +127,7 @@ const FeedKPGame = () => {
         {/* Popup message */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-xl border-4 border-amber-400/50 animate-fade-in max-w-[280px]">
           <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
-            "I ate enough dengulu for today" 😋
+            I ate enough dengulu for today 😋
           </p>
         </div>
         
