@@ -167,10 +167,10 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           🇳🇱 🥛
         </div>
         
-        {/* Text in black box */}
-        <div className="bg-black px-6 py-3 rounded-xl shadow-xl mb-6">
-          <h2 className="text-xl md:text-3xl font-bold text-white text-shadow-game">
-            Bye guys, I'm going to Netherlands!
+        {/* Yellow strip box with netherlands text */}
+        <div className="bg-amber-500 px-8 py-3 rounded-lg shadow-xl mb-6 border-4 border-amber-400">
+          <h2 className="text-2xl md:text-4xl font-bold text-white tracking-wider">
+            netherlands!
           </h2>
         </div>
         

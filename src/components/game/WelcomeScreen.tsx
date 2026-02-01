@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
-import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
 
 // Preload images for later screens
 import hondaAmazeImg from '@/assets/honda-amaze.jpg';
@@ -11,30 +11,55 @@ import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
 import pugMemorial from '@/assets/pug-memorial.jpg';
 import pugGrave from '@/assets/pug-grave.jpg';
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
+
 const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
+  const [rizzReady, setRizzReady] = useState(false);
+  const [qtImageLoaded, setQtImageLoaded] = useState(false);
+  const [qtImageError, setQtImageError] = useState(false);
 
-  // Preload audio on mount - images deferred for faster initial load
+  // Preload audio and CRITICAL QT image on mount
   useEffect(() => {
     // Preload all audio (critical for instant playback)
     preloadAllAudio();
+    
+    // CRITICAL: Preload QT image IMMEDIATELY (not delayed) since it's needed for Rizz Scene
+    const qtImg = new Image();
+    qtImg.onload = () => {
+      setQtImageLoaded(true);
+      console.log('✅ QT image preloaded and ready');
+    };
+    qtImg.onerror = () => {
+      console.error('❌ QT image failed to preload');
+      setQtImageError(true);
+    };
+    qtImg.src = qtGirlImage;
 
-    // Delay image preloading by 500ms to prioritize audio loading
+    // Check audio readiness periodically until ready
+    const checkAudioReady = () => {
+      if (isRizzAudioReady()) {
+        setRizzReady(true);
+        console.log('✅ Rizz audio ready');
+      } else {
+        setTimeout(checkAudioReady, 100);
+      }
+    };
+    checkAudioReady();
+
+    // Delay OTHER image preloading by 500ms to prioritize audio + QT image
     const imageTimer = setTimeout(() => {
-      const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave, qtGirlImage];
+      const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave];
       images.forEach(src => {
         const img = new Image();
         img.src = src;
       });
     }, 500);
-
-    // kpfall.mp4 removed from eager loading - will lazy load when needed
-    // This significantly speeds up initial page load on mobile Safari
 
     return () => clearTimeout(imageTimer);
   }, []);
@@ -181,8 +206,19 @@ const WelcomeScreen = memo(({
             <span className="text-white font-bold text-sm md:text-base font-mono">​qt</span>
           </div>
           
-          {/* QT Character - Image */}
-          <img src={qtGirlImage} alt="QT" className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg" />
+          {/* QT Character - Image with fallback */}
+          {qtImageError ? (
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-pink-300 shadow-lg bg-pink-200 flex items-center justify-center">
+              <span className="text-4xl md:text-5xl">👩</span>
+            </div>
+          ) : (
+            <img 
+              src={qtGirlImage} 
+              alt="QT" 
+              className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
+              onError={() => setQtImageError(true)}
+            />
+          )}
           
           {/* Speech Bubble - angry response */}
           <div className="relative bg-white rounded-xl px-4 py-3 mt-4 shadow-lg animate-speech-bubble" style={{
