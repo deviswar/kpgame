@@ -289,24 +289,6 @@ const MilkHospitalScreen = ({
               <img src={pugGrave} alt="Pug Grave" className="w-full h-auto" loading="eager" />
             </div>}
           
-          {/* Loading dots - hint that there's more */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 items-center">
-            <span className="w-3 h-3 rounded-full animate-pulse" style={{
-              animation: 'pulse 1.2s ease-in-out infinite',
-              background: 'linear-gradient(135deg, #ffffff 0%, #9ca3af 100%)',
-              animationDelay: '0s'
-            }} />
-            <span className="w-3 h-3 rounded-full animate-pulse" style={{
-              animation: 'pulse 1.2s ease-in-out infinite',
-              background: 'linear-gradient(135deg, #9ca3af 0%, #ffffff 100%)',
-              animationDelay: '0.4s'
-            }} />
-            <span className="w-3 h-3 rounded-full animate-pulse" style={{
-              animation: 'pulse 1.2s ease-in-out infinite',
-              background: 'linear-gradient(135deg, #ffffff 0%, #9ca3af 100%)',
-              animationDelay: '0.8s'
-            }} />
-          </div>
         </div>}
     </div>;
 };
