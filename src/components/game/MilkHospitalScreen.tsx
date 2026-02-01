@@ -263,7 +263,7 @@ const MilkHospitalScreen = ({
 
               {/* Hospital Button - requires user tap to proceed (fixes mobile audio!) */}
               {phase === 'aftermath' && waitingForUserTap && <button onClick={handleTakePuppyToHospital} className="mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-lg md:text-xl px-6 rounded-2xl shadow-2xl border-4 border-red-400 animate-pulse active:scale-95 transition-transform py-px">
-                  OMG 😭😭😭 Touch 👆 to take puppy to the hospital 🏥   
+                  OMG puppy 😭 Touch 👆 to take puppy to the hospital 🏥   
                 </button>}
             </div>}
         </div>}
@@ -291,9 +291,15 @@ const MilkHospitalScreen = ({
           
           {/* Loading dots - hint that there's more */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5">
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
-            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{
+          animationDelay: '0s'
+        }} />
+            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{
+          animationDelay: '0.15s'
+        }} />
+            <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{
+          animationDelay: '0.3s'
+        }} />
           </div>
         </div>}
     </div>;
