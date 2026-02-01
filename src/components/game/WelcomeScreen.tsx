@@ -121,10 +121,11 @@ const WelcomeScreen = memo(({
               Click here to see my rizz 🥰 
             </span>
           </button>
-          <div className="bg-yellow-400 px-4 py-1.5 rounded-md">
-            <p className="text-white text-sm md:text-base font-bold">
-              Powered by Rapido
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
+            <div className="bg-yellow-400 px-3 py-1 rounded-md">
+              <span className="text-white text-sm md:text-base font-black tracking-wide" style={{ fontFamily: '"Bangers", cursive' }}>Rapido</span>
+            </div>
           </div>
         <p className="text-primary-foreground/70 text-sm md:text-base font-medium animate-blink-bounce">
           🔊 <WaveText text="Turn up your volume for the best experience" />
@@ -205,10 +206,11 @@ const WelcomeScreen = memo(({
             👆 Tap to start the game
           </span>
         </button>
-        <div className="bg-yellow-400 px-4 py-1.5 rounded-md">
-          <p className="text-white text-sm md:text-base font-bold">
-            Powered by Rapido
-          </p>
+        <div className="flex items-center gap-2">
+          <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
+          <div className="bg-yellow-400 px-3 py-1 rounded-md">
+            <span className="text-white text-sm md:text-base font-black tracking-wide" style={{ fontFamily: '"Bangers", cursive' }}>Rapido</span>
+          </div>
         </div>
         <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
           🔊 <WaveText text="Turn up your volume for the best experience" />
