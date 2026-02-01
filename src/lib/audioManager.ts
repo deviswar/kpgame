@@ -26,6 +26,11 @@ let gameMusicPreloaded = false;
 let mourningPreloaded = false;
 let rizzPreloaded = false;
 
+// ============ CHECK IF RIZZ AUDIO IS READY ============
+export const isRizzAudioReady = (): boolean => {
+  return rizzPreloaded;
+};
+
 // iOS unlock flag - only need to unlock once per session
 let iosAudioUnlocked = false;
 
