@@ -47,7 +47,7 @@ const FeedKPGame = () => {
       setTimeout(() => {
         setShowFullState(false);
         setShowCowFight(true);
-      }, 6000);
+      }, 5000);
     }
   }, [happiness, showAirplane, showFullState]);
 
@@ -128,6 +128,13 @@ const FeedKPGame = () => {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-xl border-4 border-amber-400/50 animate-fade-in max-w-[280px]">
           <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
             "I ate enough dengulu for today" 😋
+          </p>
+        </div>
+        
+        {/* Thank you popup */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-xl border-4 border-green-400/50 animate-fade-in max-w-[200px] mt-4">
+          <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
+            Thank you 🙏
           </p>
         </div>
       </div>
