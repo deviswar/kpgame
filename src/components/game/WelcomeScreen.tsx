@@ -121,9 +121,11 @@ const WelcomeScreen = memo(({
               Click here to see my rizz 🥰 
             </span>
           </button>
-          <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
-            Powered by <span className="text-yellow-400 font-bold">Rapido</span>
-          </p>
+          <div className="bg-yellow-400 px-4 py-1.5 rounded-md">
+            <p className="text-white text-sm md:text-base font-bold">
+              Powered by Rapido
+            </p>
+          </div>
         <p className="text-primary-foreground/70 text-sm md:text-base font-medium animate-blink-bounce">
           🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
@@ -203,9 +205,11 @@ const WelcomeScreen = memo(({
             👆 Tap to start the game
           </span>
         </button>
-        <p className="text-primary-foreground/80 text-xs md:text-sm font-medium">
-          Powered by <span className="text-yellow-400 font-bold">Rapido</span>
-        </p>
+        <div className="bg-yellow-400 px-4 py-1.5 rounded-md">
+          <p className="text-white text-sm md:text-base font-bold">
+            Powered by Rapido
+          </p>
+        </div>
         <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
           🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
