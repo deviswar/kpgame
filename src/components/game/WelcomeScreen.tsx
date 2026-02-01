@@ -42,7 +42,7 @@ const WelcomeScreen = memo(({
     // CRITICAL: Play audio FIRST, synchronously in user gesture context
     // This must happen before any state updates to preserve user gesture
     playRizz();
-    
+
     // Then update state (React batches this anyway)
     setShowRizzScene(true);
   };
@@ -151,7 +151,7 @@ const WelcomeScreen = memo(({
       }}>
           {/* Name Badge */}
           <div className="bg-blue-500 px-4 py-1.5 rounded-lg mb-3 shadow-lg">
-            <span className="text-white font-bold text-sm md:text-base">KP</span>
+            <span className="text-white font-bold text-sm md:text-base font-sans">kp</span>
           </div>
           
           {/* KP Character */}
@@ -175,7 +175,7 @@ const WelcomeScreen = memo(({
       }}>
           {/* Name Badge */}
           <div className="bg-pink-500 px-4 py-1.5 rounded-lg mb-3 shadow-lg">
-            <span className="text-white font-bold text-sm md:text-base">QT</span>
+            <span className="text-white font-bold text-sm md:text-base font-mono">​qt</span>
           </div>
           
           {/* QT Character - Image */}
