@@ -88,7 +88,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
         {/* Video - top half */}
-        <div className="flex-1 w-full flex items-center justify-center p-4 max-h-[60vh]">
+        <div className="flex-1 w-full flex flex-col items-center justify-center p-4 max-h-[60vh]">
           <video
             ref={videoRef}
             src={videoBlobUrl || '/music/kpfall.mp4'}
@@ -99,11 +99,18 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
             muted
             className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
             style={{ 
-              maxHeight: '50vh',
+              maxHeight: '45vh',
               pointerEvents: 'none'  // Disable all touch interactions
             }}
             onContextMenu={(e) => e.preventDefault()}  // Disable right-click menu
           />
+          
+          {/* Brutal popup below video */}
+          <div className="bg-black px-6 py-3 rounded-xl shadow-xl mt-4">
+            <p className="text-white font-bold text-lg md:text-xl text-center">
+              Brutal Is A Small Word 😂😭
+            </p>
+          </div>
         </div>
 
         {/* Bottom section */}
