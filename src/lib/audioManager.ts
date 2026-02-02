@@ -157,11 +157,10 @@ export const playRizz = () => {
     return;
   }
   
-  // CRITICAL: Start silent unlocker FIRST to bypass iOS silent mode
-  // This must happen before WebAudio to force iOS into "media" mode
-  startSilentUnlocker();
+  // Detect iOS Safari - they need special handling
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
-  // Ensure fallback exists (still only PLAYED within this user gesture)
+  // Ensure HTMLAudio element exists
   if (!rizzHtmlAudio) {
     rizzHtmlAudio = new Audio('/music/rizz.mp3');
     rizzHtmlAudio.volume = 0.5;
@@ -176,6 +175,49 @@ export const playRizz = () => {
   let webAudioStarted = false;
   let htmlAudioStarted = false;
 
+  // ============ iOS SAFARI: HTMLAudio FIRST (SYNCHRONOUS) ============
+  // iOS Safari requires audio play to happen SYNCHRONOUSLY in user gesture
+  // The silent unlocker and WebAudio unlock can consume the gesture "budget"
+  // So on iOS, we play HTMLAudio FIRST before anything else
+  if (isIOS) {
+    console.log('📱 iOS detected - using HTMLAudio as PRIMARY method');
+    
+    // Start silent unlocker simultaneously (for silent mode bypass)
+    startSilentUnlocker();
+    
+    // Play HTMLAudio IMMEDIATELY (synchronously in gesture)
+    try {
+      rizzHtmlAudio.currentTime = 0;
+      const playPromise = rizzHtmlAudio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            htmlAudioStarted = true;
+            rizzPlaying = true;
+            console.log('🎵 iOS: Rizz audio started via HTMLAudio (primary)');
+          })
+          .catch((e) => {
+            console.error('❌ iOS HTMLAudio play failed:', e);
+          });
+      } else {
+        htmlAudioStarted = true;
+        rizzPlaying = true;
+        console.log('🎵 iOS: Rizz audio started via HTMLAudio (no promise)');
+      }
+    } catch (e) {
+      console.error('❌ iOS HTMLAudio threw:', e);
+    }
+    
+    // Log and return - don't try WebAudio on iOS (it often fails/is silent)
+    console.log(`playRizz (iOS) complete: htmlAudioStarted=${htmlAudioStarted}, rizzPlaying=${rizzPlaying}`);
+    return;
+  }
+
+  // ============ NON-iOS: WebAudio with HTMLAudio fallback ============
+  // CRITICAL: Start silent unlocker FIRST to bypass iOS silent mode
+  startSilentUnlocker();
+
   try {
     const ctx = getAudioContext();
 
@@ -185,7 +227,6 @@ export const playRizz = () => {
     // CRITICAL: Resume context - Safari requires this in user gesture
     const state = ctx.state as string;
     if (state === 'suspended' || state === 'interrupted') {
-      // Do NOT await (would break gesture); kick it off synchronously
       void ctx.resume();
       console.log('AudioContext resume requested');
     }
@@ -198,12 +239,10 @@ export const playRizz = () => {
     }
 
     if (rizzAudioBuffer) {
-      // Create new buffer source (MUST create fresh each time - can't reuse)
       rizzBufferSource = ctx.createBufferSource();
       rizzBufferSource.buffer = rizzAudioBuffer;
       rizzBufferSource.loop = true;
 
-      // Create gain node for volume control (reuse if exists)
       if (!rizzGainNode) {
         rizzGainNode = ctx.createGain();
         rizzGainNode.gain.value = 0.5;
@@ -211,53 +250,43 @@ export const playRizz = () => {
       }
 
       rizzBufferSource.connect(rizzGainNode);
-
-      // START IMMEDIATELY - synchronous
       rizzBufferSource.start(0);
       webAudioStarted = true;
-      rizzPlaying = true; // Mark playing ONLY on success
+      rizzPlaying = true;
       console.log('🎵 Rizz audio started via Web Audio API');
     } else {
       console.warn('Rizz AudioBuffer missing; will rely on HTMLAudio fallback');
-      // Best-effort: start loading (won't play automatically)
       void precacheRizzAudio();
     }
   } catch (e) {
     console.error('❌ WebAudio rizz start failed, falling back to HTMLAudio:', e);
   }
 
-  // Fallback (still within the same click): if WebAudio didn't start, try HTMLAudio.
-  // This keeps old behavior working on browsers where WebAudio is unreliable.
+  // Fallback: if WebAudio didn't start, try HTMLAudio
   if (!webAudioStarted && rizzHtmlAudio) {
     try {
-      // Ensure it's ready
       rizzHtmlAudio.currentTime = 0;
-      
       const playPromise = rizzHtmlAudio.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             htmlAudioStarted = true;
-            rizzPlaying = true; // Mark playing ONLY on success
+            rizzPlaying = true;
             console.log('🎵 Rizz audio started via HTMLAudio fallback');
           })
           .catch((e) => {
             console.error('❌ HTMLAudio rizz play failed:', e);
-            // Keep rizzPlaying = false so user can retry
           });
       } else {
-        // Old browsers that don't return promise - assume success
         htmlAudioStarted = true;
         rizzPlaying = true;
         console.log('🎵 Rizz audio started via HTMLAudio fallback (no promise)');
       }
     } catch (e) {
       console.error('❌ HTMLAudio fallback threw:', e);
-      // Keep rizzPlaying = false so user can retry
     }
   }
 
-  // Log final state for debugging
   console.log(`playRizz complete: webAudioStarted=${webAudioStarted}, htmlAudioStarted=${htmlAudioStarted}, rizzPlaying=${rizzPlaying}`);
 };
 

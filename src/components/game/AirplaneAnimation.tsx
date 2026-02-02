@@ -36,12 +36,16 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Preload video as blob for INSTANT playback with zero buffering
+  // DELAYED to avoid competing with critical initial page resources
   useEffect(() => {
+    let blobUrlToClean: string | null = null;
+    
     const preloadVideoAsBlob = async () => {
       try {
         const response = await fetch('/music/fall.mp4');
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
+        blobUrlToClean = blobUrl;
         setVideoBlobUrl(blobUrl);
         setVideoPreloaded(true);
         console.log('Video pre-cached as blob - ready for instant playback');
@@ -52,12 +56,16 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
       }
     };
     
-    preloadVideoAsBlob();
+    // Delay video preload by 2 seconds to prioritize critical resources
+    const timer = setTimeout(() => {
+      preloadVideoAsBlob();
+    }, 2000);
     
     return () => {
+      clearTimeout(timer);
       // Cleanup blob URL on unmount
-      if (videoBlobUrl) {
-        URL.revokeObjectURL(videoBlobUrl);
+      if (blobUrlToClean) {
+        URL.revokeObjectURL(blobUrlToClean);
       }
     };
   }, []);
