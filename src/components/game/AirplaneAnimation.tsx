@@ -106,8 +106,8 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           />
           
           {/* Brutal popup below video */}
-          <div className="bg-black px-4 py-2 rounded-xl shadow-xl mt-3">
-            <p className="text-white font-bold text-base md:text-xl text-center">
+          <div className="bg-black px-5 py-3 rounded-xl shadow-xl mt-3">
+            <p className="text-white font-bold text-lg md:text-2xl text-center">
               Brutal Is A Small Word 😂😭
             </p>
           </div>
