@@ -97,8 +97,8 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-4 px-3">
         {/* Video container - takes most space */}
         <div className="flex-1 w-full flex flex-col items-center justify-center">
-          {/* Video wrapper with relative positioning for overlay button */}
-          <div className="relative w-full max-w-md">
+          {/* Video wrapper */}
+          <div className="w-full max-w-md">
             <video
               ref={videoRef}
               src={videoBlobUrl || '/music/fall.mp4'}
@@ -109,24 +109,11 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
               muted
               className="w-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
               style={{ 
-                maxHeight: '55vh',
+                maxHeight: '50vh',
                 pointerEvents: 'none'
               }}
               onContextMenu={(e) => e.preventDefault()}
             />
-            
-            {/* Don't Click button - black circle with light orange glow */}
-            <a
-              href="https://api.whatsapp.com/send/?phone=919573725363&text=sir+meeru+erripuk+ah?+🤡&type=phone_number&app_absent=0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-black flex flex-col items-center justify-center animate-glow-pulse z-10"
-            >
-              <span className="text-white text-[10px] font-bold text-center leading-tight">
-                Don't Click
-              </span>
-              <span className="text-lg">🤡</span>
-            </a>
           </div>
           
           {/* Brutal popup below video */}
@@ -139,13 +126,26 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
 
         {/* Bottom section - compact for mobile */}
         <div className="w-full flex flex-col items-center gap-3 mt-3">
-          {/* Go to Home button */}
-          <button
-            onClick={onComplete}
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold text-base md:text-lg hover:scale-105 transition-transform shadow-xl w-full max-w-xs"
-          >
-            Go to Home 🏠
-          </button>
+          {/* Two buttons side by side */}
+          <div className="flex gap-3 w-full max-w-md px-2">
+            {/* Go to Home button - left */}
+            <button
+              onClick={onComplete}
+              className="flex-1 bg-primary text-primary-foreground px-4 py-3 rounded-2xl font-bold text-sm md:text-base hover:scale-105 transition-transform shadow-xl"
+            >
+              Go to Home 🏠
+            </button>
+            
+            {/* Click here to abuse KP button - right with orange glow */}
+            <a
+              href="https://api.whatsapp.com/send/?phone=919573725363&text=sir+meeru+erripuk+ah?+🤡&type=phone_number&app_absent=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-black text-white px-4 py-3 rounded-2xl font-bold text-sm md:text-base hover:scale-105 transition-transform shadow-xl animate-glow-pulse text-center"
+            >
+              Click here to abuse KP 🤡
+            </a>
+          </div>
           
           {/* PhonePe request */}
           <p className="text-white/90 text-sm md:text-base font-medium text-center">
