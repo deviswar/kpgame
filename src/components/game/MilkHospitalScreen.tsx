@@ -74,7 +74,7 @@ const MilkHospitalScreen = ({
     setTimeout(() => setShowMourningFlash(false), 2250);
 
     // Complete after mourning duration
-    setTimeout(() => onComplete(), 9300);
+    setTimeout(() => onComplete(), 8300);
   };
   useEffect(() => {
     // Phase timing
