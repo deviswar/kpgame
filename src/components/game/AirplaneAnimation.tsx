@@ -39,7 +39,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   useEffect(() => {
     const preloadVideoAsBlob = async () => {
       try {
-        const response = await fetch('/music/kpfall.mp4');
+        const response = await fetch('/music/fall.mp4');
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         setVideoBlobUrl(blobUrl);
@@ -86,45 +86,45 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   // Video screen
   if (showVideo) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
-        {/* Video - top half */}
-        <div className="flex-1 w-full flex flex-col items-center justify-center p-4 max-h-[60vh]">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-4 px-3">
+        {/* Video container - takes most space */}
+        <div className="flex-1 w-full flex flex-col items-center justify-center">
           <video
             ref={videoRef}
-            src={videoBlobUrl || '/music/kpfall.mp4'}
+            src={videoBlobUrl || '/music/fall.mp4'}
             autoPlay
             loop
             playsInline
             preload="auto"
             muted
-            className="max-w-full max-h-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
+            className="w-full max-w-md rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
             style={{ 
-              maxHeight: '45vh',
-              pointerEvents: 'none'  // Disable all touch interactions
+              maxHeight: '55vh',
+              pointerEvents: 'none'
             }}
-            onContextMenu={(e) => e.preventDefault()}  // Disable right-click menu
+            onContextMenu={(e) => e.preventDefault()}
           />
           
           {/* Brutal popup below video */}
-          <div className="bg-black px-6 py-3 rounded-xl shadow-xl mt-4">
-            <p className="text-white font-bold text-lg md:text-xl text-center">
+          <div className="bg-black px-4 py-2 rounded-xl shadow-xl mt-3">
+            <p className="text-white font-bold text-base md:text-xl text-center">
               Brutal Is A Small Word 😂😭
             </p>
           </div>
         </div>
 
-        {/* Bottom section */}
-        <div className="flex flex-col items-center justify-center p-6 gap-4">
+        {/* Bottom section - compact for mobile */}
+        <div className="w-full flex flex-col items-center gap-3 mt-3">
           {/* Go to Home button */}
           <button
             onClick={onComplete}
-            className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl"
+            className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold text-base md:text-lg hover:scale-105 transition-transform shadow-xl w-full max-w-xs"
           >
             Go to Home 🏠
           </button>
           
           {/* PhonePe request */}
-          <p className="text-white/90 text-base md:text-lg font-medium">
+          <p className="text-white/90 text-sm md:text-base font-medium text-center">
             Can you give 100 rupees cash? I will do PhonePe 💸
           </p>
         </div>
