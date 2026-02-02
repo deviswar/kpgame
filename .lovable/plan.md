@@ -1,69 +1,73 @@
 
 
 ## Summary
-Two timing and UI adjustments:
-1. Replace the "Thank you" popup with an animated loading bar on the "I ate enough dengulu" screen
-2. Reduce the mourning "Sorry..." screen duration by 1 second
+Three fixes:
+1. Remove the "Loading next adventure..." text below the loading bar
+2. Fix iPhone Safari rizz audio not playing
+3. Improve website loading speed
 
 ---
 
 ## Changes
 
-### 1. Replace "Thank You" with Loading Bar
+### 1. Remove Loading Bar Text
 **File:** `src/components/game/FeedKPGame.tsx`
 
-Replace the "Thank you 🙏" popup (lines 134-139) with an animated progress bar that fills from 0% to 100% over the 4-second screen duration.
-
-**Current:**
+Delete line 144:
 ```tsx
-{/* Thank you popup */}
-<div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-xl border-4 border-green-400/50 animate-fade-in max-w-[200px] mt-4">
-  <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
-    Thank you 🙏
-  </p>
-</div>
+<p className="text-white text-sm mt-2 text-center font-medium">Loading next adventure...</p>
 ```
 
-**New:**
-```tsx
-{/* Loading bar */}
-<div className="w-64 md:w-80 mt-4">
-  <div className="bg-gray-300 rounded-full h-4 overflow-hidden shadow-inner border-2 border-gray-400">
-    <div 
-      className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-none"
-      style={{
-        width: '100%',
-        animation: 'loadingFill 4s linear forwards'
-      }}
-    />
-  </div>
-  <p className="text-white text-sm mt-2 text-center font-medium">Loading next adventure...</p>
-</div>
-```
+The loading bar will remain, only the text below it is removed.
 
-### 2. Add CSS Animation for Loading Bar
-**File:** `src/index.css`
+---
 
-Add a new keyframe animation:
-```css
-@keyframes loadingFill {
-  from { width: 0%; }
-  to { width: 100%; }
-}
-```
+### 2. Fix iPhone Safari Rizz Audio
+**File:** `src/lib/audioManager.ts`
 
-### 3. Reduce Mourning Scene Duration
-**File:** `src/components/game/MilkHospitalScreen.tsx`
+The issue is that iOS Safari requires the audio to be triggered SYNCHRONOUSLY within the user gesture. The current implementation calls `startSilentUnlocker()` first which may be consuming the user gesture.
 
-Change line 77:
-- **Current:** `setTimeout(() => onComplete(), 9300);`
-- **New:** `setTimeout(() => onComplete(), 8300);`
+**Changes:**
+1. Move HTMLAudio fallback play attempt to happen FIRST (before WebAudio) since HTMLAudio is more reliable on iOS Safari
+2. Add explicit iOS detection to prioritize HTMLAudio on iOS devices
+3. Ensure audio play happens synchronously in the click handler
 
-This reduces the "Sorry..." screen with the 3 images by 1 second.
+Key changes to `playRizz()` function (lines 154-262):
+- Detect iOS Safari and use HTMLAudio as PRIMARY method (not fallback)
+- Start the silent unlocker AND the actual audio simultaneously
+- Ensure `rizzHtmlAudio.play()` is called synchronously before any async operations
+
+---
+
+### 3. Improve Website Loading Speed
+**File:** `index.html`
+
+Remove the console warning by ensuring we don't load Tailwind CDN. The project already uses PostCSS/Tailwind properly, so this warning may come from a dev-mode artifact.
+
+**File:** `src/components/game/AirplaneAnimation.tsx`
+
+The video preloading (fetch as blob) happens immediately on component mount which can compete with other resources. Delay video preload slightly.
+
+---
+
+## Technical Details
+
+### iOS Safari Audio Fix Details
+The current code calls:
+1. `startSilentUnlocker()` - creates and plays silent audio
+2. `unlockIOSWebAudio()` - plays silent buffer
+3. `ctx.resume()` - resumes context
+4. `rizzBufferSource.start()` - plays actual audio
+
+On iOS Safari, the user gesture "budget" may be consumed by step 1 or 2. The fix:
+- Detect iOS: `const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);`
+- On iOS, prioritize `rizzHtmlAudio.play()` FIRST in the same synchronous call
+- Keep WebAudio as enhancement, not primary path
 
 ---
 
 ## Result
-- The "I ate dengulu" screen will show a loading bar that smoothly fills up over 4 seconds instead of "Thank you"
-- The mourning scene ends 1 second earlier (8.3s instead of 9.3s)
+- Loading bar shows without any text below it
+- Rizz audio plays reliably on iPhone Safari
+- Faster initial page load
 
