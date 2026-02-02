@@ -499,13 +499,13 @@ video::-webkit-media-controls-start-playback-button {
   animation: speech-bubble-pop 0.4s ease-out forwards;
 }
 
-/* Glow pulse animation for WhatsApp button */
+/* Glow pulse animation for WhatsApp button - light orange */
 @keyframes glow-pulse {
   0%, 100% { 
-    box-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b, 0 0 30px #ff6b6b;
+    box-shadow: 0 0 10px #FFB347, 0 0 20px #FFB347, 0 0 30px #FFB347;
   }
   50% { 
-    box-shadow: 0 0 15px #ff4757, 0 0 30px #ff4757, 0 0 45px #ff4757, 0 0 60px #ff4757;
+    box-shadow: 0 0 15px #FFA500, 0 0 30px #FFA500, 0 0 45px #FFA500, 0 0 60px #FFA500;
   }
 }
 

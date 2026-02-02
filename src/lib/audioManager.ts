@@ -346,12 +346,25 @@ export const playRizz = () => {
   console.log(`playRizz complete: webAudioStarted=${webAudioStarted}, htmlAudioStarted=${htmlAudioStarted}, rizzPlaying=${rizzPlaying}`);
 };
 
+/**
+ * AGGRESSIVE RIZZ STOP - Ensures rizz audio CANNOT leak to other screens
+ * 
+ * On iOS 15-16, Safari may "queue" audio.play() requests. When another audio
+ * starts later, it can inadvertently "release" the queued rizz audio.
+ * 
+ * This function aggressively stops rizz audio by:
+ * 1. Setting the flag immediately (sync)
+ * 2. Stopping the silent unlocker
+ * 3. Stopping AND disconnecting WebAudio source
+ * 4. Pausing, resetting, AND clearing event listeners on HTMLAudio
+ */
 export const stopRizz = () => {
   rizzPlaying = false;
   
   // Stop silent unlocker (iOS silent mode bypass)
   stopSilentUnlocker();
   
+  // Stop WebAudio source
   if (rizzBufferSource) {
     try { 
       rizzBufferSource.stop(); 
@@ -361,11 +374,33 @@ export const stopRizz = () => {
     rizzBufferSource.disconnect();
     rizzBufferSource = null;
   }
+  
+  // CRITICAL: Aggressively stop HTMLAudio to prevent iOS "queued" playback
   if (rizzHtmlAudio) {
     rizzHtmlAudio.pause();
     rizzHtmlAudio.currentTime = 0;
+    // Clear any event listeners that might re-trigger playback
+    rizzHtmlAudio.onplay = null;
+    rizzHtmlAudio.oncanplay = null;
+    rizzHtmlAudio.oncanplaythrough = null;
+    rizzHtmlAudio.onplaying = null;
   }
-  console.log('Rizz audio stopped');
+  
+  console.log('🛑 Rizz audio FORCE STOPPED');
+};
+
+/**
+ * Force-stop rizz - call this at the START of other music functions
+ * to ensure rizz cannot "leak" into other screens
+ */
+export const forceStopRizz = () => {
+  // Only do work if rizz might be playing
+  if (!rizzPlaying && !rizzBufferSource && (!rizzHtmlAudio || rizzHtmlAudio.paused)) {
+    return;
+  }
+  
+  console.log('🚨 Force-stopping rizz before other audio');
+  stopRizz();
 };
 
 // ============ PRELOAD ALL AUDIO ============
@@ -437,6 +472,9 @@ export const preloadMourningMusic = () => {
 
 // ============ MUSIC 2: GAME MUSIC ============
 export const playGameMusic = () => {
+  // CRITICAL: Force-stop rizz FIRST to prevent iOS audio leak
+  forceStopRizz();
+  
   // CRITICAL: Never start game music if mourning has started
   if (mourningStartingOrPlaying || gameMusicPlaying) return;
   
@@ -489,6 +527,9 @@ export const isGameMusicPlaying = (): boolean => {
 
 // ============ MUSIC 3: MOURNING ============
 export const playMourningMusic = () => {
+  // CRITICAL: Force-stop rizz FIRST to prevent iOS audio leak
+  forceStopRizz();
+  
   // Prevent duplicate calls
   if (mourningStartingOrPlaying) return;
   
@@ -547,6 +588,9 @@ export const isMourningMusicPlaying = (): boolean => {
 // ============ STOP ALL ============
 export const stopAll = () => {
   console.log('Stopping all audio');
+  
+  // CRITICAL: Force-stop rizz FIRST
+  forceStopRizz();
   
   // Reset all flags
   rizzPlaying = false;
