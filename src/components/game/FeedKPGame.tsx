@@ -134,14 +134,13 @@ const FeedKPGame = () => {
         {/* Loading bar */}
         <div className="w-64 md:w-80 mt-4">
           <div className="bg-gray-300 rounded-full h-4 overflow-hidden shadow-inner border-2 border-gray-400">
-            <div 
+          <div 
               className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
               style={{
                 animation: 'loadingFill 4s linear forwards'
               }}
             />
           </div>
-          <p className="text-white text-sm mt-2 text-center font-medium">Loading next adventure...</p>
         </div>
       </div>
     );
