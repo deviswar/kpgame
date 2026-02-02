@@ -1,48 +1,50 @@
 
-## Replace Default Lovable OG Images with KP Branding
+## Update All Text to "Play the game & Make KP EP"
 
-### Current Issue
-Lines 28 and 32 in `index.html` use the default Lovable opengraph image:
-```html
-<meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-<meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-```
+### Summary
+Replace every instance of "Make KP Happy" with "Make KP EP" and update the OG image to use the existing KP favicon.svg.
 
-### Solution
+### Files to Modify
 
-**Option A: Use the existing favicon.svg as OG image**
-We can reference the SVG favicon directly. While SVGs aren't ideal for OG images (some platforms don't support them), it's a quick solution:
+#### 1. `index.html`
+Update 4 meta properties:
 
-```html
-<meta property="og:image" content="https://kpgtest.lovable.app/favicon.svg" />
-<meta name="twitter:image" content="https://kpgtest.lovable.app/favicon.svg" />
-```
-
-**Option B (Recommended): Create a proper PNG OG image**
-Create a new `public/og-image.png` file (1200x630px) with the KP character design and game branding for best compatibility across all social platforms.
-
-### Implementation Plan
-
-1. **Create OG Image File**
-   - Create a new PNG image at `public/og-image.png` 
-   - Use the KP character with yellow background and "KP Game" text
-   - Dimensions: 1200x630px (standard OG size)
-
-2. **Update index.html**
-   - Change line 28: `og:image` → `/og-image.png` with full published URL
-   - Change line 32: `twitter:image` → `/og-image.png` with full published URL
-   - Add `og:image:width` and `og:image:height` meta tags for better rendering
+| Line | Current | New |
+|------|---------|-----|
+| 6 | `<title>KP Game</title>` | `<title>Play the game & Make KP EP</title>` |
+| 7 | `content="Play the game & Make KP Happy"` | `content="Play the game & Make KP EP"` |
+| 25 | `og:title` = "KP Game" | `og:title` = "Play the game & Make KP EP" |
+| 26 | `og:description` = "...Make KP Happy" | `og:description` = "Play the game & Make KP EP" |
+| 28-30 | `og:image` = `.../og-image.png` + width/height | `og:image` = `https://kpgtest.lovable.app/favicon.svg` (remove width/height lines since SVG scales) |
+| 34 | `twitter:image` = `.../og-image.png` | `twitter:image` = `https://kpgtest.lovable.app/favicon.svg` |
 
 ### Technical Details
 
-```html
-<!-- Updated OG tags -->
-<meta property="og:image" content="https://kpgtest.lovable.app/og-image.png" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
+**Changes in index.html:**
 
-<meta name="twitter:image" content="https://kpgtest.lovable.app/og-image.png" />
+```html
+<!-- Line 6 -->
+<title>Play the game & Make KP EP</title>
+
+<!-- Line 7 -->
+<meta name="description" content="Play the game & Make KP EP" />
+
+<!-- Line 25 -->
+<meta property="og:title" content="Play the game & Make KP EP" />
+
+<!-- Line 26 -->
+<meta property="og:description" content="Play the game & Make KP EP" />
+
+<!-- Lines 28-30: Replace og:image PNG with SVG favicon -->
+<meta property="og:image" content="https://kpgtest.lovable.app/favicon.svg" />
+<!-- Remove og:image:width and og:image:height since SVG is scalable -->
+
+<!-- Line 34 -->
+<meta name="twitter:image" content="https://kpgtest.lovable.app/favicon.svg" />
 ```
 
-### Note
-If you don't have a PNG image ready, I can create a simple HTML-based approach or we can temporarily use the SVG favicon. Let me know which option you prefer!
+### What Stays the Same
+- `og:type` remains "website"
+- `twitter:card` remains "summary_large_image"
+- `twitter:site` remains "@KPGame"
+- All other game components (FeedKPGame, WelcomeScreen, etc.) don't contain the "Make KP Happy" text, so no changes needed there
