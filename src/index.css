@@ -499,6 +499,12 @@ video::-webkit-media-controls-start-playback-button {
   animation: speech-bubble-pop 0.4s ease-out forwards;
 }
 
+/* Loading bar animation */
+@keyframes loadingFill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
 /* Text shine/highlight animation - sweeping light effect */
 @keyframes text-shine {
   0% { background-position: -200% center; }
