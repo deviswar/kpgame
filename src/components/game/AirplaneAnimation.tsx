@@ -115,12 +115,12 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
               onContextMenu={(e) => e.preventDefault()}
             />
             
-            {/* Don't Click button - bottom right overlay */}
+            {/* Don't Click button - black circle with light orange glow */}
             <a
               href="https://api.whatsapp.com/send/?phone=919573725363&text=sir+meeru+erripuk+ah?+🤡&type=phone_number&app_absent=0"
               target="_blank"
               rel="noopener noreferrer"
-              className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex flex-col items-center justify-center animate-glow-pulse z-10"
+              className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-black flex flex-col items-center justify-center animate-glow-pulse z-10"
             >
               <span className="text-white text-[10px] font-bold text-center leading-tight">
                 Don't Click
