@@ -97,21 +97,37 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-4 px-3">
         {/* Video container - takes most space */}
         <div className="flex-1 w-full flex flex-col items-center justify-center">
-          <video
-            ref={videoRef}
-            src={videoBlobUrl || '/music/fall.mp4'}
-            autoPlay
-            loop
-            playsInline
-            preload="auto"
-            muted
-            className="w-full max-w-md rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
-            style={{ 
-              maxHeight: '55vh',
-              pointerEvents: 'none'
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-          />
+          {/* Video wrapper with relative positioning for overlay button */}
+          <div className="relative w-full max-w-md">
+            <video
+              ref={videoRef}
+              src={videoBlobUrl || '/music/fall.mp4'}
+              autoPlay
+              loop
+              playsInline
+              preload="auto"
+              muted
+              className="w-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
+              style={{ 
+                maxHeight: '55vh',
+                pointerEvents: 'none'
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+            
+            {/* Don't Click button - bottom right overlay */}
+            <a
+              href="https://api.whatsapp.com/send/?phone=919573725363&text=sir+meeru+erripuk+ah?+🤡&type=phone_number&app_absent=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-4 right-4 w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex flex-col items-center justify-center animate-glow-pulse z-10"
+            >
+              <span className="text-white text-[10px] font-bold text-center leading-tight">
+                Don't Click
+              </span>
+              <span className="text-lg">🤡</span>
+            </a>
+          </div>
           
           {/* Brutal popup below video */}
           <div className="bg-black px-5 py-3 rounded-xl shadow-xl mt-3">
