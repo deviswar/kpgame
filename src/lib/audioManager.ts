@@ -118,6 +118,29 @@ export const precacheRizzAudio = async () => {
     console.log('Rizz audio already cached in AudioBuffer');
     return;
   }
+
+  // iOS Safari: avoid early WebAudio work (slow + can cause weird unlock states).
+  // We rely on HTMLAudio for iOS reliability.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    try {
+      if (!rizzHtmlAudio) {
+        rizzHtmlAudio = new Audio('/music/rizz.mp3');
+        rizzHtmlAudio.volume = 0.5;
+        rizzHtmlAudio.loop = true;
+        rizzHtmlAudio.preload = 'auto';
+        (rizzHtmlAudio as any).playsInline = true;
+        rizzHtmlAudio.setAttribute('playsinline', '');
+        rizzHtmlAudio.setAttribute('webkit-playsinline', '');
+      }
+      rizzHtmlAudio.load();
+      rizzPreloaded = true;
+      console.log('📱 iOS: Rizz HTMLAudio warmed (skipped WebAudio decode)');
+    } catch (e) {
+      console.error('❌ iOS: Failed to warm rizz HTMLAudio:', e);
+    }
+    return;
+  }
   
   try {
     console.log('Starting rizz audio pre-cache with Web Audio API...');
@@ -150,6 +173,77 @@ export const precacheRizzAudio = async () => {
   }
 };
 
+const ensureRizzHtmlAudio = (): HTMLAudioElement => {
+  if (!rizzHtmlAudio) {
+    rizzHtmlAudio = new Audio('/music/rizz.mp3');
+    rizzHtmlAudio.volume = 0.5;
+    rizzHtmlAudio.loop = true;
+    rizzHtmlAudio.preload = 'auto';
+    // CRITICAL for iOS: must set playsInline
+    (rizzHtmlAudio as any).playsInline = true;
+    rizzHtmlAudio.setAttribute('playsinline', '');
+    rizzHtmlAudio.setAttribute('webkit-playsinline', '');
+  }
+  return rizzHtmlAudio;
+};
+
+const playRizzIOS = (): void => {
+  const audio = ensureRizzHtmlAudio();
+
+  // IMPORTANT (iOS Safari): the *first* media play call must be the real audio,
+  // otherwise Safari may reject the second play() as not user-initiated.
+  // So: start rizz first, then kick the silent unlocker.
+  try {
+    // Use a tiny volume for the very first tick to help iOS treat it as media,
+    // then raise it immediately after (doesn't need to be in gesture).
+    audio.volume = 0.01;
+    audio.currentTime = 0;
+
+    const p = audio.play();
+    rizzPlaying = true; // set sync so other tracks won't start over it
+
+    // Start silent unlocker after rizz play is initiated
+    setTimeout(() => startSilentUnlocker(), 0);
+
+    if (p !== undefined) {
+      p.then(() => {
+        audio.volume = 0.5;
+        console.log('🎵 iOS: Rizz started via HTMLAudio');
+      }).catch((e) => {
+        // Retry once with muted-toggle trick
+        console.error('❌ iOS: Rizz HTMLAudio play failed:', e);
+        try {
+          audio.muted = true;
+          const p2 = audio.play();
+          if (p2 !== undefined) {
+            p2.then(() => {
+              audio.muted = false;
+              audio.volume = 0.5;
+              console.log('🎵 iOS: Rizz started after retry');
+            }).catch((e2) => {
+              console.error('❌ iOS: Rizz retry failed:', e2);
+              rizzPlaying = false;
+            });
+          } else {
+            audio.muted = false;
+            audio.volume = 0.5;
+            console.log('🎵 iOS: Rizz started (retry no-promise)');
+          }
+        } catch (e2) {
+          console.error('❌ iOS: Rizz retry threw:', e2);
+          rizzPlaying = false;
+        }
+      });
+    } else {
+      audio.volume = 0.5;
+      console.log('🎵 iOS: Rizz started via HTMLAudio (no promise)');
+    }
+  } catch (e) {
+    console.error('❌ iOS: Rizz HTMLAudio threw:', e);
+    rizzPlaying = false;
+  }
+};
+
 // ============ MUSIC 1: RIZZ (Web Audio API) ============
 export const playRizz = () => {
   if (rizzPlaying) {
@@ -161,16 +255,7 @@ export const playRizz = () => {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   
   // Ensure HTMLAudio element exists
-  if (!rizzHtmlAudio) {
-    rizzHtmlAudio = new Audio('/music/rizz.mp3');
-    rizzHtmlAudio.volume = 0.5;
-    rizzHtmlAudio.loop = true;
-    rizzHtmlAudio.preload = 'auto';
-    // CRITICAL for iOS: must set playsInline
-    (rizzHtmlAudio as any).playsInline = true;
-    rizzHtmlAudio.setAttribute('playsinline', '');
-    rizzHtmlAudio.setAttribute('webkit-playsinline', '');
-  }
+  ensureRizzHtmlAudio();
 
   let webAudioStarted = false;
   let htmlAudioStarted = false;
@@ -180,37 +265,8 @@ export const playRizz = () => {
   // The silent unlocker and WebAudio unlock can consume the gesture "budget"
   // So on iOS, we play HTMLAudio FIRST before anything else
   if (isIOS) {
-    console.log('📱 iOS detected - using HTMLAudio as PRIMARY method');
-    
-    // Start silent unlocker simultaneously (for silent mode bypass)
-    startSilentUnlocker();
-    
-    // Play HTMLAudio IMMEDIATELY (synchronously in gesture)
-    try {
-      rizzHtmlAudio.currentTime = 0;
-      const playPromise = rizzHtmlAudio.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            htmlAudioStarted = true;
-            rizzPlaying = true;
-            console.log('🎵 iOS: Rizz audio started via HTMLAudio (primary)');
-          })
-          .catch((e) => {
-            console.error('❌ iOS HTMLAudio play failed:', e);
-          });
-      } else {
-        htmlAudioStarted = true;
-        rizzPlaying = true;
-        console.log('🎵 iOS: Rizz audio started via HTMLAudio (no promise)');
-      }
-    } catch (e) {
-      console.error('❌ iOS HTMLAudio threw:', e);
-    }
-    
-    // Log and return - don't try WebAudio on iOS (it often fails/is silent)
-    console.log(`playRizz (iOS) complete: htmlAudioStarted=${htmlAudioStarted}, rizzPlaying=${rizzPlaying}`);
+    console.log('📱 iOS detected - using isolated iOS HTMLAudio path');
+    playRizzIOS();
     return;
   }
 
