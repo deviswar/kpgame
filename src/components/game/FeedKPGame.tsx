@@ -47,7 +47,7 @@ const FeedKPGame = () => {
       setTimeout(() => {
         setShowFullState(false);
         setShowCowFight(true);
-      }, 5000);
+      }, 4000);
     }
   }, [happiness, showAirplane, showFullState]);
 
