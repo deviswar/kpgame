@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
-import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio, warmRizzAudio } from '@/lib/audioManager';
 
 // Preload images for later screens - import ONLY what's needed for immediate display
 import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
@@ -19,7 +19,11 @@ const WelcomeScreen = memo(({
 
   // Preload audio and CRITICAL images immediately on mount
   useEffect(() => {
-    // Preload all audio (sets rizzPreloaded = true immediately)
+    // CRITICAL: Warm up rizz audio FIRST for instant playback
+    // This creates the Audio element and waits for 'canplaythrough'
+    warmRizzAudio();
+
+    // Then preload other audio
     preloadAllAudio();
 
     // Preload MILK SCENE BANNERS IMMEDIATELY (no delay!)
