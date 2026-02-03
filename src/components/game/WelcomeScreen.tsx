@@ -130,9 +130,13 @@ const WelcomeScreen = memo(({
         
         {/* Click to see rizz + Footer */}
         <div className="flex flex-col items-center gap-2">
-          <button onClick={handleShowRizz} className="bg-pink-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-pink-600 transition-colors active:scale-95">
+          <button 
+            onClick={handleShowRizz} 
+            disabled={!rizzReady}
+            className={`${rizzReady ? 'bg-pink-500 hover:bg-pink-600 animate-pulse' : 'bg-gray-400 cursor-not-allowed'} backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 shadow-lg transition-colors active:scale-95`}
+          >
             <span className="text-white text-lg md:text-xl font-bold">
-              Click here to see my rizz 🥰 
+              {rizzReady ? 'Click here to see my rizz 🥰' : 'Loading... ⏳'} 
             </span>
           </button>
           <div className="flex items-center gap-2">
