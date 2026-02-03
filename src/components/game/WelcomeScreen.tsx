@@ -3,14 +3,11 @@ import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
 import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
+import { debug } from '@/lib/debug';
 
-// Preload images for later screens
-import hondaAmazeImg from '@/assets/honda-amaze.jpg';
-import cementBagsImg from '@/assets/cement-bags.jpg';
-import hondaAmaze from '@/assets/honda-amaze-car.jpg';
-import pugDog from '@/assets/pug-dog.webp';
-import pugMemorial from '@/assets/pug-memorial.jpg';
-import pugGrave from '@/assets/pug-grave.jpg';
+// Preload images for later screens - import ONLY what's needed for immediate display
+import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
+import villageMilkBanner from '@/assets/village-milk-banner.jpg';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -22,32 +19,47 @@ const WelcomeScreen = memo(({
   const [showRizzScene, setShowRizzScene] = useState(false);
   const [rizzReady, setRizzReady] = useState(false);
 
-  // Preload audio and images on mount
+  // Preload audio and CRITICAL images immediately on mount
   useEffect(() => {
     // Preload all audio (critical for instant playback)
     preloadAllAudio();
 
-    // Check audio readiness periodically until ready
+    // Check audio readiness - but don't block forever
+    let checkCount = 0;
+    const maxChecks = 30; // Max 3 seconds
     const checkAudioReady = () => {
+      checkCount++;
       if (isRizzAudioReady()) {
         setRizzReady(true);
-        console.log('✅ Rizz audio ready');
-      } else {
+        debug.log('✅ Rizz audio ready');
+      } else if (checkCount < maxChecks) {
         setTimeout(checkAudioReady, 100);
+      } else {
+        // Force ready after 3s to prevent infinite wait
+        setRizzReady(true);
+        debug.warn('⚠️ Rizz audio timeout - enabling button anyway');
       }
     };
     checkAudioReady();
 
-    // Delay OTHER image preloading by 500ms to prioritize audio
-    const imageTimer = setTimeout(() => {
-      const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave];
-      images.forEach(src => {
-        const img = new Image();
-        img.src = src;
-      });
-    }, 500);
+    // Preload MILK SCENE BANNERS IMMEDIATELY (no delay!)
+    // These are the images that load slowly in the milk scene
+    [roseMilkBanner, villageMilkBanner].forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
 
-    return () => clearTimeout(imageTimer);
+    // Lazy load other images after 1 second (not critical for first screens)
+    const lazyTimer = setTimeout(() => {
+      import('@/assets/honda-amaze.jpg');
+      import('@/assets/cement-bags.jpg');
+      import('@/assets/honda-amaze-car.jpg');
+      import('@/assets/pug-dog.webp');
+      import('@/assets/pug-memorial.jpg');
+      import('@/assets/pug-grave.jpg');
+    }, 1000);
+
+    return () => clearTimeout(lazyTimer);
   }, []);
 
   const handleShowRizz = () => {
