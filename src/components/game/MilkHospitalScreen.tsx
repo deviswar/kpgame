@@ -33,14 +33,19 @@ const MilkHospitalScreen = ({
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Preload mourning music AND images on mount so they're ready for instant playback
+  // Preload mourning music AND all images on mount so they're ready instantly
   useEffect(() => {
     const loadAssets = async () => {
       // Preload mourning audio immediately (primes it for instant playback)
       preloadMourningMusic();
 
-      // Preload mourning images
-      await Promise.all([preloadImage(pugMemorial), preloadImage(pugGrave)]);
+      // Preload ALL images including banner images (they load late otherwise)
+      await Promise.all([
+        preloadImage(roseMilkBanner),
+        preloadImage(villageMilkBanner),
+        preloadImage(pugMemorial),
+        preloadImage(pugGrave)
+      ]);
       setImagesLoaded(true);
     };
     loadAssets();
