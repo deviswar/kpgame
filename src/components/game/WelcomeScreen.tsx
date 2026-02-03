@@ -11,11 +11,9 @@ import hondaAmaze from '@/assets/honda-amaze-car.jpg';
 import pugDog from '@/assets/pug-dog.webp';
 import pugMemorial from '@/assets/pug-memorial.jpg';
 import pugGrave from '@/assets/pug-grave.jpg';
-
 interface WelcomeScreenProps {
   onStart: () => void;
 }
-
 const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
@@ -28,7 +26,7 @@ const WelcomeScreen = memo(({
   useEffect(() => {
     // Preload all audio (critical for instant playback)
     preloadAllAudio();
-    
+
     // CRITICAL: Preload QT image IMMEDIATELY (not delayed) since it's needed for Rizz Scene
     const qtImg = new Image();
     qtImg.onload = () => {
@@ -60,7 +58,6 @@ const WelcomeScreen = memo(({
         img.src = src;
       });
     }, 500);
-
     return () => clearTimeout(imageTimer);
   }, []);
   const handleShowRizz = () => {
@@ -143,7 +140,7 @@ const WelcomeScreen = memo(({
         <div className="flex flex-col items-center gap-2">
           <button onClick={handleShowRizz} className="bg-pink-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-pink-600 transition-colors active:scale-95">
             <span className="text-white text-lg md:text-xl font-bold">
-              Click here to see my rizz 🥰 
+              Click here to see my rizz 🥰  
             </span>
           </button>
           <div className="flex items-center gap-2">
@@ -207,18 +204,9 @@ const WelcomeScreen = memo(({
           </div>
           
           {/* QT Character - Image with fallback */}
-          {qtImageError ? (
-            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-pink-300 shadow-lg bg-pink-200 flex items-center justify-center">
+          {qtImageError ? <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-pink-300 shadow-lg bg-pink-200 flex items-center justify-center">
               <span className="text-4xl md:text-5xl">👩</span>
-            </div>
-          ) : (
-            <img 
-              src={qtGirlImage} 
-              alt="QT" 
-              className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
-              onError={() => setQtImageError(true)}
-            />
-          )}
+            </div> : <img src={qtGirlImage} alt="QT" className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg" onError={() => setQtImageError(true)} />}
           
           {/* Speech Bubble - angry response */}
           <div className="relative bg-white rounded-xl px-4 py-3 mt-4 shadow-lg animate-speech-bubble" style={{
