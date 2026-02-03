@@ -10,8 +10,7 @@
 
     <!-- Preload critical first-interaction audio (high priority) -->
     <link rel="preload" href="/music/rizz.mp3" as="audio" />
-    <!-- Preload QT image for Rizz Scene (critical - shown immediately after rizz button click) -->
-    <link rel="preload" href="/src/assets/qt-girl.jpg" as="image" type="image/jpeg" />
+    <!-- QT image loads via ES6 import in RizzScene.tsx - no preload needed -->
     <!-- Prefetch later audio (lower priority) -->
     <link rel="prefetch" href="/music/background.mp3" as="fetch" />
     <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
