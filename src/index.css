@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -495,26 +497,6 @@ video::-webkit-media-controls-start-playback-button {
 
 .animate-speech-bubble {
   animation: speech-bubble-pop 0.4s ease-out forwards;
-}
-
-/* Glow pulse animation for WhatsApp button - light orange */
-@keyframes glow-pulse {
-  0%, 100% { 
-    box-shadow: 0 0 10px #FFB347, 0 0 20px #FFB347, 0 0 30px #FFB347;
-  }
-  50% { 
-    box-shadow: 0 0 15px #FFA500, 0 0 30px #FFA500, 0 0 45px #FFA500, 0 0 60px #FFA500;
-  }
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 1.5s ease-in-out infinite;
-}
-
-/* Loading bar animation */
-@keyframes loadingFill {
-  from { width: 0%; }
-  to { width: 100%; }
 }
 
 /* Text shine/highlight animation - sweeping light effect */
