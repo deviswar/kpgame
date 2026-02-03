@@ -2,11 +2,15 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
-import { playRizz, stopRizz, preloadAllAudio, warmRizzAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
 
-// Preload images for later screens - import ONLY what's needed for immediate display
-import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
-import villageMilkBanner from '@/assets/village-milk-banner.jpg';
+// Preload images for later screens
+import hondaAmazeImg from '@/assets/honda-amaze.jpg';
+import cementBagsImg from '@/assets/cement-bags.jpg';
+import hondaAmaze from '@/assets/honda-amaze-car.jpg';
+import pugDog from '@/assets/pug-dog.webp';
+import pugMemorial from '@/assets/pug-memorial.jpg';
+import pugGrave from '@/assets/pug-grave.jpg';
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -16,33 +20,34 @@ const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
+  const [rizzReady, setRizzReady] = useState(false);
 
-  // Preload audio and CRITICAL images immediately on mount
+  // Preload audio and images on mount
   useEffect(() => {
-    // CRITICAL: Warm up rizz audio FIRST for instant playback
-    // This creates the Audio element and waits for 'canplaythrough'
-    warmRizzAudio();
-
-    // Then preload other audio
+    // Preload all audio (critical for instant playback)
     preloadAllAudio();
 
-    // Preload MILK SCENE BANNERS IMMEDIATELY (no delay!)
-    [roseMilkBanner, villageMilkBanner].forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
+    // Check audio readiness periodically until ready
+    const checkAudioReady = () => {
+      if (isRizzAudioReady()) {
+        setRizzReady(true);
+        console.log('✅ Rizz audio ready');
+      } else {
+        setTimeout(checkAudioReady, 100);
+      }
+    };
+    checkAudioReady();
 
-    // Lazy load other images after 1 second (not critical for first screens)
-    const lazyTimer = setTimeout(() => {
-      import('@/assets/honda-amaze.jpg');
-      import('@/assets/cement-bags.jpg');
-      import('@/assets/honda-amaze-car.jpg');
-      import('@/assets/pug-dog.webp');
-      import('@/assets/pug-memorial.jpg');
-      import('@/assets/pug-grave.jpg');
-    }, 1000);
+    // Delay OTHER image preloading by 500ms to prioritize audio
+    const imageTimer = setTimeout(() => {
+      const images = [hondaAmazeImg, cementBagsImg, hondaAmaze, pugDog, pugMemorial, pugGrave];
+      images.forEach(src => {
+        const img = new Image();
+        img.src = src;
+      });
+    }, 500);
 
-    return () => clearTimeout(lazyTimer);
+    return () => clearTimeout(imageTimer);
   }, []);
 
   const handleShowRizz = () => {
@@ -125,12 +130,9 @@ const WelcomeScreen = memo(({
         
         {/* Click to see rizz + Footer */}
         <div className="flex flex-col items-center gap-2">
-          <button 
-            onClick={handleShowRizz} 
-            className="bg-pink-500 hover:bg-pink-600 animate-pulse backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 shadow-lg transition-colors active:scale-95"
-          >
+          <button onClick={handleShowRizz} className="bg-pink-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-pink-600 transition-colors active:scale-95">
             <span className="text-white text-lg md:text-xl font-bold">
-              Click here to see my rizz 🥰
+              Click here to see my rizz 🥰 
             </span>
           </button>
           <div className="flex items-center gap-2">

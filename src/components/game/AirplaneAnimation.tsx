@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import KPCharacter from './KPCharacter';
-import { publicAssetUrl } from '@/lib/assetUrl';
 
 interface AirplaneAnimationProps {
   onComplete: () => void;
@@ -38,39 +37,31 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
 
   // Preload video as blob for INSTANT playback with zero buffering
   // DELAYED to avoid competing with critical initial page resources
-  // Fixed: proper abort handling to prevent memory leaks
   useEffect(() => {
     let blobUrlToClean: string | null = null;
-    let aborted = false;
     
     const preloadVideoAsBlob = async () => {
       try {
-        const response = await fetch(publicAssetUrl('music/fall.mp4'));
-        if (aborted) return; // Don't process if component unmounted
-        
+        const response = await fetch('/music/fall.mp4');
         const blob = await response.blob();
-        if (aborted) {
-          // Cleanup if unmounted during blob creation
-          return;
-        }
-        
         const blobUrl = URL.createObjectURL(blob);
         blobUrlToClean = blobUrl;
         setVideoBlobUrl(blobUrl);
         setVideoPreloaded(true);
+        console.log('Video pre-cached as blob - ready for instant playback');
       } catch (e) {
+        console.error('Failed to pre-cache video:', e);
         // Fallback: still mark as preloaded so video can play from network
-        if (!aborted) {
-          setVideoPreloaded(true);
-        }
+        setVideoPreloaded(true);
       }
     };
     
     // Delay video preload by 2 seconds to prioritize critical resources
-    const timer = setTimeout(preloadVideoAsBlob, 2000);
+    const timer = setTimeout(() => {
+      preloadVideoAsBlob();
+    }, 2000);
     
     return () => {
-      aborted = true;
       clearTimeout(timer);
       // Cleanup blob URL on unmount
       if (blobUrlToClean) {
@@ -84,8 +75,8 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Generate confetti pieces - reduced from 50 to 25 for mobile performance
-  const confettiPieces = [...Array(25)].map((_, i) => ({
+  // Generate confetti pieces
+  const confettiPieces = [...Array(50)].map((_, i) => ({
     delay: Math.random() * 2,
     left: Math.random() * 100,
   }));
@@ -110,7 +101,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           <div className="w-full max-w-md">
             <video
               ref={videoRef}
-              src={videoBlobUrl || publicAssetUrl('music/fall.mp4')}
+              src={videoBlobUrl || '/music/fall.mp4'}
               autoPlay
               loop
               playsInline

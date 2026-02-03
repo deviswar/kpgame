@@ -1,215 +1,178 @@
 
-# Zero-Delay Rizz Audio - Complete Fix
 
-## Problem Analysis
+## Summary
 
-The rizz audio has a delay because:
+Two critical fixes:
 
-1. **HTML preload downloads bytes** but doesn't connect them to the Audio element
-2. **iOS Safari** requires creating Audio in gesture context, so it re-fetches (ignoring cached bytes)
-3. **`preload="auto"`** is just a hint - browser may not fully buffer before click
+1. **Permanently fix rizz scene music leaking to other screens** - The rizz audio is being "queued" by iOS but starts later when another audio triggers. We need to:
+   - Force-stop rizz audio at every scene transition
+   - Isolate rizz scene into its own dedicated component file
+   - Ensure rizz audio is truly stopped before game music can start
 
-### Current Flow (Slow)
-```text
-Page loads → <link preload> downloads rizz.mp3 to HTTP cache
-User clicks → Create Audio element → Browser checks cache → Decodes → Plays
-                                    ↑ 200-500ms delay here
-```
-
-### Target Flow (Instant)
-```text
-Page loads → Create Audio element → audio.load() → Wait for 'canplaythrough'
-User clicks → audio.play() → Instant!
-```
+2. **Update "Don't Click" button styling** - Change from red/pink gradient to black circle with white text and light orange glow
 
 ---
 
-## The Fix: Pre-warm Audio with canplaythrough
+## Root Cause Analysis
 
-For **both iOS and non-iOS**, we will:
+The problem is that on iOS 15-16, Safari's audio playback restrictions can cause `audio.play()` to silently "queue" rather than truly start. When the user later taps "Tap to start the game", the `playGameMusic()` function starts, which triggers more audio activity. This inadvertently "releases" the queued rizz audio, causing it to play on the wrong screen.
 
-1. Create the Audio element immediately on page load
-2. Call `audio.load()` and wait for `'canplaythrough'` event (fully buffered)
-3. For iOS: Keep a "warm" audio element that we've already interacted with via a silent play attempt
-4. On click: Just call `play()` on the already-buffered element
-
-### iOS Trick: Silent Touch Warm-up
-
-iOS blocks `play()` without gesture, BUT it allows `load()` and buffering. The trick:
-- Create Audio element on mount
-- Set `volume = 0` and try to play (will fail silently)
-- This "warms" the audio context
-- On user click, we can play the SAME element (now it's "blessed")
+The fix requires **aggressive force-stopping** of rizz audio before any other music starts, plus creating an isolated component for the rizz scene so future changes won't accidentally break its audio logic.
 
 ---
 
-## Technical Changes
+## Changes
 
-### File: `src/lib/audioManager.ts`
+### 1. Create Isolated Rizz Scene Component
+**File (NEW):** `src/components/game/RizzScene.tsx`
 
-#### 1. New: warmRizzAudio() - Called on mount, returns Promise
+Move the entire Phase 2 (rizz scene) from `WelcomeScreen.tsx` into its own file. This includes:
+- The rizz attempt UI with KP and QT characters
+- Speech bubbles
+- "Tap to start the game" button
+- All associated styling
 
-```typescript
-let rizzWarmAudio: HTMLAudioElement | null = null;
-let rizzWarmedUp = false;
+The component will receive:
+- `onStart`: callback when user taps "Tap to start"
+- Internal state for QT image loading/error
 
-export const warmRizzAudio = (): Promise<void> => {
-  return new Promise((resolve) => {
-    if (rizzWarmedUp && rizzWarmAudio) {
-      resolve();
-      return;
-    }
-    
-    // Create audio element immediately
-    rizzWarmAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
-    rizzWarmAudio.volume = 0.5;
-    rizzWarmAudio.loop = true;
-    rizzWarmAudio.preload = 'auto';
-    (rizzWarmAudio as any).playsInline = true;
-    rizzWarmAudio.setAttribute('playsinline', '');
-    rizzWarmAudio.setAttribute('webkit-playsinline', '');
-    
-    // Wait for full buffer
-    rizzWarmAudio.addEventListener('canplaythrough', () => {
-      rizzWarmedUp = true;
-      rizzPreloaded = true;
-      debug.log('Rizz audio FULLY BUFFERED and ready');
-      resolve();
-    }, { once: true });
-    
-    // Fallback timeout (3 seconds max wait)
-    setTimeout(() => {
-      rizzWarmedUp = true;
-      rizzPreloaded = true;
-      debug.log('Rizz audio ready (timeout fallback)');
-      resolve();
-    }, 3000);
-    
-    // Start loading
-    rizzWarmAudio.load();
-  });
-};
-```
+This isolates the rizz scene so other code changes won't accidentally affect it.
 
-#### 2. Simplified playRizz() - Uses pre-warmed audio
+---
+
+### 2. Update WelcomeScreen to Use RizzScene
+**File:** `src/components/game/WelcomeScreen.tsx`
+
+- Remove Phase 2 inline code
+- Import and render `<RizzScene onStart={handleStartGame} />` when `showRizzScene` is true
+- Keep Phase 1 (initial welcome screen) inline
+
+---
+
+### 3. Force-Stop Rizz in ALL Scene Transitions
+**File:** `src/lib/audioManager.ts`
+
+Add a new `forceStopRizz()` function that aggressively stops rizz audio:
 
 ```typescript
-export const playRizz = () => {
-  if (rizzPlaying) return;
+export const forceStopRizz = () => {
+  rizzPlaying = false;
+  stopSilentUnlocker();
   
-  startSilentUnlocker();
-  
-  // Use the pre-warmed audio element (already buffered!)
-  if (rizzWarmAudio) {
-    rizzWarmAudio.currentTime = 0;
-    rizzPlaying = true;
-    rizzHtmlAudio = rizzWarmAudio; // Store for stop control
-    
-    const playPromise = rizzWarmAudio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          rizzLastMethod = 'htmlaudio';
-          debug.log('Rizz playing INSTANTLY (pre-warmed)');
-        })
-        .catch((e) => {
-          // iOS fallback: create fresh if pre-warm didn't work
-          debug.log('Pre-warm failed, creating fresh audio');
-          playRizzIOSFallback();
-        });
-    }
-    return;
+  // Stop WebAudio source
+  if (rizzBufferSource) {
+    try { rizzBufferSource.stop(); } catch {}
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
   }
   
-  // Fallback if warmRizzAudio wasn't called
-  playRizzIOSFallback();
+  // Stop HTMLAudio - CRITICAL: pause AND set src empty to truly release
+  if (rizzHtmlAudio) {
+    rizzHtmlAudio.pause();
+    rizzHtmlAudio.currentTime = 0;
+    // Remove event listeners that might re-trigger
+    rizzHtmlAudio.onplay = null;
+    rizzHtmlAudio.oncanplay = null;
+  }
 };
 ```
 
-#### 3. playRizzIOSFallback() - Only used as last resort
+Then call `forceStopRizz()` at the START of:
+- `playGameMusic()` (line ~439)
+- `playMourningMusic()` (line ~491)
+- `stopAll()` (line ~548)
 
-```typescript
-const playRizzIOSFallback = (): void => {
-  const audio = new Audio(publicAssetUrl('music/rizz.mp3'));
-  audio.volume = 0.5;
-  audio.loop = true;
-  rizzHtmlAudio = audio;
-  rizzPlaying = true;
-  
-  audio.play()
-    .then(() => debug.log('Rizz playing (iOS fallback)'))
-    .catch((e) => {
-      rizzPlaying = false;
-      debug.error('Rizz failed:', e);
-    });
-};
+This ensures rizz cannot "leak" into other scenes.
+
+---
+
+### 4. Update stopRizz to Match forceStopRizz
+**File:** `src/lib/audioManager.ts`
+
+Update the existing `stopRizz()` function (lines 349-369) to be as aggressive as `forceStopRizz`:
+- Clear any pending event listeners on the HTMLAudio element
+- Ensure the audio is truly stopped, not just paused
+
+---
+
+### 5. Update "Don't Click" Button Styling
+**File:** `src/components/game/AirplaneAnimation.tsx`
+
+Change the button (lines 119-129):
+
+**Current:**
+```tsx
+className="... bg-gradient-to-br from-red-500 to-pink-600 ..."
 ```
 
-#### 4. Remove/simplify precacheRizzAudio()
+**New:**
+```tsx
+className="... bg-black ..."
+```
 
-```typescript
-export const precacheRizzAudio = async () => {
-  // Now just calls warmRizzAudio
-  await warmRizzAudio();
-};
+The text is already white, so no change needed there.
+
+---
+
+### 6. Update Glow Animation Color
+**File:** `src/index.css`
+
+Update the `glow-pulse` keyframe animation (lines 503-514):
+
+**Current (red/pink):**
+```css
+box-shadow: 0 0 10px #ff6b6b, 0 0 20px #ff6b6b, 0 0 30px #ff6b6b;
+```
+
+**New (light orange):**
+```css
+box-shadow: 0 0 10px #FFB347, 0 0 20px #FFB347, 0 0 30px #FFB347;
+```
+
+And for the 50% state:
+```css
+box-shadow: 0 0 15px #FFA500, 0 0 30px #FFA500, 0 0 45px #FFA500, 0 0 60px #FFA500;
 ```
 
 ---
 
-### File: `src/components/game/WelcomeScreen.tsx`
+## Files Modified
 
-#### Call warmRizzAudio on mount
-
-```typescript
-useEffect(() => {
-  // Warm up rizz audio FIRST (most critical for instant playback)
-  warmRizzAudio();
-  
-  // Then preload other audio
-  preloadAllAudio();
-  
-  // Preload images...
-}, []);
-```
+| File | Change |
+|------|--------|
+| `src/components/game/RizzScene.tsx` | NEW - Isolated rizz scene component |
+| `src/components/game/WelcomeScreen.tsx` | Delegate Phase 2 to RizzScene |
+| `src/lib/audioManager.ts` | Add forceStopRizz(), update stopRizz(), call forceStopRizz in all transitions |
+| `src/components/game/AirplaneAnimation.tsx` | Change button to black background |
+| `src/index.css` | Update glow-pulse to light orange |
 
 ---
 
-### File: `index.html`
+## Technical Details
 
-#### Add crossorigin for better caching
+### Why Rizz Audio Leaks on iOS 15-16
 
-```html
-<link rel="preload" href="/music/rizz.mp3" as="audio" crossorigin="anonymous" />
-```
+iOS Safari has strict autoplay policies. When `audio.play()` is called:
+1. If the user gesture context is valid, audio starts immediately
+2. If the gesture context has "expired" (due to async operations or timing), Safari may silently queue the request
 
-This helps the browser reuse the preloaded bytes for the Audio element.
+The current code calls `playRizz()` → `startSilentUnlocker()` → `audio.play()`. On iOS 15-16, the silent unlocker call may consume the gesture, leaving the actual rizz play in a "pending" state. Later, when `playGameMusic()` is called, it creates new audio activity that Safari interprets as a new opportunity to honor the pending play request.
 
----
+### The Fix
 
-## Why This Will Work
+By calling `forceStopRizz()` at the START of every other music function, we:
+1. Explicitly stop any pending/playing rizz audio
+2. Clear event listeners that might re-trigger playback
+3. Reset all state flags
 
-1. **Browser-level preload** (index.html) downloads bytes to HTTP cache during page load
-2. **warmRizzAudio()** creates Audio element and calls `load()` which uses cached bytes
-3. **`canplaythrough` event** fires when audio is fully buffered and ready
-4. **On click**, we just call `play()` on an already-buffered element = **INSTANT**
-5. **iOS fallback** still works if pre-warming fails for any reason
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/lib/audioManager.ts` | Add `warmRizzAudio()`, simplify `playRizz()`, add iOS fallback |
-| `src/components/game/WelcomeScreen.tsx` | Call `warmRizzAudio()` on mount |
-| `index.html` | Add `crossorigin` to preload link |
+This guarantees rizz audio ONLY plays during the rizz scene.
 
 ---
 
 ## Expected Result
 
-After this fix:
-- Page loads → audio bytes download AND buffer into Audio element
-- User clicks "Click here to see my rizz" → music plays **INSTANTLY** (0ms delay)
-- Works on iOS Safari, Chrome, Firefox, all browsers
-- Falls back gracefully if anything fails
+- Rizz scene music plays ONLY during the rizz scene
+- No audio leakage to game screen or any later screens
+- "Don't Click" button: black circle, white text, light orange pulsing glow
+- Rizz scene code is isolated in its own file for future maintainability
+

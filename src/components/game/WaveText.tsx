@@ -1,47 +1,23 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 
 interface WaveTextProps {
   text: string;
   className?: string;
-  /** Character limit before switching to simple pulse animation (default: 20) */
-  threshold?: number;
 }
 
-/**
- * Optimized WaveText - uses simple pulse for long strings to reduce DOM nodes
- */
-const WaveText = memo(({ text, className, threshold = 20 }: WaveTextProps) => {
-  // For long texts, use simple pulse to avoid creating N DOM elements
-  if (text.length > threshold) {
-    return (
-      <span className={`${className || ''} animate-pulse`}>
-        {text}
-      </span>
-    );
-  }
-
-  // For short texts, keep letter-by-letter wave animation
-  const letters = useMemo(() => 
-    text.split('').map((char, index) => ({
-      char,
-      delay: index * 0.05,
-      isSpace: char === ' ',
-    })),
-    [text]
-  );
-
+const WaveText = memo(({ text, className }: WaveTextProps) => {
   return (
     <span className={className}>
-      {letters.map((letter, index) => (
+      {text.split('').map((char, index) => (
         <span
           key={index}
           className="inline-block animate-letter-wave"
           style={{ 
-            animationDelay: `${letter.delay}s`,
-            whiteSpace: letter.isSpace ? 'pre' : 'normal'
+            animationDelay: `${index * 0.05}s`,
+            whiteSpace: char === ' ' ? 'pre' : 'normal'
           }}
         >
-          {letter.char}
+          {char}
         </span>
       ))}
     </span>
