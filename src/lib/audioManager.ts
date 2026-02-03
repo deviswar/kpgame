@@ -189,57 +189,59 @@ const ensureRizzHtmlAudio = (): HTMLAudioElement => {
 
 const playRizzIOS = (): void => {
   const audio = ensureRizzHtmlAudio();
-
-  // IMPORTANT (iOS Safari): the *first* media play call must be the real audio,
-  // otherwise Safari may reject the second play() as not user-initiated.
-  // So: start rizz first, then kick the silent unlocker.
+  
+  // DEBUG: Log audio state for diagnosis
+  console.log('📱 playRizzIOS called, audio element exists:', !!audio);
+  console.log('📱 Audio readyState:', audio.readyState);
+  console.log('📱 Audio networkState:', audio.networkState);
+  
+  // CRITICAL: Set volume to audible level BEFORE play
+  // Do NOT use 0.01 and raise later - that fails on iOS 15-16
+  audio.volume = 0.5;
+  audio.currentTime = 0;
+  
+  // Set flag synchronously BEFORE any async operation
+  rizzPlaying = true;
+  
+  // Attempt play - must be synchronous in gesture
   try {
-    // Use a tiny volume for the very first tick to help iOS treat it as media,
-    // then raise it immediately after (doesn't need to be in gesture).
-    audio.volume = 0.01;
-    audio.currentTime = 0;
-
-    const p = audio.play();
-    rizzPlaying = true; // set sync so other tracks won't start over it
-
-    // Start silent unlocker after rizz play is initiated
-    setTimeout(() => startSilentUnlocker(), 0);
-
-    if (p !== undefined) {
-      p.then(() => {
-        audio.volume = 0.5;
-        console.log('🎵 iOS: Rizz started via HTMLAudio');
-      }).catch((e) => {
-        // Retry once with muted-toggle trick
-        console.error('❌ iOS: Rizz HTMLAudio play failed:', e);
-        try {
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('🎵 iOS: Rizz playing at full volume');
+          // Start silent unlocker AFTER audio is confirmed playing
+          startSilentUnlocker();
+        })
+        .catch((error) => {
+          console.error('❌ iOS: Rizz failed:', error);
+          rizzPlaying = false;
+          
+          // Last resort: try with muted first, then unmute
           audio.muted = true;
-          const p2 = audio.play();
-          if (p2 !== undefined) {
-            p2.then(() => {
-              audio.muted = false;
-              audio.volume = 0.5;
-              console.log('🎵 iOS: Rizz started after retry');
-            }).catch((e2) => {
-              console.error('❌ iOS: Rizz retry failed:', e2);
+          audio.play()
+            .then(() => {
+              // Unmute after a tiny delay
+              setTimeout(() => {
+                audio.muted = false;
+                rizzPlaying = true;
+                console.log('🎵 iOS: Rizz playing (unmute trick)');
+                startSilentUnlocker();
+              }, 50);
+            })
+            .catch(() => {
+              console.error('❌ iOS: All rizz attempts failed');
               rizzPlaying = false;
             });
-          } else {
-            audio.muted = false;
-            audio.volume = 0.5;
-            console.log('🎵 iOS: Rizz started (retry no-promise)');
-          }
-        } catch (e2) {
-          console.error('❌ iOS: Rizz retry threw:', e2);
-          rizzPlaying = false;
-        }
-      });
+        });
     } else {
-      audio.volume = 0.5;
-      console.log('🎵 iOS: Rizz started via HTMLAudio (no promise)');
+      // No promise returned - audio likely started (older browsers)
+      console.log('🎵 iOS: Rizz started (no promise returned)');
+      startSilentUnlocker();
     }
   } catch (e) {
-    console.error('❌ iOS: Rizz HTMLAudio threw:', e);
+    console.error('❌ iOS: Rizz threw:', e);
     rizzPlaying = false;
   }
 };
