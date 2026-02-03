@@ -119,10 +119,19 @@ const unlockIOSWebAudio = (ctx: AudioContext): void => {
   }
 };
 
-// ============ PRE-CACHE RIZZ AUDIO (Web Audio API) ============
+// ============ PRE-CACHE RIZZ AUDIO ============
 export const precacheRizzAudio = async () => {
-  // CRITICAL: Create HTMLAudio FIRST and mark ready IMMEDIATELY
-  // This allows instant playback while WebAudio decodes in background
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  if (isIOS) {
+    // iOS: CANNOT preload audio - gesture requirements prevent it from working
+    // Just mark as ready - we'll create FRESH audio in the click handler
+    rizzPreloaded = true;
+    debug.log('📱 iOS: Rizz ready (will create fresh audio on play)');
+    return;
+  }
+  
+  // Non-iOS: Create and preload HTMLAudio for instant playback
   if (!rizzHtmlAudio) {
     rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
     rizzHtmlAudio.volume = 0.5;
@@ -133,25 +142,18 @@ export const precacheRizzAudio = async () => {
     rizzHtmlAudio.setAttribute('webkit-playsinline', '');
     rizzHtmlAudio.load();
     
-    // Mark ready IMMEDIATELY - HTMLAudio provides instant fallback
+    // Mark ready IMMEDIATELY for non-iOS
     rizzPreloaded = true;
     debug.log('✅ Rizz HTMLAudio ready (instant playback available)');
   }
 
-  // Already decoded? Skip
+  // Already decoded? Skip WebAudio
   if (rizzAudioBuffer) {
     debug.log('Rizz WebAudio already cached');
     return;
   }
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS) {
-    // iOS uses HTMLAudio only - already set up above
-    debug.log('📱 iOS: Using HTMLAudio path only');
-    return;
-  }
   
-  // Background decode for WebAudio (upgrade path for better quality)
+  // Background decode for WebAudio (upgrade path for better quality on desktop)
   try {
     debug.log('Starting WebAudio decode in background...');
     const ctx = getAudioContext();
@@ -165,76 +167,58 @@ export const precacheRizzAudio = async () => {
   }
 };
 
-const ensureRizzHtmlAudio = (): HTMLAudioElement => {
-  if (!rizzHtmlAudio) {
-    rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
-    rizzHtmlAudio.volume = 0.5;
-    rizzHtmlAudio.loop = true;
-    rizzHtmlAudio.preload = 'auto';
-    // CRITICAL for iOS: must set playsInline
-    (rizzHtmlAudio as any).playsInline = true;
-    rizzHtmlAudio.setAttribute('playsinline', '');
-    rizzHtmlAudio.setAttribute('webkit-playsinline', '');
-  }
-  return rizzHtmlAudio;
-};
-
+/**
+ * iOS RIZZ PLAYBACK - CRITICAL FIX
+ * 
+ * iOS Safari requires audio elements to be created INSIDE the user gesture context.
+ * Pre-created audio elements (from preload) are NOT allowed to play.
+ * 
+ * This is why game music works (it creates audio in handler) but rizz failed
+ * (it tried to use a preloaded audio element).
+ * 
+ * Solution: Create a FRESH Audio element right here, in the click handler.
+ */
 const playRizzIOS = (): void => {
-  const audio = ensureRizzHtmlAudio();
+  debug.log('📱 playRizzIOS: Creating FRESH audio in gesture context');
   
-  debug.log('📱 playRizzIOS called, readyState:', audio.readyState);
-  
+  // CRITICAL: Create NEW audio element inside user gesture
+  // This is blessed by iOS Safari's gesture requirement
+  const audio = new Audio(publicAssetUrl('music/rizz.mp3'));
   audio.volume = 0.5;
-  audio.currentTime = 0;
+  audio.loop = true;
+  (audio as any).playsInline = true;
+  audio.setAttribute('playsinline', '');
+  audio.setAttribute('webkit-playsinline', '');
+  
+  // Store for later stop/control
+  rizzHtmlAudio = audio;
   
   rizzPlaying = true;
   rizzLastMethod = 'ios-htmlaudio';
   rizzLastError = null;
   
-  try {
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          debug.log('🎵 iOS: Rizz playing');
-          rizzLastError = null;
-          startSilentUnlocker();
-        })
-        .catch((error) => {
-          debug.error('❌ iOS: Rizz failed:', error);
-          rizzPlaying = false;
-          rizzLastError = `iOS play failed: ${error.message || error}`;
-          
-          audio.muted = true;
-          audio.play()
-            .then(() => {
-              setTimeout(() => {
-                audio.muted = false;
-                rizzPlaying = true;
-                rizzLastError = null;
-                debug.log('🎵 iOS: Rizz playing (unmute trick)');
-                startSilentUnlocker();
-              }, 50);
-            })
-            .catch((e2) => {
-              debug.error('❌ iOS: All rizz attempts failed');
-              rizzPlaying = false;
-              rizzLastError = `iOS all attempts failed: ${e2.message || e2}`;
-            });
-        });
-    } else {
-      debug.log('🎵 iOS: Rizz started (no promise)');
-      startSilentUnlocker();
-    }
-  } catch (e: any) {
-    debug.error('❌ iOS: Rizz threw:', e);
-    rizzPlaying = false;
-    rizzLastError = `iOS threw: ${e.message || e}`;
+  // Play immediately - will work because we're in gesture context
+  const playPromise = audio.play();
+  
+  if (playPromise !== undefined) {
+    playPromise
+      .then(() => {
+        debug.log('🎵 iOS: Rizz playing (fresh audio in gesture)');
+        rizzLastError = null;
+        startSilentUnlocker();
+      })
+      .catch((error) => {
+        debug.error('❌ iOS: Rizz failed:', error);
+        rizzPlaying = false;
+        rizzLastError = `iOS play failed: ${error.message || error}`;
+      });
+  } else {
+    debug.log('🎵 iOS: Rizz started (no promise)');
+    startSilentUnlocker();
   }
 };
 
-// ============ MUSIC 1: RIZZ (Web Audio API) ============
+// ============ MUSIC 1: RIZZ ============
 export const playRizz = () => {
   if (rizzPlaying) {
     debug.log('Rizz already playing, skipping');
@@ -242,16 +226,17 @@ export const playRizz = () => {
   }
   
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  ensureRizzHtmlAudio();
 
-  let webAudioStarted = false;
-  let htmlAudioStarted = false;
-
+  // iOS: Use fresh audio creation (CRITICAL for gesture requirement)
   if (isIOS) {
-    debug.log('📱 iOS detected - using HTMLAudio path');
+    debug.log('📱 iOS detected - creating fresh audio in gesture');
     playRizzIOS();
     return;
   }
+
+  // Non-iOS path: Use preloaded audio or WebAudio
+  let webAudioStarted = false;
+  let htmlAudioStarted = false;
 
   startSilentUnlocker();
 
