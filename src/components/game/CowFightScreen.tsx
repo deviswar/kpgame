@@ -195,28 +195,22 @@ const CowFightScreen = ({ onComplete }: CowFightScreenProps) => {
         />
       </div>
 
-      {/* Background images - positioned at top */}
+      {/* Background images - positioned at top with lazy loading */}
       <div className="absolute top-20 left-0 right-0 flex justify-between px-4 z-10">
         {/* Cement bags on the left */}
-        <div 
-          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
-          style={{
-            backgroundImage: `url(${cementBagsImg})`,
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
+        <img 
+          src={cementBagsImg}
+          alt="Cement bags"
+          loading="lazy"
+          className="w-32 h-32 md:w-48 md:h-48 opacity-70 object-contain"
         />
         
         {/* Honda Amaze on the right */}
-        <div 
-          className="w-32 h-32 md:w-48 md:h-48 opacity-70"
-          style={{
-            backgroundImage: `url(${hondaAmazeImg})`,
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-          }}
+        <img 
+          src={hondaAmazeImg}
+          alt="Honda Amaze"
+          loading="lazy"
+          className="w-32 h-32 md:w-48 md:h-48 opacity-70 object-contain"
         />
       </div>
 
