@@ -1,9 +1,11 @@
+import { memo } from 'react';
+
 interface QTCharacterProps {
   scale: number;
   isAngry?: boolean;
 }
 
-const QTCharacter = ({ scale, isAngry = true }: QTCharacterProps) => {
+const QTCharacter = memo(({ scale, isAngry = true }: QTCharacterProps) => {
   const baseHeight = 180;
   const height = baseHeight * scale;
   const width = height * 0.45;
@@ -372,6 +374,8 @@ const QTCharacter = ({ scale, isAngry = true }: QTCharacterProps) => {
       )}
     </div>
   );
-};
+});
+
+QTCharacter.displayName = 'QTCharacter';
 
 export default QTCharacter;
