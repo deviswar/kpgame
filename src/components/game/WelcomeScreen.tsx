@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
-import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
+import { playRizz, stopRizz, precacheRizzAudio, preloadAllAudio } from '@/lib/audioManager';
 
 // Preload images for later screens - import ONLY what's needed for immediate display
 import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
@@ -19,8 +19,10 @@ const WelcomeScreen = memo(({
 
   // Preload audio and CRITICAL images immediately on mount
   useEffect(() => {
-    // Preload all audio (simplified - no pre-warming for iOS compatibility)
-    preloadAllAudio();
+    // IMPORTANT (iPhone Safari): do NOT start loading multiple audio files on first paint.
+    // That can saturate bandwidth/CPU and delay the first user-gesture playback.
+    // We only mark rizz as "ready" here; actual Audio is created on tap.
+    precacheRizzAudio();
 
     // Preload MILK SCENE BANNERS IMMEDIATELY (no delay!)
     [roseMilkBanner, villageMilkBanner].forEach(src => {
@@ -48,6 +50,12 @@ const WelcomeScreen = memo(({
 
     // Then update state (React batches this anyway)
     setShowRizzScene(true);
+
+    // After the first interaction, we can safely preload the other tracks.
+    // Delay slightly so rizz has priority on constrained iPhone Safari networks.
+    window.setTimeout(() => {
+      preloadAllAudio();
+    }, 1200);
   };
 
   const handleStartGame = () => {
