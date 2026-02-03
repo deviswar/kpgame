@@ -102,11 +102,14 @@ export const playRizz = () => {
   
   // Create fresh audio in gesture context (iOS requirement!)
   const audio = new Audio(publicAssetUrl('music/rizz.mp3'));
+  audio.preload = 'auto';
   audio.volume = 0.5;
   audio.loop = true;
   (audio as any).playsInline = true;
   audio.setAttribute('playsinline', '');
   audio.setAttribute('webkit-playsinline', '');
+  // Kick off loading immediately (some iOS Safari versions behave better with an explicit load())
+  try { audio.load(); } catch {}
   
   rizzHtmlAudio = audio;
   rizzPlaying = true;
