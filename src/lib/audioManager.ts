@@ -62,6 +62,22 @@ let rizzPlayAttemptTime: number | null = null;
 let rizzPlayResolvedTime: number | null = null;
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CACHE WARMING (NO AUDIO ELEMENTS)
+// ═══════════════════════════════════════════════════════════════════════════════
+// iOS Safari can ignore/deprioritize <audio preload>. A safe improvement is to
+// warm the HTTP cache using fetch() (no play(), no gesture requirement).
+const warmHttpCache = async (url: string): Promise<void> => {
+  try {
+    // Use GET (not HEAD) so the media bytes can be cached.
+    // keepalive helps on iOS when a navigation is happening.
+    await fetch(url, { method: 'GET', cache: 'force-cache', keepalive: true });
+  } catch (e) {
+    // Non-fatal: cache warming is best-effort.
+    debug.log('Cache warm failed:', url, e);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DEBUG STATUS FOR DebugPanel
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -126,8 +142,10 @@ const stopSilentUnlocker = (): void => {
 
 // ============ PRE-CACHE RIZZ AUDIO (simplified - just marks ready) ============
 export const precacheRizzAudio = async () => {
-  // Just mark as ready - audio will be created on demand in gesture context
+  // Best-effort: warm HTTP cache without creating Audio elements.
+  // Audio will still be created on-demand in the gesture.
   rizzPreloaded = true;
+  void warmHttpCache(publicAssetUrl('music/rizz.mp3'));
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -181,8 +199,9 @@ export const playRizz = () => {
       })
       .catch((e) => {
         debug.error('❌ Rizz failed:', e);
-        rizzPlaying = false;
-        rizzLastError = e.message || String(e);
+        rizzLastError = (e as any)?.message || String(e);
+        // IMPORTANT: fully clean up so future tracks aren't affected.
+        stopRizz();
       });
   }
 };
@@ -224,6 +243,11 @@ export const forceStopRizz = () => {
 export const preloadAllAudio = () => {
   // Mark rizz as ready (will be created on demand)
   rizzPreloaded = true;
+
+  // Warm HTTP cache for all tracks (best-effort, no Audio elements required)
+  void warmHttpCache(publicAssetUrl('music/rizz.mp3'));
+  void warmHttpCache(publicAssetUrl('music/background.mp3'));
+  void warmHttpCache(publicAssetUrl('music/mourning.mp3'));
   
   if (!gameMusicAudio) {
     gameMusicAudio = new Audio(publicAssetUrl('music/background.mp3'));
@@ -251,31 +275,17 @@ export const preloadAllAudio = () => {
 };
 
 export const preloadMourningMusic = () => {
+  // IMPORTANT (iOS): never call play() here; it can be blocked and cause
+  // confusing state. Preload = cache-warm + create Audio instance only.
+  mourningPreloaded = true;
+  void warmHttpCache(publicAssetUrl('music/mourning.mp3'));
+
   if (!mourningAudio) {
     mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
     mourningAudio.preload = 'auto';
-  }
-  
-  mourningAudio.load();
-  
-  const originalVolume = mourningAudio.volume;
-  mourningAudio.volume = 0;
-  mourningAudio.currentTime = 0;
-  
-  const primePromise = mourningAudio.play();
-  if (primePromise !== undefined) {
-    primePromise.then(() => {
-      mourningAudio!.pause();
-      mourningAudio!.currentTime = 0;
-      mourningAudio!.volume = originalVolume;
-      mourningPreloaded = true;
-      debug.log('Mourning audio primed and ready');
-    }).catch(() => {
-      mourningAudio!.volume = originalVolume;
-      debug.log('Mourning audio loaded (prime failed)');
-    });
+    try { mourningAudio.load(); } catch {}
   }
 };
 
@@ -297,6 +307,11 @@ export const playGameMusic = () => {
     gameMusicPlaying = true;
     
     const playPromise = gameMusicAudio.play();
+
+     // Keep iOS in “media playback” mode after the user gesture.
+     // (Does nothing on non‑iOS; startSilentUnlocker() is idempotent.)
+     startSilentUnlocker();
+
     if (playPromise !== undefined) {
       playPromise.catch((e) => {
         debug.error('Game music failed:', e);
@@ -357,6 +372,10 @@ export const playMourningMusic = () => {
     mourningAudio.currentTime = 0;
     
     const playPromise = mourningAudio.play();
+
+     // Keep iOS in “media playback” mode after the user gesture.
+     startSilentUnlocker();
+
     if (playPromise !== undefined) {
       playPromise.catch((e) => {
         debug.error('Mourning music failed:', e);
