@@ -121,54 +121,47 @@ const unlockIOSWebAudio = (ctx: AudioContext): void => {
 
 // ============ PRE-CACHE RIZZ AUDIO (Web Audio API) ============
 export const precacheRizzAudio = async () => {
+  // CRITICAL: Create HTMLAudio FIRST and mark ready IMMEDIATELY
+  // This allows instant playback while WebAudio decodes in background
+  if (!rizzHtmlAudio) {
+    rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
+    rizzHtmlAudio.volume = 0.5;
+    rizzHtmlAudio.loop = true;
+    rizzHtmlAudio.preload = 'auto';
+    (rizzHtmlAudio as any).playsInline = true;
+    rizzHtmlAudio.setAttribute('playsinline', '');
+    rizzHtmlAudio.setAttribute('webkit-playsinline', '');
+    rizzHtmlAudio.load();
+    
+    // Mark ready IMMEDIATELY - HTMLAudio provides instant fallback
+    rizzPreloaded = true;
+    debug.log('✅ Rizz HTMLAudio ready (instant playback available)');
+  }
+
+  // Already decoded? Skip
   if (rizzAudioBuffer) {
-    debug.log('Rizz audio already cached');
+    debug.log('Rizz WebAudio already cached');
     return;
   }
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   if (isIOS) {
-    try {
-      if (!rizzHtmlAudio) {
-        rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
-        rizzHtmlAudio.volume = 0.5;
-        rizzHtmlAudio.loop = true;
-        rizzHtmlAudio.preload = 'auto';
-        (rizzHtmlAudio as any).playsInline = true;
-        rizzHtmlAudio.setAttribute('playsinline', '');
-        rizzHtmlAudio.setAttribute('webkit-playsinline', '');
-      }
-      rizzHtmlAudio.load();
-      rizzPreloaded = true;
-      debug.log('📱 iOS: Rizz HTMLAudio warmed');
-    } catch (e) {
-      debug.error('❌ iOS: Failed to warm rizz HTMLAudio:', e);
-    }
+    // iOS uses HTMLAudio only - already set up above
+    debug.log('📱 iOS: Using HTMLAudio path only');
     return;
   }
   
+  // Background decode for WebAudio (upgrade path for better quality)
   try {
-    debug.log('Starting rizz audio pre-cache...');
+    debug.log('Starting WebAudio decode in background...');
     const ctx = getAudioContext();
     const response = await fetch(publicAssetUrl('music/rizz.mp3'));
     const arrayBuffer = await response.arrayBuffer();
     
     rizzAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    rizzPreloaded = true;
-    debug.log('✅ Rizz audio decoded - ready for INSTANT playback');
-
-    if (!rizzHtmlAudio) {
-      rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
-      rizzHtmlAudio.volume = 0.5;
-      rizzHtmlAudio.loop = true;
-      rizzHtmlAudio.preload = 'auto';
-      (rizzHtmlAudio as any).playsInline = true;
-      rizzHtmlAudio.setAttribute('playsinline', '');
-      rizzHtmlAudio.setAttribute('webkit-playsinline', '');
-    }
-    rizzHtmlAudio.load();
+    debug.log('✅ Rizz WebAudio decoded (quality upgrade available)');
   } catch (e) {
-    debug.error('❌ Failed to pre-cache rizz audio:', e);
+    debug.warn('WebAudio decode failed, HTMLAudio fallback active:', e);
   }
 };
 

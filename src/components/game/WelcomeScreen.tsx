@@ -2,8 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
-import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
-import { debug } from '@/lib/debug';
+import { playRizz, stopRizz, preloadAllAudio } from '@/lib/audioManager';
 
 // Preload images for later screens - import ONLY what's needed for immediate display
 import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
@@ -17,33 +16,13 @@ const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
-  const [rizzReady, setRizzReady] = useState(false);
 
   // Preload audio and CRITICAL images immediately on mount
   useEffect(() => {
-    // Preload all audio (critical for instant playback)
+    // Preload all audio (sets rizzPreloaded = true immediately)
     preloadAllAudio();
 
-    // Check audio readiness - but don't block forever
-    let checkCount = 0;
-    const maxChecks = 30; // Max 3 seconds
-    const checkAudioReady = () => {
-      checkCount++;
-      if (isRizzAudioReady()) {
-        setRizzReady(true);
-        debug.log('✅ Rizz audio ready');
-      } else if (checkCount < maxChecks) {
-        setTimeout(checkAudioReady, 100);
-      } else {
-        // Force ready after 3s to prevent infinite wait
-        setRizzReady(true);
-        debug.warn('⚠️ Rizz audio timeout - enabling button anyway');
-      }
-    };
-    checkAudioReady();
-
     // Preload MILK SCENE BANNERS IMMEDIATELY (no delay!)
-    // These are the images that load slowly in the milk scene
     [roseMilkBanner, villageMilkBanner].forEach(src => {
       const img = new Image();
       img.src = src;
@@ -144,11 +123,10 @@ const WelcomeScreen = memo(({
         <div className="flex flex-col items-center gap-2">
           <button 
             onClick={handleShowRizz} 
-            disabled={!rizzReady}
-            className={`${rizzReady ? 'bg-pink-500 hover:bg-pink-600 animate-pulse' : 'bg-gray-400 cursor-not-allowed'} backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 shadow-lg transition-colors active:scale-95`}
+            className="bg-pink-500 hover:bg-pink-600 animate-pulse backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 shadow-lg transition-colors active:scale-95"
           >
             <span className="text-white text-lg md:text-xl font-bold">
-              {rizzReady ? 'Click here to see my rizz 🥰' : 'Loading... ⏳'} 
+              Click here to see my rizz 🥰
             </span>
           </button>
           <div className="flex items-center gap-2">
