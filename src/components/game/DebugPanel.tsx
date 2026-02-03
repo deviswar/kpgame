@@ -88,7 +88,7 @@ const DebugPanel = () => {
           <div className="text-gray-400 mb-1">Rizz Audio:</div>
           <div>Playing: {rizzStatus.isPlaying ? '✅ Yes' : '❌ No'}</div>
           <div>Method: {rizzStatus.method || 'none'}</div>
-          <div>Preloaded: {rizzStatus.preloaded ? '✅' : '❌'}</div>
+          <div>Ready: {rizzStatus.preloaded ? '✅' : '❌'}</div>
           {rizzStatus.lastError && (
             <div className="text-red-400 break-words">Error: {rizzStatus.lastError}</div>
           )}
