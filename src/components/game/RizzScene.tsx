@@ -4,11 +4,10 @@ import WaveText from './WaveText';
 import DebugPanel from './DebugPanel';
 import { publicAssetUrl } from '@/lib/assetUrl';
 import { playRizz, getRizzStatus } from '@/lib/audioManager';
-// Primary: Vite-hashed import (works on Lovable)
-import qtGirlImageHashed from '@/assets/qt-girl.jpg';
-// Fallback: stable public URL (works on Vercel even with stale caches)
-const qtGirlImagePublic = publicAssetUrl('qt-girl.jpg');
+import { debug } from '@/lib/debug';
 
+// Single stable source: public folder (no hashing issues on Vercel)
+const qtGirlImage = publicAssetUrl('qt-girl.jpg');
 interface RizzSceneProps {
   onStart: () => void;
 }
@@ -24,20 +23,14 @@ interface RizzSceneProps {
  * - Stops rizz audio via stopRizz() when onStart is called
  */
 const RizzScene = memo(({ onStart }: RizzSceneProps) => {
-  const [qtImageSrc, setQtImageSrc] = useState(qtGirlImageHashed);
   const [qtImageError, setQtImageError] = useState(false);
   const [showRetrySound, setShowRetrySound] = useState(false);
 
-  // Handle image error - fallback to public URL
+  // Handle image error
   const handleImageError = useCallback(() => {
-    if (qtImageSrc === qtGirlImageHashed) {
-      console.log('⚠️ QT hashed image failed, trying public fallback:', qtGirlImagePublic);
-      setQtImageSrc(qtGirlImagePublic);
-    } else {
-      console.error('❌ Both QT image sources failed');
-      setQtImageError(true);
-    }
-  }, [qtImageSrc]);
+    debug.error('❌ QT image failed to load');
+    setQtImageError(true);
+  }, []);
 
   // Retry sound handler for when audio fails
   const handleRetrySound = useCallback(() => {
@@ -124,18 +117,18 @@ const RizzScene = memo(({ onStart }: RizzSceneProps) => {
             <span className="text-white font-bold text-sm md:text-base font-mono">​qt</span>
           </div>
           
-          {/* QT Character - Image with dual fallback */}
+          {/* QT Character - stable public URL */}
           {qtImageError ? (
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-pink-300 shadow-lg bg-pink-200 flex items-center justify-center">
               <span className="text-4xl md:text-5xl">👩</span>
             </div>
           ) : (
             <img 
-              src={qtImageSrc} 
+              src={qtGirlImage} 
               alt="QT" 
               className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
               onError={handleImageError}
-              onLoad={() => console.log('✅ QT image loaded from:', qtImageSrc)}
+              onLoad={() => debug.log('✅ QT image loaded')}
             />
           )}
           
