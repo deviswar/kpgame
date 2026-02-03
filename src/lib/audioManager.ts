@@ -1,47 +1,18 @@
-/**
- * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║                    AUDIO MANAGER - ARCHITECTURE RULES                         ║
- * ╠══════════════════════════════════════════════════════════════════════════════╣
- * ║                                                                              ║
- * ║  🚨 iOS SAFARI AUDIO REQUIREMENTS - DO NOT VIOLATE 🚨                        ║
- * ║                                                                              ║
- * ║  1. Audio MUST be created AND played in the SAME user gesture context       ║
- * ║     - ✅ onClick → new Audio() → audio.play()                                ║
- * ║     - ❌ onMount → new Audio() ... later onClick → audio.play()              ║
- * ║                                                                              ║
- * ║  2. Pre-warming/pre-buffering audio BREAKS iOS playback                     ║
- * ║     - ❌ warmRizzAudio(), preloadWithCanPlayThrough()                        ║
- * ║     - ✅ Just mark as "ready", create Audio on demand in gesture             ║
- * ║                                                                              ║
- * ║  3. Do NOT call preloadAllAudio() on mount - saturates bandwidth            ║
- * ║     - ✅ Call preloadAllAudio() AFTER first user interaction                 ║
- * ║     - ✅ Use 1200ms delay to let primary audio start first                   ║
- * ║                                                                              ║
- * ║  4. Prefer pointerdown/touchstart over onClick for first-play on iOS        ║
- * ║     - These events fire earlier and more reliably on mobile Safari          ║
- * ║                                                                              ║
- * ║  5. Silent unlocker must start AFTER main audio.play() call                 ║
- * ║     - Reduces contention for iOS audio pipeline                              ║
- * ║                                                                              ║
- * ╚══════════════════════════════════════════════════════════════════════════════╝
- */
-
 // Centralized Audio Manager - handles all 3 music tracks
-// Music 1: Rizz scene only (rizz.mp3) - Created fresh on gesture for iOS compatibility
+// Music 1: Rizz scene only (rizz.mp3) - USES WEB AUDIO API for Safari compatibility
 // Music 2: Gameplay - from "Tap to start" until hospital button (background.mp3)
 // Music 3: Mourning - from hospital button through end screen + leaked video (mourning.mp3)
 
-import { publicAssetUrl } from '@/lib/assetUrl';
-import { debug } from '@/lib/debug';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STATE VARIABLES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Rizz audio (Music 1) - created on demand in gesture context
+// ============ WEB AUDIO API FOR RIZZ (Safari-compatible) ============
+// This is the ONLY way to get instant audio playback on iPhone Safari
+let audioContext: AudioContext | null = null;
+let rizzAudioBuffer: AudioBuffer | null = null;
+let rizzBufferSource: AudioBufferSourceNode | null = null;
+let rizzGainNode: GainNode | null = null;
+// Fallback for devices/browsers where WebAudio starts but remains silent
 let rizzHtmlAudio: HTMLAudioElement | null = null;
 
-// Module-level singletons for other audio
+// Module-level singletons for other audio (persist across route navigations)
 let gameMusicAudio: HTMLAudioElement | null = null;
 let mourningAudio: HTMLAudioElement | null = null;
 
@@ -55,57 +26,17 @@ let gameMusicPreloaded = false;
 let mourningPreloaded = false;
 let rizzPreloaded = false;
 
-// Debug/timing tracking for diagnostics
-let rizzLastMethod: 'htmlaudio' | null = null;
-let rizzLastError: string | null = null;
-let rizzPlayAttemptTime: number | null = null;
-let rizzPlayResolvedTime: number | null = null;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CACHE WARMING (NO AUDIO ELEMENTS)
-// ═══════════════════════════════════════════════════════════════════════════════
-// iOS Safari can ignore/deprioritize <audio preload>. A safe improvement is to
-// warm the HTTP cache using fetch() (no play(), no gesture requirement).
-const warmHttpCache = async (url: string): Promise<void> => {
-  try {
-    // Use GET (not HEAD) so the media bytes can be cached.
-    // keepalive helps on iOS when a navigation is happening.
-    await fetch(url, { method: 'GET', cache: 'force-cache', keepalive: true });
-  } catch (e) {
-    // Non-fatal: cache warming is best-effort.
-    debug.log('Cache warm failed:', url, e);
-  }
+// ============ CHECK IF RIZZ AUDIO IS READY ============
+export const isRizzAudioReady = (): boolean => {
+  return rizzPreloaded;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DEBUG STATUS FOR DebugPanel
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const getRizzStatus = () => ({
-  isPlaying: rizzPlaying,
-  preloaded: rizzPreloaded,
-  method: rizzLastMethod,
-  lastError: rizzLastError,
-  playAttemptTime: rizzPlayAttemptTime,
-  playResolvedTime: rizzPlayResolvedTime,
-  latencyMs: rizzPlayAttemptTime && rizzPlayResolvedTime 
-    ? rizzPlayResolvedTime - rizzPlayAttemptTime 
-    : null,
-  htmlAudioState: rizzHtmlAudio ? {
-    readyState: rizzHtmlAudio.readyState,
-    networkState: rizzHtmlAudio.networkState,
-    paused: rizzHtmlAudio.paused,
-    currentTime: rizzHtmlAudio.currentTime,
-  } : null,
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// UTILITY EXPORTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const isRizzAudioReady = (): boolean => rizzPreloaded;
+// iOS unlock flag - only need to unlock once per session
+let iosAudioUnlocked = false;
 
 // ============ iOS SILENT MODE BYPASS ============
+// Playing a silent HTMLAudioElement alongside WebAudio forces iOS to treat
+// the audio session as "media" rather than "ringer", bypassing silent mode
 let silentAudioUnlocker: HTMLAudioElement | null = null;
 
 // Silent MP3 data URL (0.1 second of silence, ~1KB)
@@ -117,7 +48,8 @@ const startSilentUnlocker = (): void => {
   try {
     silentAudioUnlocker = new Audio(SILENT_MP3);
     silentAudioUnlocker.loop = true;
-    silentAudioUnlocker.volume = 0.01;
+    silentAudioUnlocker.volume = 0.01; // Nearly silent but not zero
+    // iOS attributes
     (silentAudioUnlocker as any).playsInline = true;
     silentAudioUnlocker.setAttribute('playsinline', '');
     silentAudioUnlocker.setAttribute('webkit-playsinline', '');
@@ -125,11 +57,11 @@ const startSilentUnlocker = (): void => {
     const playPromise = silentAudioUnlocker.play();
     if (playPromise !== undefined) {
       playPromise
-        .then(() => debug.log('✅ Silent unlocker started'))
-        .catch(() => debug.log('Silent unlocker failed (ok if not iOS)'));
+        .then(() => console.log('✅ Silent unlocker started - iOS silent mode bypassed'))
+        .catch(() => console.log('Silent unlocker failed (ok if not iOS)'));
     }
   } catch (e) {
-    debug.log('Silent unlocker error:', e);
+    console.log('Silent unlocker error:', e);
   }
 };
 
@@ -140,164 +72,293 @@ const stopSilentUnlocker = (): void => {
   }
 };
 
-// ============ PRE-CACHE RIZZ AUDIO (simplified - just marks ready) ============
-export const precacheRizzAudio = async () => {
-  // Best-effort: warm HTTP cache without creating Audio elements.
-  // Audio will still be created on-demand in the gesture.
-  rizzPreloaded = true;
-  void warmHttpCache(publicAssetUrl('music/rizz.mp3'));
+const getAudioContext = (): AudioContext => {
+  if (!audioContext) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    audioContext = new AudioContextClass();
+  }
+  return audioContext;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MUSIC 1: RIZZ (SIMPLE PATTERN - CREATE ON GESTURE)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ============ iOS WEBAUDIO UNLOCK ROUTINE ============
+// This is a battle-tested workaround for iOS Safari's audio restrictions
+// Plays a silent buffer to "unlock" the AudioContext on first user gesture
+const unlockIOSWebAudio = (ctx: AudioContext): void => {
+  // Only unlock once per session
+  if (iosAudioUnlocked) return;
+  
+  try {
+    // Check if context needs unlocking
+    const state = ctx.state as string; // Cast to handle 'interrupted' which isn't in TypeScript types
+    if (state === 'suspended' || state === 'interrupted') {
+      // Resume without awaiting - must stay synchronous
+      void ctx.resume();
+      console.log('AudioContext resume requested for unlock');
+    }
+    
+    // Play a tiny silent buffer - this is the key iOS unlock trick
+    // Creates a 1-sample (essentially silent) buffer and plays it immediately
+    const silentBuffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const silentSource = ctx.createBufferSource();
+    silentSource.buffer = silentBuffer;
+    silentSource.connect(ctx.destination);
+    silentSource.start(0);
+    
+    iosAudioUnlocked = true;
+    console.log('✅ iOS WebAudio unlock performed (silent buffer played)');
+  } catch (e) {
+    console.warn('iOS unlock attempt failed:', e);
+  }
+};
 
-export const playRizz = () => {
-  if (rizzPlaying) {
-    debug.log('Rizz already playing, skipping');
+// ============ PRE-CACHE RIZZ AUDIO (Web Audio API) ============
+// Fetch and decode audio EARLY so it's ready for instant playback
+export const precacheRizzAudio = async () => {
+  if (rizzAudioBuffer) {
+    console.log('Rizz audio already cached in AudioBuffer');
     return;
   }
   
-  // Record attempt time for diagnostics
-  rizzPlayAttemptTime = Date.now();
-  rizzPlayResolvedTime = null;
-  rizzLastError = null;
-  
-  // ═══════════════════════════════════════════════════════════════════════════
-  // 🔑 CRITICAL: Create audio FIRST, play() FIRST, THEN silent unlocker.
-  // This ensures iOS Safari prioritizes the real audio over the silent hack.
-  // ═══════════════════════════════════════════════════════════════════════════
-  
-  // Create fresh audio in gesture context (iOS requirement!)
-  const audio = new Audio(publicAssetUrl('music/rizz.mp3'));
-  audio.preload = 'auto';
-  audio.volume = 0.5;
-  audio.loop = true;
-  (audio as any).playsInline = true;
-  audio.setAttribute('playsinline', '');
-  audio.setAttribute('webkit-playsinline', '');
-  
-  // Kick off loading immediately
-  try { audio.load(); } catch {}
-  
-  rizzHtmlAudio = audio;
-  rizzPlaying = true;
-  rizzLastMethod = 'htmlaudio';
-  
-  // 🎵 PLAY FIRST - This is the critical path
-  const playPromise = audio.play();
-  
-  // 🔇 THEN start silent unlocker (lower priority, helps with iOS silent mode)
-  startSilentUnlocker();
-  
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => {
-        rizzPlayResolvedTime = Date.now();
-        const latency = rizzPlayResolvedTime - (rizzPlayAttemptTime || 0);
-        debug.log(`🎵 Rizz playing (latency: ${latency}ms)`);
-      })
-      .catch((e) => {
-        debug.error('❌ Rizz failed:', e);
-        rizzLastError = (e as any)?.message || String(e);
-        // IMPORTANT: fully clean up so future tracks aren't affected.
-        stopRizz();
-      });
+  try {
+    console.log('Starting rizz audio pre-cache with Web Audio API...');
+    const ctx = getAudioContext();
+    // IMPORTANT: Use MP3 for iOS Safari reliability. Safari often fails `decodeAudioData`
+    // for MP4/AAC depending on encoding/container.
+    const response = await fetch('/music/rizz.mp3');
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Decode audio data into AudioBuffer - this is the key step
+    rizzAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    rizzPreloaded = true;
+    console.log('✅ Rizz audio decoded into AudioBuffer - ready for INSTANT playback');
+
+    // Also warm up HTMLAudioElement as a fallback (no autoplay; just cache)
+    if (!rizzHtmlAudio) {
+      rizzHtmlAudio = new Audio('/music/rizz.mp3');
+      rizzHtmlAudio.volume = 0.5;
+      rizzHtmlAudio.loop = true;
+      rizzHtmlAudio.preload = 'auto';
+      // CRITICAL for iOS: must set playsInline
+      (rizzHtmlAudio as any).playsInline = true;
+      rizzHtmlAudio.setAttribute('playsinline', '');
+      rizzHtmlAudio.setAttribute('webkit-playsinline', '');
+    }
+    // Ensure the browser starts caching it
+    rizzHtmlAudio.load();
+  } catch (e) {
+    console.error('❌ Failed to pre-cache rizz audio:', e);
   }
 };
 
-/**
- * AGGRESSIVE RIZZ STOP - Ensures rizz audio CANNOT leak to other screens
- */
+// ============ MUSIC 1: RIZZ (Web Audio API) ============
+export const playRizz = () => {
+  if (rizzPlaying) {
+    console.log('Rizz already playing, skipping');
+    return;
+  }
+  
+  // CRITICAL: Start silent unlocker FIRST to bypass iOS silent mode
+  // This must happen before WebAudio to force iOS into "media" mode
+  startSilentUnlocker();
+  
+  // Ensure fallback exists (still only PLAYED within this user gesture)
+  if (!rizzHtmlAudio) {
+    rizzHtmlAudio = new Audio('/music/rizz.mp3');
+    rizzHtmlAudio.volume = 0.5;
+    rizzHtmlAudio.loop = true;
+    rizzHtmlAudio.preload = 'auto';
+    // CRITICAL for iOS: must set playsInline
+    (rizzHtmlAudio as any).playsInline = true;
+    rizzHtmlAudio.setAttribute('playsinline', '');
+    rizzHtmlAudio.setAttribute('webkit-playsinline', '');
+  }
+
+  let webAudioStarted = false;
+  let htmlAudioStarted = false;
+
+  try {
+    const ctx = getAudioContext();
+
+    // CRITICAL: Run iOS unlock routine FIRST - plays silent buffer to prime AudioContext
+    unlockIOSWebAudio(ctx);
+
+    // CRITICAL: Resume context - Safari requires this in user gesture
+    const state = ctx.state as string;
+    if (state === 'suspended' || state === 'interrupted') {
+      // Do NOT await (would break gesture); kick it off synchronously
+      void ctx.resume();
+      console.log('AudioContext resume requested');
+    }
+
+    // Stop any existing source
+    if (rizzBufferSource) {
+      try { rizzBufferSource.stop(); } catch {}
+      rizzBufferSource.disconnect();
+      rizzBufferSource = null;
+    }
+
+    if (rizzAudioBuffer) {
+      // Create new buffer source (MUST create fresh each time - can't reuse)
+      rizzBufferSource = ctx.createBufferSource();
+      rizzBufferSource.buffer = rizzAudioBuffer;
+      rizzBufferSource.loop = true;
+
+      // Create gain node for volume control (reuse if exists)
+      if (!rizzGainNode) {
+        rizzGainNode = ctx.createGain();
+        rizzGainNode.gain.value = 0.5;
+        rizzGainNode.connect(ctx.destination);
+      }
+
+      rizzBufferSource.connect(rizzGainNode);
+
+      // START IMMEDIATELY - synchronous
+      rizzBufferSource.start(0);
+      webAudioStarted = true;
+      rizzPlaying = true; // Mark playing ONLY on success
+      console.log('🎵 Rizz audio started via Web Audio API');
+    } else {
+      console.warn('Rizz AudioBuffer missing; will rely on HTMLAudio fallback');
+      // Best-effort: start loading (won't play automatically)
+      void precacheRizzAudio();
+    }
+  } catch (e) {
+    console.error('❌ WebAudio rizz start failed, falling back to HTMLAudio:', e);
+  }
+
+  // Fallback (still within the same click): if WebAudio didn't start, try HTMLAudio.
+  // This keeps old behavior working on browsers where WebAudio is unreliable.
+  if (!webAudioStarted && rizzHtmlAudio) {
+    try {
+      // Ensure it's ready
+      rizzHtmlAudio.currentTime = 0;
+      
+      const playPromise = rizzHtmlAudio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            htmlAudioStarted = true;
+            rizzPlaying = true; // Mark playing ONLY on success
+            console.log('🎵 Rizz audio started via HTMLAudio fallback');
+          })
+          .catch((e) => {
+            console.error('❌ HTMLAudio rizz play failed:', e);
+            // Keep rizzPlaying = false so user can retry
+          });
+      } else {
+        // Old browsers that don't return promise - assume success
+        htmlAudioStarted = true;
+        rizzPlaying = true;
+        console.log('🎵 Rizz audio started via HTMLAudio fallback (no promise)');
+      }
+    } catch (e) {
+      console.error('❌ HTMLAudio fallback threw:', e);
+      // Keep rizzPlaying = false so user can retry
+    }
+  }
+
+  // Log final state for debugging
+  console.log(`playRizz complete: webAudioStarted=${webAudioStarted}, htmlAudioStarted=${htmlAudioStarted}, rizzPlaying=${rizzPlaying}`);
+};
+
 export const stopRizz = () => {
   rizzPlaying = false;
+  
+  // Stop silent unlocker (iOS silent mode bypass)
   stopSilentUnlocker();
   
-  // Stop HTMLAudio
+  if (rizzBufferSource) {
+    try { 
+      rizzBufferSource.stop(); 
+    } catch (e) {
+      // Ignore - might already be stopped
+    }
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
+  }
   if (rizzHtmlAudio) {
     rizzHtmlAudio.pause();
     rizzHtmlAudio.currentTime = 0;
-    rizzHtmlAudio.onplay = null;
-    rizzHtmlAudio.oncanplay = null;
-    rizzHtmlAudio.oncanplaythrough = null;
-    rizzHtmlAudio.onplaying = null;
-    rizzHtmlAudio = null;
   }
-  
-  debug.log('🛑 Rizz audio FORCE STOPPED');
-};
-
-/**
- * Force-stop rizz - call this at the START of other music functions
- */
-export const forceStopRizz = () => {
-  if (!rizzPlaying && (!rizzHtmlAudio || rizzHtmlAudio.paused)) {
-    return;
-  }
-  
-  debug.log('🚨 Force-stopping rizz before other audio');
-  stopRizz();
+  console.log('Rizz audio stopped');
 };
 
 // ============ PRELOAD ALL AUDIO ============
+// Call this early (e.g., on WelcomeScreen mount) to ensure audio is ready
 export const preloadAllAudio = () => {
-  // Mark rizz as ready (will be created on demand)
-  rizzPreloaded = true;
-
-  // Warm HTTP cache for all tracks (best-effort, no Audio elements required)
-  void warmHttpCache(publicAssetUrl('music/rizz.mp3'));
-  void warmHttpCache(publicAssetUrl('music/background.mp3'));
-  void warmHttpCache(publicAssetUrl('music/mourning.mp3'));
+  // Pre-cache rizz audio using Web Audio API
+  precacheRizzAudio();
   
+  // Preload Game Music (Music 2)
   if (!gameMusicAudio) {
-    gameMusicAudio = new Audio(publicAssetUrl('music/background.mp3'));
+    gameMusicAudio = new Audio('/music/background.mp3');
     gameMusicAudio.volume = 0.5;
     gameMusicAudio.loop = true;
     gameMusicAudio.preload = 'auto';
     gameMusicAudio.load();
     gameMusicAudio.oncanplaythrough = () => {
       gameMusicPreloaded = true;
-      debug.log('Game music preloaded');
+      console.log('Game music preloaded');
     };
   }
   
+  // Preload Mourning (Music 3)
   if (!mourningAudio) {
-    mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
+    mourningAudio = new Audio('/music/mourning.mp3');
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
     mourningAudio.preload = 'auto';
     mourningAudio.load();
     mourningAudio.oncanplaythrough = () => {
       mourningPreloaded = true;
-      debug.log('Mourning audio preloaded');
+      console.log('Mourning audio preloaded');
     };
   }
 };
 
+// Specific preload for mourning music - call this when entering milk hospital
 export const preloadMourningMusic = () => {
-  // IMPORTANT (iOS): never call play() here; it can be blocked and cause
-  // confusing state. Preload = cache-warm + create Audio instance only.
-  mourningPreloaded = true;
-  void warmHttpCache(publicAssetUrl('music/mourning.mp3'));
-
   if (!mourningAudio) {
-    mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
+    mourningAudio = new Audio('/music/mourning.mp3');
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
     mourningAudio.preload = 'auto';
-    try { mourningAudio.load(); } catch {}
+  }
+  
+  // Force reload to ensure it's cached
+  mourningAudio.load();
+  
+  // Also try to "prime" the audio by playing silently for a moment
+  const originalVolume = mourningAudio.volume;
+  mourningAudio.volume = 0;
+  mourningAudio.currentTime = 0;
+  
+  const primePromise = mourningAudio.play();
+  if (primePromise !== undefined) {
+    primePromise.then(() => {
+      // Immediately pause after priming
+      mourningAudio!.pause();
+      mourningAudio!.currentTime = 0;
+      mourningAudio!.volume = originalVolume;
+      mourningPreloaded = true;
+      console.log('Mourning audio primed and ready');
+    }).catch(() => {
+      // If priming fails, at least the load() will help
+      mourningAudio!.volume = originalVolume;
+      console.log('Mourning audio loaded (prime failed, but ready)');
+    });
   }
 };
 
 // ============ MUSIC 2: GAME MUSIC ============
 export const playGameMusic = () => {
-  forceStopRizz();
-  
+  // CRITICAL: Never start game music if mourning has started
   if (mourningStartingOrPlaying || gameMusicPlaying) return;
   
   try {
+    // Ensure audio is created if not preloaded
     if (!gameMusicAudio) {
-      gameMusicAudio = new Audio(publicAssetUrl('music/background.mp3'));
+      gameMusicAudio = new Audio('/music/background.mp3');
       gameMusicAudio.volume = 0.5;
       gameMusicAudio.loop = true;
       gameMusicAudio.preload = 'auto';
@@ -307,14 +368,10 @@ export const playGameMusic = () => {
     gameMusicPlaying = true;
     
     const playPromise = gameMusicAudio.play();
-
-     // Keep iOS in “media playback” mode after the user gesture.
-     // (Does nothing on non‑iOS; startSilentUnlocker() is idempotent.)
-     startSilentUnlocker();
-
     if (playPromise !== undefined) {
       playPromise.catch((e) => {
-        debug.error('Game music failed:', e);
+        console.error('Game music failed:', e);
+        // Retry once
         setTimeout(() => {
           if (gameMusicPlaying && !mourningStartingOrPlaying && gameMusicAudio) {
             gameMusicAudio.play().catch(() => {});
@@ -323,7 +380,7 @@ export const playGameMusic = () => {
       });
     }
   } catch (e) {
-    debug.error('Game music error:', e);
+    console.error('Game music error:', e);
     gameMusicPlaying = false;
   }
 };
@@ -347,23 +404,25 @@ export const isGameMusicPlaying = (): boolean => {
 
 // ============ MUSIC 3: MOURNING ============
 export const playMourningMusic = () => {
-  forceStopRizz();
-  
+  // Prevent duplicate calls
   if (mourningStartingOrPlaying) return;
   
+  // CRITICAL: Set flag IMMEDIATELY (sync) before any async operations
   mourningStartingOrPlaying = true;
   
+  // CRITICAL: Stop game music IMMEDIATELY
   gameMusicPlaying = false;
   if (gameMusicAudio) {
     gameMusicAudio.pause();
     gameMusicAudio.currentTime = 0;
   }
   
-  debug.log('Starting mourning music - game music stopped');
+  console.log('Starting mourning music - game music stopped');
   
   try {
+    // Ensure audio is created if not preloaded
     if (!mourningAudio) {
-      mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
+      mourningAudio = new Audio('/music/mourning.mp3');
       mourningAudio.volume = 0.5;
       mourningAudio.loop = true;
       mourningAudio.preload = 'auto';
@@ -372,13 +431,10 @@ export const playMourningMusic = () => {
     mourningAudio.currentTime = 0;
     
     const playPromise = mourningAudio.play();
-
-     // Keep iOS in “media playback” mode after the user gesture.
-     startSilentUnlocker();
-
     if (playPromise !== undefined) {
       playPromise.catch((e) => {
-        debug.error('Mourning music failed:', e);
+        console.error('Mourning music failed:', e);
+        // Retry once
         setTimeout(() => {
           if (mourningStartingOrPlaying && mourningAudio) {
             mourningAudio.play().catch(() => {});
@@ -387,7 +443,7 @@ export const playMourningMusic = () => {
       });
     }
   } catch (e) {
-    debug.error('Mourning music error:', e);
+    console.error('Mourning music error:', e);
   }
 };
 
@@ -399,26 +455,80 @@ export const stopMourningMusic = () => {
   }
 };
 
-export const isMourningPlaying = (): boolean => {
+export const isMourningMusicPlaying = (): boolean => {
   return mourningStartingOrPlaying;
 };
 
-// ============ STOP ALL AUDIO ============
-export const stopAllAudio = () => {
-  stopRizz();
-  stopGameMusic();
-  stopMourningMusic();
+// ============ STOP ALL ============
+export const stopAll = () => {
+  console.log('Stopping all audio');
+  
+  // Reset all flags
+  rizzPlaying = false;
+  gameMusicPlaying = false;
+  mourningStartingOrPlaying = false;
+  
+  // Stop silent unlocker (iOS silent mode bypass)
   stopSilentUnlocker();
+  
+  // Stop rizz (Web Audio API)
+  if (rizzBufferSource) {
+    try { rizzBufferSource.stop(); } catch {}
+    rizzBufferSource.disconnect();
+    rizzBufferSource = null;
+  }
+  
+  // IMPORTANT: Also stop HTML fallback for rizz
+  if (rizzHtmlAudio) {
+    rizzHtmlAudio.pause();
+    rizzHtmlAudio.currentTime = 0;
+  }
+  
+  // Stop other audio
+  if (gameMusicAudio) {
+    gameMusicAudio.pause();
+    gameMusicAudio.currentTime = 0;
+  }
+  
+  if (mourningAudio) {
+    mourningAudio.pause();
+    mourningAudio.currentTime = 0;
+  }
 };
 
-// Alias for backward compatibility
-export const stopAll = stopAllAudio;
-
-// ============ RESET FOR GAME RESTART ============
-export const resetAudioState = () => {
-  stopAllAudio();
-  mourningStartingOrPlaying = false;
-  gameMusicPlaying = false;
-  rizzPlaying = false;
-  debug.log('Audio state reset for game restart');
+// ============ CLEANUP ============
+// Call this only when completely leaving the game (rare)
+export const destroyAll = () => {
+  stopAll();
+  
+  // Clean up Web Audio API resources
+  if (rizzGainNode) {
+    rizzGainNode.disconnect();
+    rizzGainNode = null;
+  }
+  rizzAudioBuffer = null;
+  
+  // Reset iOS unlock flag
+  iosAudioUnlocked = false;
+  
+  if (gameMusicAudio) {
+    gameMusicAudio.src = '';
+    gameMusicAudio = null;
+  }
+  
+  if (mourningAudio) {
+    mourningAudio.src = '';
+    mourningAudio = null;
+  }
+  
+  if (rizzHtmlAudio) {
+    rizzHtmlAudio.src = '';
+    rizzHtmlAudio = null;
+  }
+  
+  // Close AudioContext
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
 };
