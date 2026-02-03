@@ -1,7 +1,13 @@
-import { useState, memo } from 'react';
+import { useState, memo, useCallback, useEffect } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
-import qtGirlImage from '@/assets/qt-girl.jpg';
+import DebugPanel from './DebugPanel';
+import { publicAssetUrl } from '@/lib/assetUrl';
+import { playRizz, getRizzStatus } from '@/lib/audioManager';
+// Primary: Vite-hashed import (works on Lovable)
+import qtGirlImageHashed from '@/assets/qt-girl.jpg';
+// Fallback: stable public URL (works on Vercel even with stale caches)
+const qtGirlImagePublic = publicAssetUrl('qt-girl.jpg');
 
 interface RizzSceneProps {
   onStart: () => void;
@@ -18,10 +24,61 @@ interface RizzSceneProps {
  * - Stops rizz audio via stopRizz() when onStart is called
  */
 const RizzScene = memo(({ onStart }: RizzSceneProps) => {
+  const [qtImageSrc, setQtImageSrc] = useState(qtGirlImageHashed);
   const [qtImageError, setQtImageError] = useState(false);
+  const [showRetrySound, setShowRetrySound] = useState(false);
+
+  // Handle image error - fallback to public URL
+  const handleImageError = useCallback(() => {
+    if (qtImageSrc === qtGirlImageHashed) {
+      console.log('⚠️ QT hashed image failed, trying public fallback:', qtGirlImagePublic);
+      setQtImageSrc(qtGirlImagePublic);
+    } else {
+      console.error('❌ Both QT image sources failed');
+      setQtImageError(true);
+    }
+  }, [qtImageSrc]);
+
+  // Retry sound handler for when audio fails
+  const handleRetrySound = useCallback(() => {
+    playRizz();
+    // Check status after a short delay
+    setTimeout(() => {
+      const status = getRizzStatus();
+      if (status.isPlaying) {
+        setShowRetrySound(false);
+      }
+    }, 500);
+  }, []);
+
+  // Check if sound failed after mount
+  useEffect(() => {
+    const checkSound = setTimeout(() => {
+      const status = getRizzStatus();
+      if (!status.isPlaying && status.lastError) {
+        setShowRetrySound(true);
+      }
+    }, 1000);
+    return () => clearTimeout(checkSound);
+  }, []);
 
   return (
     <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden">
+      {/* Debug Panel - only visible with ?debug=1 */}
+      <DebugPanel />
+
+      {/* Retry Sound Button - shows if audio failed */}
+      {showRetrySound && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+          <button
+            onClick={handleRetrySound}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold animate-pulse shadow-lg"
+          >
+            🔊 Tap to enable sound
+          </button>
+        </div>
+      )}
+
       {/* Version number - bottom left */}
       <div className="absolute bottom-24 left-4">
         <span className="text-white text-xs font-medium">version - 8008.69</span>
@@ -67,17 +124,18 @@ const RizzScene = memo(({ onStart }: RizzSceneProps) => {
             <span className="text-white font-bold text-sm md:text-base font-mono">​qt</span>
           </div>
           
-          {/* QT Character - Image with fallback */}
+          {/* QT Character - Image with dual fallback */}
           {qtImageError ? (
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-pink-300 shadow-lg bg-pink-200 flex items-center justify-center">
               <span className="text-4xl md:text-5xl">👩</span>
             </div>
           ) : (
             <img 
-              src={qtGirlImage} 
+              src={qtImageSrc} 
               alt="QT" 
               className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-full border-4 border-pink-300 shadow-lg"
-              onError={() => setQtImageError(true)}
+              onError={handleImageError}
+              onLoad={() => console.log('✅ QT image loaded from:', qtImageSrc)}
             />
           )}
           

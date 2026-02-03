@@ -28,6 +28,25 @@ let gameMusicPreloaded = false;
 let mourningPreloaded = false;
 let rizzPreloaded = false;
 
+// Debug status tracking
+let rizzLastMethod: 'webaudio' | 'htmlaudio' | 'ios-htmlaudio' | null = null;
+let rizzLastError: string | null = null;
+
+// ============ GET RIZZ STATUS FOR DEBUG UI ============
+export const getRizzStatus = () => {
+  return {
+    isPlaying: rizzPlaying,
+    preloaded: rizzPreloaded,
+    method: rizzLastMethod,
+    lastError: rizzLastError,
+    htmlAudioState: rizzHtmlAudio ? {
+      readyState: rizzHtmlAudio.readyState,
+      paused: rizzHtmlAudio.paused,
+      currentTime: rizzHtmlAudio.currentTime,
+    } : null,
+  };
+};
+
 // ============ CHECK IF RIZZ AUDIO IS READY ============
 export const isRizzAudioReady = (): boolean => {
   return rizzPreloaded;
@@ -204,6 +223,8 @@ const playRizzIOS = (): void => {
   
   // Set flag synchronously BEFORE any async operation
   rizzPlaying = true;
+  rizzLastMethod = 'ios-htmlaudio';
+  rizzLastError = null;
   
   // Attempt play - must be synchronous in gesture
   try {
@@ -213,12 +234,14 @@ const playRizzIOS = (): void => {
       playPromise
         .then(() => {
           console.log('🎵 iOS: Rizz playing at full volume');
+          rizzLastError = null;
           // Start silent unlocker AFTER audio is confirmed playing
           startSilentUnlocker();
         })
         .catch((error) => {
           console.error('❌ iOS: Rizz failed:', error);
           rizzPlaying = false;
+          rizzLastError = `iOS play failed: ${error.message || error}`;
           
           // Last resort: try with muted first, then unmute
           audio.muted = true;
@@ -228,13 +251,15 @@ const playRizzIOS = (): void => {
               setTimeout(() => {
                 audio.muted = false;
                 rizzPlaying = true;
+                rizzLastError = null;
                 console.log('🎵 iOS: Rizz playing (unmute trick)');
                 startSilentUnlocker();
               }, 50);
             })
-            .catch(() => {
+            .catch((e2) => {
               console.error('❌ iOS: All rizz attempts failed');
               rizzPlaying = false;
+              rizzLastError = `iOS all attempts failed: ${e2.message || e2}`;
             });
         });
     } else {
@@ -242,9 +267,10 @@ const playRizzIOS = (): void => {
       console.log('🎵 iOS: Rizz started (no promise returned)');
       startSilentUnlocker();
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error('❌ iOS: Rizz threw:', e);
     rizzPlaying = false;
+    rizzLastError = `iOS threw: ${e.message || e}`;
   }
 };
 
@@ -313,6 +339,8 @@ export const playRizz = () => {
       rizzBufferSource.start(0);
       webAudioStarted = true;
       rizzPlaying = true;
+      rizzLastMethod = 'webaudio';
+      rizzLastError = null;
       console.log('🎵 Rizz audio started via Web Audio API');
     } else {
       console.warn('Rizz AudioBuffer missing; will rely on HTMLAudio fallback');
@@ -332,10 +360,13 @@ export const playRizz = () => {
           .then(() => {
             htmlAudioStarted = true;
             rizzPlaying = true;
+            rizzLastMethod = 'htmlaudio';
+            rizzLastError = null;
             console.log('🎵 Rizz audio started via HTMLAudio fallback');
           })
-          .catch((e) => {
+          .catch((e: any) => {
             console.error('❌ HTMLAudio rizz play failed:', e);
+            rizzLastError = `HTMLAudio fallback failed: ${e.message || e}`;
           });
       } else {
         htmlAudioStarted = true;
