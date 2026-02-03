@@ -131,11 +131,16 @@ const FeedKPGame = () => {
           </p>
         </div>
         
-        {/* Thank you popup */}
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-3 shadow-xl border-4 border-green-400/50 animate-fade-in max-w-[200px] mt-4">
-          <p className="text-gray-800 text-lg md:text-xl font-bold text-center">
-            Thank you 🙏
-          </p>
+        {/* Loading bar */}
+        <div className="w-64 md:w-80 mt-4">
+          <div className="bg-gray-300 rounded-full h-4 overflow-hidden shadow-inner border-2 border-gray-400">
+          <div 
+              className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full"
+              style={{
+                animation: 'loadingFill 4s linear forwards'
+              }}
+            />
+          </div>
         </div>
       </div>
     );

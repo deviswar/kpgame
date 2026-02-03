@@ -33,17 +33,40 @@ const MilkHospitalScreen = ({
   const [waitingForUserTap, setWaitingForUserTap] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Preload mourning music AND images on mount so they're ready for instant playback
+  // Preload mourning music AND images progressively (non-blocking)
   useEffect(() => {
-    const loadAssets = async () => {
-      // Preload mourning audio immediately (primes it for instant playback)
-      preloadMourningMusic();
+    // Preload mourning audio immediately (primes it for instant playback)
+    preloadMourningMusic();
 
-      // Preload mourning images
-      await Promise.all([preloadImage(pugMemorial), preloadImage(pugGrave)]);
-      setImagesLoaded(true);
-    };
-    loadAssets();
+    // Progressive image loading - don't block render
+    // Memorial images are critical (visible in mourning phase)
+    let loadedCount = 0;
+    const criticalImages = [pugMemorial, pugGrave];
+    const backgroundImages = [roseMilkBanner, villageMilkBanner];
+    
+    // Load critical images first
+    criticalImages.forEach(src => {
+      const img = new Image();
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount >= criticalImages.length) {
+          setImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount >= criticalImages.length) {
+          setImagesLoaded(true);
+        }
+      };
+      img.src = src;
+    });
+    
+    // Load background images without blocking
+    backgroundImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
 
   // Handler for the hospital button - user tap triggers mourning music (works on mobile!)
@@ -55,26 +78,24 @@ const MilkHospitalScreen = ({
     setPhase('mourning');
     setWaitingForUserTap(false);
 
-    // Trigger flashes - 8 total flashes
-    setShowMourningFlash(true);
-    setTimeout(() => setShowMourningFlash(false), 150);
-    setTimeout(() => setShowMourningFlash(true), 300);
-    setTimeout(() => setShowMourningFlash(false), 450);
-    setTimeout(() => setShowMourningFlash(true), 600);
-    setTimeout(() => setShowMourningFlash(false), 750);
-    setTimeout(() => setShowMourningFlash(true), 900);
-    setTimeout(() => setShowMourningFlash(false), 1050);
-    setTimeout(() => setShowMourningFlash(true), 1200);
-    setTimeout(() => setShowMourningFlash(false), 1350);
-    setTimeout(() => setShowMourningFlash(true), 1500);
-    setTimeout(() => setShowMourningFlash(false), 1650);
-    setTimeout(() => setShowMourningFlash(true), 1800);
-    setTimeout(() => setShowMourningFlash(false), 1950);
-    setTimeout(() => setShowMourningFlash(true), 2100);
-    setTimeout(() => setShowMourningFlash(false), 2250);
+    // Consolidated flash timeline - cleaner timer management
+    const flashTimeline = [
+      0, 150, 300, 450, 600, 750, 900, 1050, 
+      1200, 1350, 1500, 1650, 1800, 1950, 2100, 2250
+    ];
+    
+    const flashTimers = flashTimeline.map((delay, i) => 
+      setTimeout(() => setShowMourningFlash(i % 2 === 0), delay)
+    );
 
     // Complete after mourning duration
-    setTimeout(() => onComplete(), 9300);
+    const completeTimer = setTimeout(() => onComplete(), 8300);
+    
+    // Store timers for potential cleanup (though component will unmount)
+    return () => {
+      flashTimers.forEach(clearTimeout);
+      clearTimeout(completeTimer);
+    };
   };
   useEffect(() => {
     // Phase timing

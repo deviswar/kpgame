@@ -10,17 +10,15 @@
 
     <!-- Preload critical first-interaction audio (high priority) -->
     <link rel="preload" href="/music/rizz.mp3" as="audio" />
-    <!-- Preload QT image for Rizz Scene (critical - shown immediately after rizz button click) -->
-    <link rel="preload" href="/src/assets/qt-girl.jpg" as="image" type="image/jpeg" />
-    <!-- Prefetch later audio (lower priority) -->
-    <link rel="prefetch" href="/music/background.mp3" as="fetch" />
-    <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
-    <!-- kpfall.mp4 removed - will lazy load when needed -->
+    <!-- QT image: preload public fallback for Vercel reliability -->
+    <link rel="preload" href="/qt-girl.jpg" as="image" />
+    <!-- Non-critical audio loads via JS preloadAllAudio() after mount -->
 
     <!-- DNS prefetch for fonts -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Bangers&family=Bungee+Shade&display=swap" />
 
     <link rel="canonical" href="https://kpgtest.lovable.app/" />
 

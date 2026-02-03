@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import KPCharacter from './KPCharacter';
+import { publicAssetUrl } from '@/lib/assetUrl';
 
 interface AirplaneAnimationProps {
   onComplete: () => void;
@@ -36,28 +37,44 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Preload video as blob for INSTANT playback with zero buffering
+  // DELAYED to avoid competing with critical initial page resources
+  // Fixed: proper abort handling to prevent memory leaks
   useEffect(() => {
+    let blobUrlToClean: string | null = null;
+    let aborted = false;
+    
     const preloadVideoAsBlob = async () => {
       try {
-        const response = await fetch('/music/fall.mp4');
+        const response = await fetch(publicAssetUrl('music/fall.mp4'));
+        if (aborted) return; // Don't process if component unmounted
+        
         const blob = await response.blob();
+        if (aborted) {
+          // Cleanup if unmounted during blob creation
+          return;
+        }
+        
         const blobUrl = URL.createObjectURL(blob);
+        blobUrlToClean = blobUrl;
         setVideoBlobUrl(blobUrl);
         setVideoPreloaded(true);
-        console.log('Video pre-cached as blob - ready for instant playback');
       } catch (e) {
-        console.error('Failed to pre-cache video:', e);
         // Fallback: still mark as preloaded so video can play from network
-        setVideoPreloaded(true);
+        if (!aborted) {
+          setVideoPreloaded(true);
+        }
       }
     };
     
-    preloadVideoAsBlob();
+    // Delay video preload by 2 seconds to prioritize critical resources
+    const timer = setTimeout(preloadVideoAsBlob, 2000);
     
     return () => {
+      aborted = true;
+      clearTimeout(timer);
       // Cleanup blob URL on unmount
-      if (videoBlobUrl) {
-        URL.revokeObjectURL(videoBlobUrl);
+      if (blobUrlToClean) {
+        URL.revokeObjectURL(blobUrlToClean);
       }
     };
   }, []);
@@ -67,8 +84,8 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Generate confetti pieces
-  const confettiPieces = [...Array(50)].map((_, i) => ({
+  // Generate confetti pieces - reduced from 50 to 25 for mobile performance
+  const confettiPieces = [...Array(25)].map((_, i) => ({
     delay: Math.random() * 2,
     left: Math.random() * 100,
   }));
@@ -89,21 +106,24 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 py-4 px-3">
         {/* Video container - takes most space */}
         <div className="flex-1 w-full flex flex-col items-center justify-center">
-          <video
-            ref={videoRef}
-            src={videoBlobUrl || '/music/fall.mp4'}
-            autoPlay
-            loop
-            playsInline
-            preload="auto"
-            muted
-            className="w-full max-w-md rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
-            style={{ 
-              maxHeight: '55vh',
-              pointerEvents: 'none'
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-          />
+          {/* Video wrapper */}
+          <div className="w-full max-w-md">
+            <video
+              ref={videoRef}
+              src={videoBlobUrl || publicAssetUrl('music/fall.mp4')}
+              autoPlay
+              loop
+              playsInline
+              preload="auto"
+              muted
+              className="w-full rounded-2xl shadow-2xl border-4 border-primary/50 no-video-controls"
+              style={{ 
+                maxHeight: '50vh',
+                pointerEvents: 'none'
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          </div>
           
           {/* Brutal popup below video */}
           <div className="bg-black px-5 py-3 rounded-xl shadow-xl mt-3">
@@ -115,13 +135,26 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
 
         {/* Bottom section - compact for mobile */}
         <div className="w-full flex flex-col items-center gap-3 mt-3">
-          {/* Go to Home button */}
-          <button
-            onClick={onComplete}
-            className="bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold text-base md:text-lg hover:scale-105 transition-transform shadow-xl w-full max-w-xs"
-          >
-            Go to Home 🏠
-          </button>
+          {/* Two buttons side by side */}
+          <div className="flex gap-3 w-full max-w-md px-2">
+            {/* Go to Home button - left */}
+            <button
+              onClick={onComplete}
+              className="flex-1 bg-primary text-primary-foreground px-4 py-3 rounded-2xl font-bold text-sm md:text-base hover:scale-105 transition-transform shadow-xl"
+            >
+              Go to Home 🏠
+            </button>
+            
+            {/* Click here to abuse KP button - right with orange glow */}
+            <a
+              href="https://api.whatsapp.com/send/?phone=919573725363&text=sir+meeru+erripuk+ah?+🤡&type=phone_number&app_absent=0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-black text-white px-4 py-3 rounded-2xl font-bold text-sm md:text-base hover:scale-105 transition-transform shadow-xl animate-glow-pulse text-center"
+            >
+              Click here to abuse KP 🤡
+            </a>
+          </div>
           
           {/* PhonePe request */}
           <p className="text-white/90 text-sm md:text-base font-medium text-center">
