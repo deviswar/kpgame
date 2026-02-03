@@ -10,11 +10,9 @@
 
     <!-- Preload critical first-interaction audio (high priority) -->
     <link rel="preload" href="/music/rizz.mp3" as="audio" />
-    <!-- QT image loads via ES6 import in RizzScene.tsx - no preload needed -->
-    <!-- Prefetch later audio (lower priority) -->
-    <link rel="prefetch" href="/music/background.mp3" as="fetch" />
-    <link rel="prefetch" href="/music/mourning.mp3" as="fetch" />
-    <!-- kpfall.mp4 removed - will lazy load when needed -->
+    <!-- QT image: preload public fallback for Vercel reliability -->
+    <link rel="preload" href="/qt-girl.jpg" as="image" />
+    <!-- Non-critical audio loads via JS preloadAllAudio() after mount -->
 
     <!-- DNS prefetch for fonts -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
