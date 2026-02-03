@@ -5,6 +5,8 @@
 
 // ============ WEB AUDIO API FOR RIZZ (Safari-compatible) ============
 // This is the ONLY way to get instant audio playback on iPhone Safari
+import { publicAssetUrl } from '@/lib/assetUrl';
+
 let audioContext: AudioContext | null = null;
 let rizzAudioBuffer: AudioBuffer | null = null;
 let rizzBufferSource: AudioBufferSourceNode | null = null;
@@ -125,7 +127,7 @@ export const precacheRizzAudio = async () => {
   if (isIOS) {
     try {
       if (!rizzHtmlAudio) {
-        rizzHtmlAudio = new Audio('/music/rizz.mp3');
+        rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
         rizzHtmlAudio.volume = 0.5;
         rizzHtmlAudio.loop = true;
         rizzHtmlAudio.preload = 'auto';
@@ -147,7 +149,7 @@ export const precacheRizzAudio = async () => {
     const ctx = getAudioContext();
     // IMPORTANT: Use MP3 for iOS Safari reliability. Safari often fails `decodeAudioData`
     // for MP4/AAC depending on encoding/container.
-    const response = await fetch('/music/rizz.mp3');
+    const response = await fetch(publicAssetUrl('music/rizz.mp3'));
     const arrayBuffer = await response.arrayBuffer();
     
     // Decode audio data into AudioBuffer - this is the key step
@@ -157,7 +159,7 @@ export const precacheRizzAudio = async () => {
 
     // Also warm up HTMLAudioElement as a fallback (no autoplay; just cache)
     if (!rizzHtmlAudio) {
-      rizzHtmlAudio = new Audio('/music/rizz.mp3');
+      rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
       rizzHtmlAudio.volume = 0.5;
       rizzHtmlAudio.loop = true;
       rizzHtmlAudio.preload = 'auto';
@@ -175,7 +177,7 @@ export const precacheRizzAudio = async () => {
 
 const ensureRizzHtmlAudio = (): HTMLAudioElement => {
   if (!rizzHtmlAudio) {
-    rizzHtmlAudio = new Audio('/music/rizz.mp3');
+    rizzHtmlAudio = new Audio(publicAssetUrl('music/rizz.mp3'));
     rizzHtmlAudio.volume = 0.5;
     rizzHtmlAudio.loop = true;
     rizzHtmlAudio.preload = 'auto';
@@ -413,7 +415,7 @@ export const preloadAllAudio = () => {
   
   // Preload Game Music (Music 2)
   if (!gameMusicAudio) {
-    gameMusicAudio = new Audio('/music/background.mp3');
+    gameMusicAudio = new Audio(publicAssetUrl('music/background.mp3'));
     gameMusicAudio.volume = 0.5;
     gameMusicAudio.loop = true;
     gameMusicAudio.preload = 'auto';
@@ -426,7 +428,7 @@ export const preloadAllAudio = () => {
   
   // Preload Mourning (Music 3)
   if (!mourningAudio) {
-    mourningAudio = new Audio('/music/mourning.mp3');
+    mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
     mourningAudio.preload = 'auto';
@@ -441,7 +443,7 @@ export const preloadAllAudio = () => {
 // Specific preload for mourning music - call this when entering milk hospital
 export const preloadMourningMusic = () => {
   if (!mourningAudio) {
-    mourningAudio = new Audio('/music/mourning.mp3');
+    mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
     mourningAudio.volume = 0.5;
     mourningAudio.loop = true;
     mourningAudio.preload = 'auto';
@@ -483,7 +485,7 @@ export const playGameMusic = () => {
   try {
     // Ensure audio is created if not preloaded
     if (!gameMusicAudio) {
-      gameMusicAudio = new Audio('/music/background.mp3');
+      gameMusicAudio = new Audio(publicAssetUrl('music/background.mp3'));
       gameMusicAudio.volume = 0.5;
       gameMusicAudio.loop = true;
       gameMusicAudio.preload = 'auto';
@@ -550,7 +552,7 @@ export const playMourningMusic = () => {
   try {
     // Ensure audio is created if not preloaded
     if (!mourningAudio) {
-      mourningAudio = new Audio('/music/mourning.mp3');
+      mourningAudio = new Audio(publicAssetUrl('music/mourning.mp3'));
       mourningAudio.volume = 0.5;
       mourningAudio.loop = true;
       mourningAudio.preload = 'auto';

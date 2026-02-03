@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import KPCharacter from './KPCharacter';
+import { publicAssetUrl } from '@/lib/assetUrl';
 
 interface AirplaneAnimationProps {
   onComplete: () => void;
@@ -42,7 +43,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
     
     const preloadVideoAsBlob = async () => {
       try {
-        const response = await fetch('/music/fall.mp4');
+        const response = await fetch(publicAssetUrl('music/fall.mp4'));
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         blobUrlToClean = blobUrl;
@@ -101,7 +102,7 @@ const AirplaneAnimation = ({ onComplete }: AirplaneAnimationProps) => {
           <div className="w-full max-w-md">
             <video
               ref={videoRef}
-              src={videoBlobUrl || '/music/fall.mp4'}
+              src={videoBlobUrl || publicAssetUrl('music/fall.mp4')}
               autoPlay
               loop
               playsInline
