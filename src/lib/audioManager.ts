@@ -1,3 +1,31 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║                    AUDIO MANAGER - ARCHITECTURE RULES                         ║
+ * ╠══════════════════════════════════════════════════════════════════════════════╣
+ * ║                                                                              ║
+ * ║  🚨 iOS SAFARI AUDIO REQUIREMENTS - DO NOT VIOLATE 🚨                        ║
+ * ║                                                                              ║
+ * ║  1. Audio MUST be created AND played in the SAME user gesture context       ║
+ * ║     - ✅ onClick → new Audio() → audio.play()                                ║
+ * ║     - ❌ onMount → new Audio() ... later onClick → audio.play()              ║
+ * ║                                                                              ║
+ * ║  2. Pre-warming/pre-buffering audio BREAKS iOS playback                     ║
+ * ║     - ❌ warmRizzAudio(), preloadWithCanPlayThrough()                        ║
+ * ║     - ✅ Just mark as "ready", create Audio on demand in gesture             ║
+ * ║                                                                              ║
+ * ║  3. Do NOT call preloadAllAudio() on mount - saturates bandwidth            ║
+ * ║     - ✅ Call preloadAllAudio() AFTER first user interaction                 ║
+ * ║     - ✅ Use 1200ms delay to let primary audio start first                   ║
+ * ║                                                                              ║
+ * ║  4. Prefer pointerdown/touchstart over onClick for first-play on iOS        ║
+ * ║     - These events fire earlier and more reliably on mobile Safari          ║
+ * ║                                                                              ║
+ * ║  5. Silent unlocker must start AFTER main audio.play() call                 ║
+ * ║     - Reduces contention for iOS audio pipeline                              ║
+ * ║                                                                              ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ */
+
 // Centralized Audio Manager - handles all 3 music tracks
 // Music 1: Rizz scene only (rizz.mp3) - Created fresh on gesture for iOS compatibility
 // Music 2: Gameplay - from "Tap to start" until hospital button (background.mp3)
@@ -6,11 +34,11 @@
 import { publicAssetUrl } from '@/lib/assetUrl';
 import { debug } from '@/lib/debug';
 
-// Legacy references (kept for stopRizz compatibility)
-let audioContext: AudioContext | null = null;
-let rizzAudioBuffer: AudioBuffer | null = null;
-let rizzBufferSource: AudioBufferSourceNode | null = null;
-let rizzGainNode: GainNode | null = null;
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE VARIABLES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Rizz audio (Music 1) - created on demand in gesture context
 let rizzHtmlAudio: HTMLAudioElement | null = null;
 
 // Module-level singletons for other audio
@@ -27,28 +55,39 @@ let gameMusicPreloaded = false;
 let mourningPreloaded = false;
 let rizzPreloaded = false;
 
-// Debug status tracking
-let rizzLastMethod: 'webaudio' | 'htmlaudio' | 'ios-htmlaudio' | null = null;
+// Debug/timing tracking for diagnostics
+let rizzLastMethod: 'htmlaudio' | null = null;
 let rizzLastError: string | null = null;
+let rizzPlayAttemptTime: number | null = null;
+let rizzPlayResolvedTime: number | null = null;
 
-// ============ GET RIZZ STATUS FOR DEBUG UI ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEBUG STATUS FOR DebugPanel
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const getRizzStatus = () => ({
   isPlaying: rizzPlaying,
   preloaded: rizzPreloaded,
   method: rizzLastMethod,
   lastError: rizzLastError,
+  playAttemptTime: rizzPlayAttemptTime,
+  playResolvedTime: rizzPlayResolvedTime,
+  latencyMs: rizzPlayAttemptTime && rizzPlayResolvedTime 
+    ? rizzPlayResolvedTime - rizzPlayAttemptTime 
+    : null,
   htmlAudioState: rizzHtmlAudio ? {
     readyState: rizzHtmlAudio.readyState,
+    networkState: rizzHtmlAudio.networkState,
     paused: rizzHtmlAudio.paused,
     currentTime: rizzHtmlAudio.currentTime,
   } : null,
 });
 
-// ============ CHECK IF RIZZ AUDIO IS READY ============
-export const isRizzAudioReady = (): boolean => rizzPreloaded;
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// iOS unlock flag - only need to unlock once per session
-let iosAudioUnlocked = false;
+export const isRizzAudioReady = (): boolean => rizzPreloaded;
 
 // ============ iOS SILENT MODE BYPASS ============
 let silentAudioUnlocker: HTMLAudioElement | null = null;
@@ -91,14 +130,25 @@ export const precacheRizzAudio = async () => {
   rizzPreloaded = true;
 };
 
-// ============ MUSIC 1: RIZZ (SIMPLE PATTERN - CREATE ON GESTURE) ============
+// ═══════════════════════════════════════════════════════════════════════════════
+// MUSIC 1: RIZZ (SIMPLE PATTERN - CREATE ON GESTURE)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export const playRizz = () => {
   if (rizzPlaying) {
     debug.log('Rizz already playing, skipping');
     return;
   }
   
-  startSilentUnlocker();
+  // Record attempt time for diagnostics
+  rizzPlayAttemptTime = Date.now();
+  rizzPlayResolvedTime = null;
+  rizzLastError = null;
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🔑 CRITICAL: Create audio FIRST, play() FIRST, THEN silent unlocker.
+  // This ensures iOS Safari prioritizes the real audio over the silent hack.
+  // ═══════════════════════════════════════════════════════════════════════════
   
   // Create fresh audio in gesture context (iOS requirement!)
   const audio = new Audio(publicAssetUrl('music/rizz.mp3'));
@@ -108,18 +158,27 @@ export const playRizz = () => {
   (audio as any).playsInline = true;
   audio.setAttribute('playsinline', '');
   audio.setAttribute('webkit-playsinline', '');
-  // Kick off loading immediately (some iOS Safari versions behave better with an explicit load())
+  
+  // Kick off loading immediately
   try { audio.load(); } catch {}
   
   rizzHtmlAudio = audio;
   rizzPlaying = true;
   rizzLastMethod = 'htmlaudio';
-  rizzLastError = null;
   
+  // 🎵 PLAY FIRST - This is the critical path
   const playPromise = audio.play();
+  
+  // 🔇 THEN start silent unlocker (lower priority, helps with iOS silent mode)
+  startSilentUnlocker();
+  
   if (playPromise !== undefined) {
     playPromise
-      .then(() => debug.log('🎵 Rizz playing (fresh audio in gesture)'))
+      .then(() => {
+        rizzPlayResolvedTime = Date.now();
+        const latency = rizzPlayResolvedTime - (rizzPlayAttemptTime || 0);
+        debug.log(`🎵 Rizz playing (latency: ${latency}ms)`);
+      })
       .catch((e) => {
         debug.error('❌ Rizz failed:', e);
         rizzPlaying = false;
@@ -134,13 +193,6 @@ export const playRizz = () => {
 export const stopRizz = () => {
   rizzPlaying = false;
   stopSilentUnlocker();
-  
-  // Stop WebAudio if it was used
-  if (rizzBufferSource) {
-    try { rizzBufferSource.stop(); } catch {}
-    rizzBufferSource.disconnect();
-    rizzBufferSource = null;
-  }
   
   // Stop HTMLAudio
   if (rizzHtmlAudio) {
@@ -160,7 +212,7 @@ export const stopRizz = () => {
  * Force-stop rizz - call this at the START of other music functions
  */
 export const forceStopRizz = () => {
-  if (!rizzPlaying && !rizzBufferSource && (!rizzHtmlAudio || rizzHtmlAudio.paused)) {
+  if (!rizzPlaying && (!rizzHtmlAudio || rizzHtmlAudio.paused)) {
     return;
   }
   

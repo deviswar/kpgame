@@ -82,22 +82,33 @@ const DebugPanel = () => {
         ))}
       </div>
 
-      {/* Rizz Status */}
+      {/* Rizz Status + Timeline */}
       {rizzStatus && (
         <div className="border-t border-white/20 pt-2 mt-2">
           <div className="text-gray-400 mb-1">Rizz Audio:</div>
           <div>Playing: {rizzStatus.isPlaying ? '✅ Yes' : '❌ No'}</div>
-          <div>Method: {rizzStatus.method || 'none'}</div>
           <div>Ready: {rizzStatus.preloaded ? '✅' : '❌'}</div>
+          {rizzStatus.latencyMs !== null && (
+            <div className={rizzStatus.latencyMs < 200 ? 'text-green-400' : rizzStatus.latencyMs < 500 ? 'text-yellow-400' : 'text-red-400'}>
+              Latency: {rizzStatus.latencyMs}ms
+            </div>
+          )}
+          {rizzStatus.htmlAudioState && (
+            <div className="text-[10px] text-gray-500">
+              readyState: {rizzStatus.htmlAudioState.readyState} | 
+              network: {rizzStatus.htmlAudioState.networkState}
+            </div>
+          )}
           {rizzStatus.lastError && (
             <div className="text-red-400 break-words">Error: {rizzStatus.lastError}</div>
           )}
         </div>
       )}
 
-      {/* URLs */}
+      {/* Build Info */}
       <div className="border-t border-white/20 pt-2 mt-2 text-[10px] text-gray-500">
         <div>BASE_URL: {import.meta.env.BASE_URL || '/'}</div>
+        <div>Build: {new Date().toISOString().slice(0, 10)}</div>
       </div>
     </div>
   );

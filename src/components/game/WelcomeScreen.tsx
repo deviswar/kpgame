@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import RizzScene from './RizzScene';
@@ -8,6 +8,9 @@ import { playRizz, stopRizz, precacheRizzAudio, preloadAllAudio } from '@/lib/au
 import roseMilkBanner from '@/assets/rose-milk-banner.jpg';
 import villageMilkBanner from '@/assets/village-milk-banner.jpg';
 
+// Build timestamp for production debugging (auto-generated at build time)
+const BUILD_ID = `${new Date().toISOString().slice(0, 10)}-${Date.now().toString(36).slice(-4)}`;
+
 interface WelcomeScreenProps {
   onStart: () => void;
 }
@@ -16,6 +19,12 @@ const WelcomeScreen = memo(({
   onStart
 }: WelcomeScreenProps) => {
   const [showRizzScene, setShowRizzScene] = useState(false);
+  
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🔒 iOS AUDIO GUARD: Ensures playRizz is called exactly ONCE per session.
+  // This prevents double-calls from pointerdown + click events firing together.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const rizzTriggeredRef = useRef(false);
 
   // Preload audio and CRITICAL images immediately on mount
   useEffect(() => {
@@ -43,12 +52,31 @@ const WelcomeScreen = memo(({
     return () => clearTimeout(lazyTimer);
   }, []);
 
-  const handleShowRizz = () => {
-    // CRITICAL: Play audio FIRST, synchronously in user gesture context
-    // This must happen before any state updates to preserve user gesture
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🎵 AUDIO TRIGGER (pointerdown/touchstart) - Fires BEFORE onClick on mobile!
+  // This gives us the earliest possible gesture context for iOS Safari.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const handleAudioTrigger = () => {
+    if (rizzTriggeredRef.current) return; // One-call guard
+    rizzTriggeredRef.current = true;
+    
+    // CRITICAL: Play audio FIRST, synchronously in user gesture context.
+    // This MUST happen before any state updates to preserve user gesture.
     playRizz();
+  };
 
-    // Then update state (React batches this anyway)
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🖱️ UI TRANSITION (onClick) - Handles state change and deferred preloading.
+  // Audio already started in handleAudioTrigger; this just updates the screen.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const handleShowRizz = () => {
+    // Ensure audio started (fallback for desktop where pointerdown might not fire)
+    if (!rizzTriggeredRef.current) {
+      rizzTriggeredRef.current = true;
+      playRizz();
+    }
+
+    // Update state to transition to Rizz scene
     setShowRizzScene(true);
 
     // After the first interaction, we can safely preload the other tracks.
@@ -69,9 +97,9 @@ const WelcomeScreen = memo(({
   if (!showRizzScene) {
     return (
       <div className="relative min-h-screen min-h-[100dvh] game-gradient flex flex-col items-center justify-center px-4 py-4 overflow-hidden gap-3">
-        {/* Version number - bottom left */}
+        {/* Version number + Build ID - bottom left */}
         <div className="absolute bottom-24 left-4">
-          <span className="text-white text-xs font-medium">version - 8008.69</span>
+          <span className="text-white text-xs font-medium">v8008.69 | {BUILD_ID}</span>
         </div>
 
         {/* Header with title and KP */}
@@ -130,6 +158,8 @@ const WelcomeScreen = memo(({
         {/* Click to see rizz + Footer */}
         <div className="flex flex-col items-center gap-2">
           <button 
+            onPointerDown={handleAudioTrigger}
+            onTouchStart={handleAudioTrigger}
             onClick={handleShowRizz} 
             className="bg-pink-500 hover:bg-pink-600 animate-pulse backdrop-blur-sm rounded-2xl px-8 py-4 border border-pink-400/50 shadow-lg transition-colors active:scale-95"
           >
