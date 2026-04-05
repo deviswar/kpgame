@@ -169,6 +169,9 @@ const WelcomeScreen = memo(({
         <span className="text-white text-xs font-medium">version - 8008.69</span>
       </div>
 
+      {/* Bike Image */}
+      <img src={kpBikeImage} alt="KP on bike" className="w-36 h-24 object-cover rounded-xl shadow-lg mb-3 animate-fade-in" />
+
       {/* Title */}
       <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground text-shadow-game mb-6 animate-fade-in">
         KP's Rizz Attempt 💀
