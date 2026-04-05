@@ -173,7 +173,7 @@ const WelcomeScreen = memo(({
       <div className="flex items-center gap-3 mb-3 animate-fade-in">
         <img src={kpBikeImage} alt="KP on bike" className="w-44 h-32 object-cover rounded-2xl shadow-2xl" />
         <div className="bg-black px-4 py-3 rounded-xl border border-white/10 flex flex-col items-center justify-center">
-          <span className="text-white font-black text-2xl">L00B</span>
+          <span className="text-white font-black text-2xl font-serif">L00B</span>
           <span className="text-orange-400 font-black text-2xl">:)</span>
         </div>
       </div>
