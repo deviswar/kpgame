@@ -144,7 +144,7 @@ const WelcomeScreen = memo(({
               Click here to see my rizz 🥰  
             </span>
           </button>
-          <button onClick={() => window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')} className="bg-red-500 backdrop-blur-sm rounded-xl px-5 py-2 border border-red-400/50 shadow-md cursor-pointer hover:bg-red-600 transition-colors active:scale-95">
+        <button onClick={() => window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')} className="bg-black backdrop-blur-sm rounded-xl px-5 py-2 border border-white/20 shadow-md cursor-pointer hover:bg-gray-800 transition-colors active:scale-95">
             <span className="text-white text-sm font-bold">
               Click here to abuse me 🤡
             </span>
@@ -170,7 +170,13 @@ const WelcomeScreen = memo(({
       </div>
 
       {/* Bike Image */}
-      <img src={kpBikeImage} alt="KP on bike" className="w-36 h-24 object-cover rounded-xl shadow-lg mb-3 animate-fade-in" />
+      <div className="flex items-center gap-3 mb-3 animate-fade-in">
+        <img src={kpBikeImage} alt="KP on bike" className="w-44 h-32 object-cover rounded-2xl shadow-2xl" />
+        <div className="bg-black px-4 py-3 rounded-xl border border-white/10 flex flex-col items-center justify-center">
+          <span className="text-white font-black text-2xl">L00B</span>
+          <span className="text-orange-400 font-black text-2xl">:)</span>
+        </div>
+      </div>
 
       {/* Title */}
       <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground text-shadow-game mb-6 animate-fade-in">
@@ -239,18 +245,13 @@ const WelcomeScreen = memo(({
             👆 Tap to start the game
           </span>
         </button>
-        <button onClick={() => window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')} className="bg-red-500 backdrop-blur-sm rounded-xl px-5 py-2 border border-red-400/50 shadow-md cursor-pointer hover:bg-red-600 transition-colors active:scale-95">
-          <span className="text-white text-sm font-bold">
-            Click here to abuse me 🤡
-          </span>
-        </button>
         <div className="flex items-center gap-2">
           <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
           <div className="bg-yellow-400 px-3 py-1 rounded-md">
             <span className="text-white text-sm md:text-base font-bold">Rapido</span>
           </div>
         </div>
-        <p className="text-primary-foreground/70 text-xs md:text-sm font-medium">
+        <p className="text-primary-foreground/70 text-sm md:text-base font-medium animate-blink-bounce">
           🔊 <WaveText text="Turn up your volume for the best experience" />
         </p>
       </div>
