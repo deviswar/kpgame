@@ -3,6 +3,7 @@ import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
 import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
+import kpBikeImage from '@/assets/kp-bike.jpg';
 
 // Preload images for later screens
 import hondaAmazeImg from '@/assets/honda-amaze.jpg';
