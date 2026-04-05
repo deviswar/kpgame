@@ -3,6 +3,7 @@ import KPCharacter from './KPCharacter';
 import WaveText from './WaveText';
 import qtGirlImage from '@/assets/qt-girl.jpg';
 import { playRizz, stopRizz, preloadAllAudio, isRizzAudioReady } from '@/lib/audioManager';
+import kpBikeImage from '@/assets/kp-bike.jpg';
 
 // Preload images for later screens
 import hondaAmazeImg from '@/assets/honda-amaze.jpg';
@@ -143,6 +144,11 @@ const WelcomeScreen = memo(({
               Click here to see my rizz 🥰  
             </span>
           </button>
+          <button onClick={() => window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')} className="bg-red-500 backdrop-blur-sm rounded-xl px-5 py-2 border border-red-400/50 shadow-md cursor-pointer hover:bg-red-600 transition-colors active:scale-95">
+            <span className="text-white text-sm font-bold">
+              Click here to abuse me 🤡
+            </span>
+          </button>
           <div className="flex items-center gap-2">
             <span className="text-primary-foreground/80 text-sm md:text-base font-medium">Powered by</span>
             <div className="bg-yellow-400 px-3 py-1 rounded-md">
@@ -162,6 +168,9 @@ const WelcomeScreen = memo(({
       <div className="absolute bottom-24 left-4">
         <span className="text-white text-xs font-medium">version - 8008.69</span>
       </div>
+
+      {/* Bike Image */}
+      <img src={kpBikeImage} alt="KP on bike" className="w-36 h-24 object-cover rounded-xl shadow-lg mb-3 animate-fade-in" />
 
       {/* Title */}
       <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground text-shadow-game mb-6 animate-fade-in">
@@ -228,6 +237,11 @@ const WelcomeScreen = memo(({
         <button onClick={handleStartGame} className="bg-green-500 backdrop-blur-sm rounded-2xl px-8 py-4 border border-green-400/50 animate-pulse shadow-lg cursor-pointer hover:bg-green-600 transition-colors active:scale-95">
           <span className="text-white text-lg md:text-xl font-bold">
             👆 Tap to start the game
+          </span>
+        </button>
+        <button onClick={() => window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')} className="bg-red-500 backdrop-blur-sm rounded-xl px-5 py-2 border border-red-400/50 shadow-md cursor-pointer hover:bg-red-600 transition-colors active:scale-95">
+          <span className="text-white text-sm font-bold">
+            Click here to abuse me 🤡
           </span>
         </button>
         <div className="flex items-center gap-2">
