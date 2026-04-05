@@ -1,47 +1,26 @@
 
 
-## Fix Favicon for Search Results & Ensure Correct Title
+## Plan: Add Bike Image + Abuse Button
 
-### Problem
-The screenshot shows Google search results displaying a default platform favicon instead of your KP character favicon. This happens because:
-1. Only an SVG favicon is defined — many search engines (Google especially) prefer PNG/ICO formats
-2. No `apple-touch-icon` is set, which Google also uses as a favicon source
+### Changes to `src/components/game/WelcomeScreen.tsx`
 
-### Changes
+#### 1. Copy uploaded image to assets
+- Copy `user-uploads://IMG_3634.jpg` to `src/assets/kp-bike.jpg`
 
-#### 1. Create a PNG favicon from the existing SVG
-Convert `public/favicon.svg` to a PNG version at `public/favicon.png` (192x192px) using an inline SVG-to-canvas approach, or simpler: copy the user's OG image and also create a dedicated `public/favicon-32x32.png`.
+#### 2. Import the bike image
+- Add `import kpBikeImage from '@/assets/kp-bike.jpg';` at the top
 
-Actually, the simplest approach: use the existing `og-image.png` as the apple-touch-icon source, and add multiple favicon link tags.
+#### 3. Rizz Scene (Phase 2) — Add bike image above title
+- Insert a small rounded image (w-32 h-24 or similar, `object-cover`) of the bike above the "KP's Rizz Attempt 💀" heading
+- Keep everything else untouched
 
-#### 2. Update `index.html` — add multiple favicon formats
+#### 4. Welcome Screen (Phase 1) — Add "abuse me" button
+- Below the existing "Click here to see my rizz 🥰" button, add a smaller button: "Click here to abuse me 🤡"
+- Style it smaller (e.g., `bg-red-500`, smaller padding/text) so it's clearly secondary
+- On click: `window.open('https://wa.me/919573725363?text=sir%20meeru%20erriPuK%20ah%3F', '_blank')`
 
-Add these link tags alongside the existing SVG favicon:
+#### 5. Rizz Scene (Phase 2) — Add same "abuse me" button
+- Below the "Tap to start the game" button, add the same "Click here to abuse me 🤡" button with the same WhatsApp link behavior
 
-```html
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="icon" href="/favicon.png" type="image/png" sizes="192x192" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-```
-
-We'll copy the og-image as `apple-touch-icon.png` and create a square-cropped version as `favicon.png` from the KP image.
-
-**Better approach**: Copy the user's uploaded KP image to `public/favicon.png` and `public/apple-touch-icon.png` so Google can pick it up. Since the user wants the same KP character image, we use `og-image.png` for this.
-
-#### 3. Ensure title is correct
-The title is already "Play the game & Make KP EP" in this project. The screenshot showing "KP Game - Play the Fun Browser Game" with Vercel is from a different deployment. If the user wants the Lovable deployment to show "KP Game" as the site name in search results, we should also add a `meta name="application-name"` tag.
-
-### Files to Modify
-
-**`index.html`** — Add PNG favicon and apple-touch-icon links:
-```html
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="icon" href="/og-image.png" type="image/png" sizes="192x192" />
-<link rel="apple-touch-icon" href="/og-image.png" />
-```
-
-This reuses the existing `og-image.png` (your KP character image) as the PNG favicon source, which Google will pick up for search results.
-
-### Note
-Google caches favicons and may take days/weeks to update. After publishing, you can use [Google's Rich Results Test](https://search.google.com/test/rich-results) to verify your metadata is correct.
+### No other layout changes — everything else stays as-is.
 
